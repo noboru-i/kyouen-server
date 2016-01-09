@@ -11,9 +11,12 @@ FIXME
 | Name | Type | Description | Example |
 | ------- | ------- | ------- | ------- |
 | **created_at** | *date-time* | when app was created | `"2015-01-01T12:00:00Z"` |
-| **id** | *uuid* | unique identifier of app | `"01234567-89ab-cdef-0123-456789abcdef"` |
-| **name** | *string* | unique name of app | `"example"` |
+| **description** | *string* | discription of app<br/> **Length:** `0..140` | `"example"` |
+| **id** | *integer* | unique identifier of app | `42` |
+| **name** | *string* | unique name of app<br/> **pattern:** <code>^(\([0-9]{3}\))?[0-9]{3}-[0-9]{4}$</code> | `"example"` |
 | **updated_at** | *date-time* | when app was updated | `"2015-01-01T12:00:00Z"` |
+| **user:id** | *integer* | unique identifier of user | `42` |
+| **user:name** | *string* | name of user | `"example"` |
 
 ### App Create
 
@@ -43,8 +46,13 @@ HTTP/1.1 201 Created
 ```json
 {
   "created_at": "2015-01-01T12:00:00Z",
-  "id": "01234567-89ab-cdef-0123-456789abcdef",
+  "description": "example",
+  "id": 42,
   "name": "example",
+  "user": {
+    "id": 42,
+    "name": "example"
+  },
   "updated_at": "2015-01-01T12:00:00Z"
 }
 ```
@@ -54,14 +62,14 @@ HTTP/1.1 201 Created
 Delete an existing app.
 
 ```
-DELETE /apps/{app_id_or_name}
+DELETE /apps/{app_id}
 ```
 
 
 #### Curl Example
 
 ```bash
-$ curl -n -X DELETE https://api.hello.com/apps/$APP_ID_OR_NAME \
+$ curl -n -X DELETE https://api.hello.com/apps/$APP_ID \
   -H "Content-Type: application/json"
 ```
 
@@ -75,8 +83,13 @@ HTTP/1.1 200 OK
 ```json
 {
   "created_at": "2015-01-01T12:00:00Z",
-  "id": "01234567-89ab-cdef-0123-456789abcdef",
+  "description": "example",
+  "id": 42,
   "name": "example",
+  "user": {
+    "id": 42,
+    "name": "example"
+  },
   "updated_at": "2015-01-01T12:00:00Z"
 }
 ```
@@ -86,14 +99,14 @@ HTTP/1.1 200 OK
 Info for existing app.
 
 ```
-GET /apps/{app_id_or_name}
+GET /apps/{app_id}
 ```
 
 
 #### Curl Example
 
 ```bash
-$ curl -n https://api.hello.com/apps/$APP_ID_OR_NAME
+$ curl -n https://api.hello.com/apps/$APP_ID
 ```
 
 
@@ -106,8 +119,13 @@ HTTP/1.1 200 OK
 ```json
 {
   "created_at": "2015-01-01T12:00:00Z",
-  "id": "01234567-89ab-cdef-0123-456789abcdef",
+  "description": "example",
+  "id": 42,
   "name": "example",
+  "user": {
+    "id": 42,
+    "name": "example"
+  },
   "updated_at": "2015-01-01T12:00:00Z"
 }
 ```
@@ -138,8 +156,13 @@ HTTP/1.1 200 OK
 [
   {
     "created_at": "2015-01-01T12:00:00Z",
-    "id": "01234567-89ab-cdef-0123-456789abcdef",
+    "description": "example",
+    "id": 42,
     "name": "example",
+    "user": {
+      "id": 42,
+      "name": "example"
+    },
     "updated_at": "2015-01-01T12:00:00Z"
   }
 ]
@@ -150,14 +173,14 @@ HTTP/1.1 200 OK
 Update an existing app.
 
 ```
-PATCH /apps/{app_id_or_name}
+PATCH /apps/{app_id}
 ```
 
 
 #### Curl Example
 
 ```bash
-$ curl -n -X PATCH https://api.hello.com/apps/$APP_ID_OR_NAME \
+$ curl -n -X PATCH https://api.hello.com/apps/$APP_ID \
   -d '{
 }' \
   -H "Content-Type: application/json"
@@ -173,8 +196,13 @@ HTTP/1.1 200 OK
 ```json
 {
   "created_at": "2015-01-01T12:00:00Z",
-  "id": "01234567-89ab-cdef-0123-456789abcdef",
+  "description": "example",
+  "id": 42,
   "name": "example",
+  "user": {
+    "id": 42,
+    "name": "example"
+  },
   "updated_at": "2015-01-01T12:00:00Z"
 }
 ```
