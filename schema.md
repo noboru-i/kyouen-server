@@ -14,9 +14,11 @@ FIXME
 | **description** | *string* | discription of app<br/> **Length:** `0..140` | `"example"` |
 | **id** | *integer* | unique identifier of app | `42` |
 | **name** | *string* | unique name of app<br/> **pattern:** <code>^(\([0-9]{3}\))?[0-9]{3}-[0-9]{4}$</code> | `"example"` |
-| **updated_at** | *date-time* | when app was updated | `"2015-01-01T12:00:00Z"` |
-| **user:id** | *integer* | unique identifier of user | `42` |
-| **user:name** | *string* | name of user | `"example"` |
+| **[updated_at](#resource-user)** | *date-time* | when app was updated | `"2015-01-01T12:00:00Z"` |
+| **[user:created_at](#resource-user)** | *date-time* | when user was created | `"2015-01-01T12:00:00Z"` |
+| **[user:id](#resource-user)** | *uuid* | unique identifier of user | `"01234567-89ab-cdef-0123-456789abcdef"` |
+| **[user:name](#resource-user)** | *string* | unique name of user | `"example"` |
+| **user:updated_at** | *date-time* | when user was updated | `"2015-01-01T12:00:00Z"` |
 
 ### App Create
 
@@ -50,8 +52,10 @@ HTTP/1.1 201 Created
   "id": 42,
   "name": "example",
   "user": {
-    "id": 42,
-    "name": "example"
+    "created_at": "2015-01-01T12:00:00Z",
+    "id": "01234567-89ab-cdef-0123-456789abcdef",
+    "name": "example",
+    "updated_at": "2015-01-01T12:00:00Z"
   },
   "updated_at": "2015-01-01T12:00:00Z"
 }
@@ -87,8 +91,10 @@ HTTP/1.1 200 OK
   "id": 42,
   "name": "example",
   "user": {
-    "id": 42,
-    "name": "example"
+    "created_at": "2015-01-01T12:00:00Z",
+    "id": "01234567-89ab-cdef-0123-456789abcdef",
+    "name": "example",
+    "updated_at": "2015-01-01T12:00:00Z"
   },
   "updated_at": "2015-01-01T12:00:00Z"
 }
@@ -123,8 +129,10 @@ HTTP/1.1 200 OK
   "id": 42,
   "name": "example",
   "user": {
-    "id": 42,
-    "name": "example"
+    "created_at": "2015-01-01T12:00:00Z",
+    "id": "01234567-89ab-cdef-0123-456789abcdef",
+    "name": "example",
+    "updated_at": "2015-01-01T12:00:00Z"
   },
   "updated_at": "2015-01-01T12:00:00Z"
 }
@@ -153,19 +161,26 @@ HTTP/1.1 200 OK
 ```
 
 ```json
-[
-  {
-    "created_at": "2015-01-01T12:00:00Z",
-    "description": "example",
-    "id": 42,
-    "name": "example",
-    "user": {
+{
+  "list": [
+    {
+      "created_at": "2015-01-01T12:00:00Z",
+      "description": "example",
       "id": 42,
-      "name": "example"
-    },
-    "updated_at": "2015-01-01T12:00:00Z"
+      "name": "example",
+      "user": {
+        "created_at": "2015-01-01T12:00:00Z",
+        "id": "01234567-89ab-cdef-0123-456789abcdef",
+        "name": "example",
+        "updated_at": "2015-01-01T12:00:00Z"
+      },
+      "updated_at": "2015-01-01T12:00:00Z"
+    }
+  ],
+  "meta": {
+    "page": 42
   }
-]
+}
 ```
 
 ### App Update
@@ -200,8 +215,10 @@ HTTP/1.1 200 OK
   "id": 42,
   "name": "example",
   "user": {
-    "id": 42,
-    "name": "example"
+    "created_at": "2015-01-01T12:00:00Z",
+    "id": "01234567-89ab-cdef-0123-456789abcdef",
+    "name": "example",
+    "updated_at": "2015-01-01T12:00:00Z"
   },
   "updated_at": "2015-01-01T12:00:00Z"
 }

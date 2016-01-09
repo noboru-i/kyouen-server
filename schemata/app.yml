@@ -1,5 +1,6 @@
 ---
 "$schema": http://json-schema.org/draft-04/hyper-schema
+id: schemata/app
 title: FIXME - App
 description: FIXME
 stability: prototype
@@ -29,13 +30,7 @@ definitions:
   user:
     description: create user of app
     type: object
-    properties:
-      id:
-        description: unique identifier of user
-        type: integer
-      name:
-        description: name of user
-        type: string
+    "$ref": "/schemata/user#"
   created_at:
     description: when app was created
     format: date-time
@@ -71,6 +66,19 @@ links:
   method: GET
   rel: instances
   title: List
+  targetSchema:
+    type: object
+    properties:
+      list:
+        type: array
+        items:
+          type: object
+          $ref: "/schemata/app#"
+      meta:
+        type: object
+        properties:
+          page:
+            type: integer
 - description: Update an existing app.
   href: "/apps/{(%2Fschemata%2Fapp%23%2Fdefinitions%2Fid)}"
   method: PATCH
@@ -93,4 +101,3 @@ properties:
     "$ref": "/schemata/app#/definitions/user"
   updated_at:
     "$ref": "/schemata/app#/definitions/updated_at"
-id: schemata/app
