@@ -27,10 +27,6 @@ definitions:
     description: discription of app
     type: string
     maxLength: 140
-  user:
-    description: create user of app
-    type: object
-    "$ref": "/schemata/user#"
   created_at:
     description: when app was created
     format: date-time
@@ -97,7 +93,7 @@ properties:
     "$ref": "/schemata/app#/definitions/id"
   name:
     "$ref": "/schemata/app#/definitions/name"
-  user:
-    "$ref": "/schemata/app#/definitions/user"
+  created_user:
+    "$ref": "/schemata/user#"
   updated_at:
     "$ref": "/schemata/app#/definitions/updated_at"
