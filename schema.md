@@ -4,7 +4,7 @@ Sample of overview message.
 
 ## <a name="resource-app"></a>App
 
-FIXME
+アプリケーションの情報を表す
 
 ### Attributes
 

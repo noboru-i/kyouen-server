@@ -2,22 +2,19 @@
 "$schema": http://json-schema.org/draft-04/hyper-schema
 id: schemata/app
 title: FIXME - App
-description: FIXME
+description: アプリケーションの情報を表す
 stability: prototype
 strictProperties: true
-type:
-- object
+type: object
 definitions:
   id:
     description: unique identifier of app
     readOnly: true
-    type:
-    - integer
+    type: integer
   name:
     description: unique name of app
     readOnly: true
-    type:
-    - string
+    type: string
     "pattern": "^(\\([0-9]{3}\\))?[0-9]{3}-[0-9]{4}$"
   identity:
     anyOf:
@@ -30,13 +27,11 @@ definitions:
   created_at:
     description: when app was created
     format: date-time
-    type:
-    - string
+    type: string
   updated_at:
     description: when app was updated
     format: date-time
-    type:
-    - string
+    type: string
 links:
 - description: Create a new app.
   href: "/apps"
