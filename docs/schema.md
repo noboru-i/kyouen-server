@@ -1,7 +1,3 @@
-# Overview
-
-Sample of overview message.
-
 ## <a name="resource-app"></a>App
 
 アプリケーションの情報を表す
