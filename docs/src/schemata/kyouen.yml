@@ -1,0 +1,93 @@
+---
+"$schema": http://json-schema.org/draft-04/hyper-schema
+id: schemata/kyouen
+title: Kyouen
+description: kyouen stages
+stability: prototype
+type: object
+definitions:
+  id:
+    description: unique identifier of kyouen.
+    readOnly: true
+    type: integer
+  identity:
+    anyOf:
+    - "$ref": "/schemata/kyouen#/definitions/id"
+  size:
+    description: size of kyouen.
+    readOnly: true
+    type: integer
+    enum: [6, 9]
+    example: 6
+  stage:
+    description: stage of kyouen.
+    type: string
+    pattern: "^[0|1]*$"
+    example: "000000010000001100001100000000001000"
+  creator:
+    description: creator name.
+    type: string
+  created_at:
+    description: when kyouen was created
+    format: date-time
+    type: string
+links:
+- description: Create a new kyouen.
+  href: "/kyouen"
+  method: POST
+  rel: create
+  title: Create
+  schema:
+    type: object
+    properties:
+      size:
+        "$ref": "/schemata/kyouen#/definitions/size"
+      stage:
+        "$ref": "/schemata/kyouen#/definitions/stage"
+      creator:
+        "$ref": "/schemata/kyouen#/definitions/creator"
+- description: List existing kyouen.
+  href: "/kyouen"
+  method: GET
+  rel: instances
+  title: List
+  schema:
+    type: object
+    properties:
+      start_stage_no:
+        type: integer
+        description: Returns results with an ID greater than the specified ID.
+      count:
+        type: integer
+        description: Specifies the number of kyouen.
+        maximum: 200
+  targetSchema:
+    type: object
+    properties:
+      items:
+        type: object
+        $ref: "/schemata/kyouen#"
+- description: Post cleared kyouen.
+  href: "/kyouen/{(%2Fschemata%2Fkyouen%23%2Fdefinitions%2Fidentity)}/clear"
+  method: PUT
+  rel: update
+  title: clear kyouen
+  schema:
+    type: object
+    properties:
+      stage:
+        type: string
+        description: check is kyouen
+        pattern: "^[0|1|2]*$"
+        example: "000000010000002200002200000000001000"
+properties:
+  id:
+    "$ref": "/schemata/kyouen#/definitions/id"
+  size:
+    "$ref": "/schemata/kyouen#/definitions/size"
+  stage:
+    "$ref": "/schemata/kyouen#/definitions/stage"
+  creator:
+    "$ref": "/schemata/kyouen#/definitions/creator"
+  created_at:
+    "$ref": "/schemata/kyouen#/definitions/created_at"

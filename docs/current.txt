@@ -1,0 +1,117 @@
+== request ==
+POST /page/api_login HTTP/1.1
+Host: my-android-server.appspot.com
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+Cookie: sid=5997fbf3-0fea-4c7a-b1ae-479f3182d0bb
+Connection: keep-alive
+Proxy-Connection: keep-alive
+Accept: */*
+User-Agent: TumeKyouen/hm.orz.chaos114.TumeKyouen (5; OS bajon 9.2(birudo 13C75))
+Accept-Language: ja-US;q=1.0, en-US;q=0.9
+Content-Length: 113
+Accept-Encoding: gzip;q=1.0, compress;q=0.5
+
+token=5021421-YJj00NUQlDuvpuP7DBCLwmi5OrXT7eFK4wJIRkLaaa&token_secret=ESmYj2t0EzdPGNipJIzbTpfMsIvWjOsFjUNWXeHaaaa
+
+== response ==
+HTTP/1.1 200 OK
+Cache-Control: no-cache
+Content-Type: application/json; charset=utf-8
+Date: Sun, 14 Feb 2016 13:42:57 GMT
+Server: Google Frontend
+Content-Length: 128
+Alternate-Protocol: 443:quic,p=1
+Alt-Svc: quic=":443"; ma=604800; v="30,29,28,27,26,25"
+
+{"message": "success", "user": {"image": "http://pbs.twimg.com/profile_images/1764027482/V9040007_normal.JPG", "id": "9995021421"}}
+
+
+== request ==
+GET /kyouen/get?stageNo=20 HTTP/1.1
+Host: my-android-server.appspot.com
+Proxy-Connection: keep-alive
+Accept: */*
+User-Agent: TumeKyouen/hm.orz.chaos114.TumeKyouen (5; OS bajon 9.2(birudo 13C75))
+Accept-Language: ja-US;q=1.0, en-US;q=0.9
+Accept-Encoding: gzip;q=1.0, compress;q=0.5
+Connection: keep-alive
+
+== response ==
+HTTP/1.1 200 OK
+Cache-Control: no-cache
+Content-Type: text/plain;charset=utf-8
+Date: Sun, 14 Feb 2016 13:43:47 GMT
+Server: Google Frontend
+Content-Length: 585
+Alternate-Protocol: 443:quic,p=1
+Alt-Svc: quic=":443"; ma=604800; v="30,29,28,27,26,25"
+
+21,6,000000010100000010000000001000010010,noboru
+22,6,000100000000011000001000000010010100,noboru
+23,6,000010000010010000000000100001001000,noboru
+24,9,000000001001010000000000000010000000001000100000100000010000001000001000000000000,noboru
+25,6,010000100000010000001000001000000110,no name
+26,6,001000010000000000001000000100010001,noboru
+27,9,000000100000000000001000001000010000000000000000101000000000000001010000000000001,no name
+28,6,000000001000010100000010001000000000,no name
+29,6,010100000100010000000010001000001000,noboru
+30,6,100000000000010101101000000010010000,りゅう
+
+
+== request ==
+POST /page/add HTTP/1.1
+Host: my-android-server.appspot.com
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+Cookie: sid=5997fbf3-0fea-4c7a-b1ae-479f3182d0bb
+Connection: keep-alive
+Proxy-Connection: keep-alive
+Accept: */*
+User-Agent: TumeKyouen/hm.orz.chaos114.TumeKyouen (5; OS bajon 9.2(birudo 13C75))
+Accept-Language: ja-US;q=1.0, en-US;q=0.9
+Content-Length: 9
+Accept-Encoding: gzip;q=1.0, compress;q=0.5
+
+stageNo=1
+
+
+== response ==
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Cache-Control: no-cache
+Date: Sun, 14 Feb 2016 13:46:08 GMT
+Server: Google Frontend
+Content-Length: 0
+Alternate-Protocol: 443:quic,p=1
+Alt-Svc: quic=":443"; ma=604800; v="30,29,28,27,26,25"
+
+
+== request ==
+POST /page/add_all HTTP/1.1
+Host: my-android-server.appspot.com
+Content-Type: application/x-www-form-urlencoded; charset=utf-8
+Cookie: sid=2e0df082-a0b5-4aa8-9e22-9b5778f6baa4
+Connection: keep-alive
+Proxy-Connection: keep-alive
+Accept: */*
+User-Agent: TumeKyouen/hm.orz.chaos114.TumeKyouen (5; OS bajon 9.2(birudo 13C75))
+Accept-Language: ja-US;q=1.0, en-US;q=0.9
+Content-Length: 849
+Accept-Encoding: gzip;q=1.0, compress;q=0.5
+
+data=%5B%7B%22stageNo%22%3A%221%22%2C%22clearDate%22%3A%222016-02-14%2013%3A46%3A08%22%7D%2C%7B%22stageNo%22%3A%222%22%2C%22clearDate%22%3A%222016-02-13%2012%3A32%3A41%22%7D%2C%7B%22stageNo%22%3A%223%22%2C%22clearDate%22%3A%222016-02-13%2014%3A22%3A17%22%7D%2C%7B%22stageNo%22%3A%224%22%2C%22clearDate%22%3A%222016-02-07%2004%3A30%3A15%22%7D%2C%7B%22stageNo%22%3A%225%22%2C%22clearDate%22%3A%222016-02-07%2012%3A35%3A21%22%7D%2C%7B%22stageNo%22%3A%226%22%2C%22clearDate%22%3A%222016-02-13%2014%3A35%3A56%22%7D%2C%7B%22stageNo%22%3A%227%22%2C%22clearDate%22%3A%222016-02-13%2014%3A46%3A19%22%7D%2C%7B%22stageNo%22%3A%228%22%2C%22clearDate%22%3A%222016-02-13%2015%3A22%3A25%22%7D%2C%7B%22stageNo%22%3A%229%22%2C%22clearDate%22%3A%222016-02-13%2015%3A22%3A31%22%7D%2C%7B%22stageNo%22%3A%2210%22%2C%22clearDate%22%3A%222013-12-13%2012%3A26%3A01%22%7D%5D
+
+↓decode
+
+data=[{"stageNo":"1","clearDate":"2016-02-14 13:46:08"},{"stageNo":"2","clearDate":"2016-02-13 12:32:41"},{"stageNo":"3","clearDate":"2016-02-13 14:22:17"},{"stageNo":"4","clearDate":"2016-02-07 04:30:15"},{"stageNo":"5","clearDate":"2016-02-07 12:35:21"},{"stageNo":"6","clearDate":"2016-02-13 14:35:56"},{"stageNo":"7","clearDate":"2016-02-13 14:46:19"},{"stageNo":"8","clearDate":"2016-02-13 15:22:25"},{"stageNo":"9","clearDate":"2016-02-13 15:22:31"},{"stageNo":"10","clearDate":"2013-12-13 12:26:01"}]
+
+== response ==
+HTTP/1.1 200 OK
+Content-Type: text/html; charset=utf-8
+Cache-Control: no-cache
+Date: Mon, 15 Feb 2016 14:22:47 GMT
+Server: Google Frontend
+Content-Length: 11122
+Alternate-Protocol: 443:quic,p=1
+Alt-Svc: quic=":443"; ma=604800; v="30,29,28,27,26,25"
+
+{"message": "success", "data": [{"stageNo": 406, "clearDate": "2011-12-03 08:02:02"}, {"stageNo": 407, "clearDate": "2011-12-08 14:58:27"}, {"stageNo": 417, "clearDate": "2011-12-13 15:01:29"}, {"stageNo": 410, "clearDate": "2011-12-08 14:54:38"}, {"stageNo": 409, "clearDate": "2011-12-08 14:54:50"}, {"stageNo": 411, "clearDate": "2011-12-09 15:37:47"}, {"stageNo": 418, "clearDate": "2011-12-21 15:41:36"}, {"stageNo": 419, "clearDate": "2011-12-21 15:41:21"}, {"stageNo": 442, "clearDate": "2012-01-16 11:59:37"}, {"stageNo": 445, "clearDate": "2012-01-16 11:52:21"}, {"stageNo": 436, "clearDate": "2012-01-13 14:33:33"}, {"stageNo": 438, "clearDate": "2012-01-13 14:32:59"}, {"stageNo": 444, "clearDate": "2012-01-16 11:57:04"}, {"stageNo": 11, "clearDate": "2013-12-13 12:26:07"}, {"stageNo": 528, "clearDate": "2012-04-19 16:11:29"}, {"stageNo": 350, "clearDate": "2012-05-08 15:17:30"}, {"stageNo": 592, "clearDate": "2012-08-19 15:48:41"}, {"stageNo": 591, "clearDate": "2012-08-19 15:48:51"}, {"stageNo": 593, "clearDate": "2012-08-19 15:48:32"}, {"stageNo": 581, "clearDate": "2012-07-24 17:20:56"}, {"stageNo": 12, "clearDate": "2013-12-13 12:26:31"}, {"stageNo": 596, "clearDate": "2012-09-05 16:34:24"}, {"stageNo": 595, "clearDate": "2012-09-05 16:37:30"}, {"stageNo": 594, "clearDate": "2012-09-05 16:37:39"}, {"stageNo": 597, "clearDate": "2012-09-05 16:34:13"}, {"stageNo": 604, "clearDate": "2012-09-20 15:22:51"}, {"stageNo": 605, "clearDate": "2012-09-20 15:22:11"}, {"stageNo": 107, "clearDate": "2012-11-14 16:48:46"}, {"stageNo": 42, "clearDate": "2012-10-12 08:43:08"}, {"stageNo": 71, "clearDate": "2012-10-12 08:43:41"}, {"stageNo": 43, "clearDate": "2012-10-29 15:17:41"}, {"stageNo": 28, "clearDate": "2012-11-17 10:50:00"}, {"stageNo": 45, "clearDate": "2012-11-06 17:06:41"}, {"stageNo": 35, "clearDate": "2012-12-23 04:14:02"}, {"stageNo": 38, "clearDate": "1970-01-01 00:00:00"}, {"stageNo": 44, "clearDate": "2012-10-29 15:17:55"}, {"stageNo": 47, "clearDate": "2012-10-30 16:45:26"}, {"stageNo": 60, "clearDate": "2012-11-06 17:19:44"}, {"stageNo": 81, "clearDate": "2012-11-14 16:43:24"}, {"stageNo": 88, "clearDate": "2012-11-14 16:45:00"}, {"stageNo": 105, "clearDate": "2012-11-14 16:48:33"}, {"stageNo": 24, "clearDate": "2012-11-17 09:56:50"}, {"stageNo": 33, "clearDate": "1970-01-01 00:00:00"}, {"stageNo": 55, "clearDate": "2012-11-06 17:16:39"}, {"stageNo": 67, "clearDate": "2012-11-08 04:05:39"}, {"stageNo": 95, "clearDate": "2012-11-14 16:46:26"}, {"stageNo": 13, "clearDate": "2013-12-13 12:26:44"}, {"stageNo": 25, "clearDate": "2012-11-17 09:56:58"}, {"stageNo": 27, "clearDate": "2012-11-17 09:57:29"}, {"stageNo": 34, "clearDate": "1970-01-01 00:00:00"}, {"stageNo": 37, "clearDate": "1970-01-01 00:00:00"}, {"stageNo": 63, "clearDate": "2012-11-06 17:20:05"}, {"stageNo": 15, "clearDate": "2013-12-13 12:28:11"}, {"stageNo": 54, "clearDate": "2012-11-06 17:16:07"}, {"stageNo": 62, "clearDate": "2012-11-06 17:20:00"}, {"stageNo": 85, "clearDate": "2012-11-14 16:44:49"}, {"stageNo": 98, "clearDate": "2012-11-14 16:46:40"}, {"stageNo": 99, "clearDate": "2012-11-14 16:46:46"}, {"stageNo": 101, "clearDate": "2012-11-14 16:47:45"}, {"stageNo": 48, "clearDate": "2012-11-06 17:13:39"}, {"stageNo": 59, "clearDate": "2012-11-06 17:18:24"}, {"stageNo": 78, "clearDate": "2012-11-08 10:49:25"}, {"stageNo": 84, "clearDate": "2012-11-14 16:44:31"}, {"stageNo": 86, "clearDate": "2012-11-14 16:44:52"}, {"stageNo": 22, "clearDate": "2013-12-30 09:01:31"}, {"stageNo": 31, "clearDate": "2012-11-17 09:59:17"}, {"stageNo": 17, "clearDate": "2014-12-05 04:27:06"}, {"stageNo": 19, "clearDate": "2013-12-14 07:11:13"}, {"stageNo": 26, "clearDate": "2012-11-17 09:57:03"}, {"stageNo": 52, "clearDate": "2012-11-06 17:14:46"}, {"stageNo": 56, "clearDate": "2012-11-06 17:16:45"}, {"stageNo": 68, "clearDate": "2012-11-08 04:05:41"}, {"stageNo": 74, "clearDate": "2012-11-08 04:06:24"}, {"stageNo": 90, "clearDate": "2012-11-14 16:45:13"}, {"stageNo": 100, "clearDate": "2012-11-14 16:47:26"}, {"stageNo": 18, "clearDate": "2013-12-14 07:10:52"}, {"stageNo": 20, "clearDate": "2014-12-05 04:27:39"}, {"stageNo": 57, "clearDate": "2012-11-06 17:17:05"}, {"stageNo": 64, "clearDate": "2012-11-06 17:20:13"}, {"stageNo": 65, "clearDate": "2012-11-08 04:05:26"}, {"stageNo": 66, "clearDate": "2012-11-08 04:05:31"}, {"stageNo": 79, "clearDate": "2012-11-08 10:49:46"}, {"stageNo": 97, "clearDate": "2012-11-14 16:46:36"}, {"stageNo": 14, "clearDate": "2013-12-13 12:27:12"}, {"stageNo": 36, "clearDate": "2012-12-23 04:14:10"}, {"stageNo": 39, "clearDate": "2012-12-30 14:59:18"}, {"stageNo": 46, "clearDate": "2012-10-30 16:44:46"}, {"stageNo": 53, "clearDate": "2012-11-06 17:15:57"}, {"stageNo": 80, "clearDate": "2012-11-08 10:51:42"}, {"stageNo": 21, "clearDate": "2014-12-05 04:27:48"}, {"stageNo": 23, "clearDate": "2012-11-17 09:54:52"}, {"stageNo": 32, "clearDate": "2012-11-17 10:51:21"}, {"stageNo": 69, "clearDate": "2012-11-08 04:05:53"}, {"stageNo": 75, "clearDate": "2012-11-08 10:49:08"}, {"stageNo": 92, "clearDate": "2012-11-14 16:45:26"}, {"stageNo": 103, "clearDate": "2012-11-14 16:48:18"}, {"stageNo": 40, "clearDate": "2012-12-30 14:59:38"}, {"stageNo": 49, "clearDate": "2012-11-06 17:14:20"}, {"stageNo": 51, "clearDate": "2012-11-06 17:14:38"}, {"stageNo": 83, "clearDate": "2012-11-14 16:44:21"}, {"stageNo": 91, "clearDate": "2012-11-14 16:45:18"}, {"stageNo": 29, "clearDate": "2012-11-17 10:50:16"}, {"stageNo": 41, "clearDate": "2012-12-30 14:59:53"}, {"stageNo": 58, "clearDate": "2012-11-06 17:17:09"}, {"stageNo": 61, "clearDate": "2012-11-06 17:19:52"}, {"stageNo": 16, "clearDate": "2013-12-14 07:10:29"}, {"stageNo": 30, "clearDate": "2012-11-17 09:58:56"}, {"stageNo": 72, "clearDate": "2012-11-08 04:06:12"}, {"stageNo": 50, "clearDate": "2012-11-06 17:14:25"}, {"stageNo": 70, "clearDate": "2012-11-08 04:05:57"}, {"stageNo": 76, "clearDate": "2012-11-08 10:49:16"}, {"stageNo": 82, "clearDate": "2012-11-14 16:43:48"}, {"stageNo": 77, "clearDate": "2012-11-08 10:49:20"}, {"stageNo": 73, "clearDate": "2012-11-08 04:06:18"}, {"stageNo": 93, "clearDate": "2012-11-14 16:45:30"}, {"stageNo": 94, "clearDate": "2012-11-14 16:45:35"}, {"stageNo": 109, "clearDate": "2012-11-14 16:48:57"}, {"stageNo": 102, "clearDate": "2012-11-14 16:48:13"}, {"stageNo": 89, "clearDate": "2012-11-14 16:45:07"}, {"stageNo": 106, "clearDate": "2012-11-14 16:48:38"}, {"stageNo": 87, "clearDate": "2012-11-14 16:44:55"}, {"stageNo": 96, "clearDate": "2012-11-14 16:46:32"}, {"stageNo": 108, "clearDate": "2012-11-14 16:48:49"}, {"stageNo": 104, "clearDate": "2012-11-14 16:48:28"}, {"stageNo": 113, "clearDate": "2013-01-04 16:14:07"}, {"stageNo": 111, "clearDate": "2013-01-04 16:13:40"}, {"stageNo": 110, "clearDate": "2013-01-04 16:12:45"}, {"stageNo": 800, "clearDate": "2013-01-04 16:10:18"}, {"stageNo": 112, "clearDate": "2013-01-04 16:13:58"}, {"stageNo": 114, "clearDate": "2013-01-26 14:23:44"}, {"stageNo": 120, "clearDate": "2013-02-12 12:59:18"}, {"stageNo": 130, "clearDate": "2013-02-12 13:08:26"}, {"stageNo": 118, "clearDate": "2013-02-12 12:54:05"}, {"stageNo": 129, "clearDate": "2013-02-12 13:08:22"}, {"stageNo": 119, "clearDate": "2013-02-12 12:59:11"}, {"stageNo": 126, "clearDate": "2013-02-12 13:07:08"}, {"stageNo": 122, "clearDate": "2013-02-12 13:04:22"}, {"stageNo": 133, "clearDate": "2013-02-15 04:07:10"}, {"stageNo": 125, "clearDate": "2013-02-12 13:06:21"}, {"stageNo": 128, "clearDate": "2013-02-12 13:08:12"}, {"stageNo": 116, "clearDate": "2013-02-12 12:53:32"}, {"stageNo": 117, "clearDate": "2013-02-12 12:53:52"}, {"stageNo": 127, "clearDate": "2013-02-12 13:08:04"}, {"stageNo": 123, "clearDate": "2013-02-12 13:05:38"}, {"stageNo": 134, "clearDate": "2013-02-15 04:07:48"}, {"stageNo": 135, "clearDate": "2013-02-15 04:09:01"}, {"stageNo": 121, "clearDate": "2013-02-12 12:59:32"}, {"stageNo": 124, "clearDate": "2013-02-12 13:05:59"}, {"stageNo": 131, "clearDate": "2013-02-12 13:08:45"}, {"stageNo": 132, "clearDate": "2013-02-12 13:09:04"}, {"stageNo": 115, "clearDate": "2013-02-12 12:52:49"}, {"stageNo": 137, "clearDate": "2013-03-09 10:43:47"}, {"stageNo": 881, "clearDate": "2013-03-14 16:18:03"}, {"stageNo": 883, "clearDate": "2013-03-14 16:18:19"}, {"stageNo": 882, "clearDate": "2013-03-14 16:18:08"}, {"stageNo": 887, "clearDate": "2013-03-14 15:17:58"}, {"stageNo": 136, "clearDate": "2013-03-23 00:33:55"}, {"stageNo": 145, "clearDate": "2013-04-11 16:24:49"}, {"stageNo": 144, "clearDate": "2013-04-11 16:24:42"}, {"stageNo": 138, "clearDate": "2013-04-11 16:15:59"}, {"stageNo": 139, "clearDate": "2013-04-11 16:16:12"}, {"stageNo": 140, "clearDate": "2013-04-11 16:20:39"}, {"stageNo": 141, "clearDate": "2013-04-11 16:21:06"}, {"stageNo": 142, "clearDate": "2013-04-11 16:21:14"}, {"stageNo": 143, "clearDate": "2013-04-11 16:22:56"}, {"stageNo": 886, "clearDate": "2013-04-19 11:56:36"}, {"stageNo": 151, "clearDate": "2013-05-16 17:10:27"}, {"stageNo": 154, "clearDate": "2013-05-16 17:10:48"}, {"stageNo": 152, "clearDate": "2013-05-16 17:10:35"}, {"stageNo": 153, "clearDate": "2013-05-16 17:10:42"}, {"stageNo": 965, "clearDate": "2013-05-17 12:00:46"}, {"stageNo": 146, "clearDate": "2013-05-31 09:05:21"}, {"stageNo": 148, "clearDate": "2013-05-31 19:59:30"}, {"stageNo": 149, "clearDate": "2013-05-31 19:59:45"}, {"stageNo": 227, "clearDate": "2014-04-27 18:29:37"}, {"stageNo": 212, "clearDate": "2014-04-27 18:21:58"}, {"stageNo": 160, "clearDate": "2014-01-12 08:43:51"}, {"stageNo": 214, "clearDate": "2014-04-27 18:22:07"}, {"stageNo": 219, "clearDate": "2014-04-27 18:24:08"}, {"stageNo": 225, "clearDate": "2014-04-27 18:29:26"}, {"stageNo": 155, "clearDate": "2013-12-17 13:40:04"}, {"stageNo": 165, "clearDate": "2014-01-12 08:45:09"}, {"stageNo": 158, "clearDate": "2014-01-05 09:57:55"}, {"stageNo": 202, "clearDate": "2014-10-15 12:21:27"}, {"stageNo": 201, "clearDate": "2014-10-15 12:21:13"}, {"stageNo": 220, "clearDate": "2014-04-27 18:26:38"}, {"stageNo": 215, "clearDate": "2014-04-27 18:22:36"}, {"stageNo": 216, "clearDate": "2014-04-27 18:22:39"}, {"stageNo": 213, "clearDate": "2014-04-27 18:22:03"}, {"stageNo": 163, "clearDate": "2014-01-12 08:44:47"}, {"stageNo": 226, "clearDate": "2014-04-27 18:29:32"}, {"stageNo": 156, "clearDate": "2014-01-05 09:57:22"}, {"stageNo": 1042, "clearDate": "2013-12-31 16:20:49"}, {"stageNo": 602, "clearDate": "2016-01-27 16:07:30"}, {"stageNo": 204, "clearDate": "2015-06-17 07:55:25"}, {"stageNo": 159, "clearDate": "2014-01-05 09:58:07"}, {"stageNo": 603, "clearDate": "2016-02-01 12:38:31"}, {"stageNo": 211, "clearDate": "2014-04-27 18:21:54"}, {"stageNo": 217, "clearDate": "2014-04-27 18:23:51"}, {"stageNo": 164, "clearDate": "2014-01-12 08:45:02"}, {"stageNo": 228, "clearDate": "2014-04-27 18:29:54"}, {"stageNo": 157, "clearDate": "2014-01-05 09:57:36"}, {"stageNo": 162, "clearDate": "2014-01-12 08:43:58"}, {"stageNo": 161, "clearDate": "2014-01-12 08:43:52"}, {"stageNo": 221, "clearDate": "2014-04-27 18:27:56"}, {"stageNo": 218, "clearDate": "2014-04-27 18:23:55"}, {"stageNo": 210, "clearDate": "2014-04-27 18:21:50"}]}

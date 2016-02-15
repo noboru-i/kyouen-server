@@ -1,35 +1,42 @@
-## <a name="resource-app"></a>App
+## <a name="resource-kyouen"></a>Kyouen
 
-アプリケーションの情報を表す
+kyouen stages
 
 ### Attributes
 
 | Name | Type | Description | Example |
 | ------- | ------- | ------- | ------- |
-| **created_at** | *date-time* | when app was created | `"2015-01-01T12:00:00Z"` |
-| **created_user:created_at** | *date-time* | when user was created | `"2015-01-01T12:00:00Z"` |
-| **created_user:id** | *uuid* | unique identifier of user | `"01234567-89ab-cdef-0123-456789abcdef"` |
-| **created_user:name** | *string* | unique name of user | `"example"` |
-| **[created_user:updated_at](#resource-user)** | *date-time* | when user was updated | `"2015-01-01T12:00:00Z"` |
-| **[description](#resource-user)** | *string* | discription of app<br/> **Length:** `0..140` | `"example"` |
-| **[id](#resource-user)** | *integer* | unique identifier of app | `42` |
-| **[name](#resource-user)** | *string* | unique name of app<br/> **pattern:** <code>^(\([0-9]{3}\))?[0-9]{3}-[0-9]{4}$</code> | `"example"` |
-| **updated_at** | *date-time* | when app was updated | `"2015-01-01T12:00:00Z"` |
+| **created_at** | *date-time* | when kyouen was created | `"2015-01-01T12:00:00Z"` |
+| **creator** | *string* | creator name. | `"example"` |
+| **id** | *integer* | unique identifier of kyouen. | `42` |
+| **size** | *integer* | size of kyouen.<br/> **one of:**`6` or `9` | `6` |
+| **stage** | *string* | stage of kyouen.<br/> **pattern:** <code>^[0&#124;1]*$</code> | `"000000010000001100001100000000001000"` |
 
-### App Create
+### Kyouen Create
 
-Create a new app.
+Create a new kyouen.
 
 ```
-POST /apps
+POST /kyouen
 ```
+
+#### Optional Parameters
+
+| Name | Type | Description | Example |
+| ------- | ------- | ------- | ------- |
+| **creator** | *string* | creator name. | `"example"` |
+| **size** | *integer* | size of kyouen.<br/> **one of:**`6` or `9` | `6` |
+| **stage** | *string* | stage of kyouen.<br/> **pattern:** <code>^[0&#124;1]*$</code> | `"000000010000001100001100000000001000"` |
 
 
 #### Curl Example
 
 ```bash
-$ curl -n -X POST https://api.hello.com/apps \
+$ curl -n -X POST https://api.hello.com/kyouen \
   -d '{
+  "size": 6,
+  "stage": "000000010000001100001100000000001000",
+  "creator": "example"
 }' \
   -H "Content-Type: application/json"
 ```
@@ -43,245 +50,37 @@ HTTP/1.1 201 Created
 
 ```json
 {
-  "created_at": "2015-01-01T12:00:00Z",
-  "description": "example",
   "id": 42,
-  "name": "example",
-  "created_user": {
-    "created_at": "2015-01-01T12:00:00Z",
-    "id": "01234567-89ab-cdef-0123-456789abcdef",
-    "name": "example",
-    "updated_at": "2015-01-01T12:00:00Z"
-  },
-  "updated_at": "2015-01-01T12:00:00Z"
+  "size": 6,
+  "stage": "000000010000001100001100000000001000",
+  "creator": "example",
+  "created_at": "2015-01-01T12:00:00Z"
 }
 ```
 
-### App Delete
+### Kyouen List
 
-Delete an existing app.
-
-```
-DELETE /apps/{app_id}
-```
-
-
-#### Curl Example
-
-```bash
-$ curl -n -X DELETE https://api.hello.com/apps/$APP_ID \
-  -H "Content-Type: application/json"
-```
-
-
-#### Response Example
+List existing kyouen.
 
 ```
-HTTP/1.1 200 OK
+GET /kyouen
 ```
 
-```json
-{
-  "created_at": "2015-01-01T12:00:00Z",
-  "description": "example",
-  "id": 42,
-  "name": "example",
-  "created_user": {
-    "created_at": "2015-01-01T12:00:00Z",
-    "id": "01234567-89ab-cdef-0123-456789abcdef",
-    "name": "example",
-    "updated_at": "2015-01-01T12:00:00Z"
-  },
-  "updated_at": "2015-01-01T12:00:00Z"
-}
-```
-
-### App Info
-
-Info for existing app.
-
-```
-GET /apps/{app_id}
-```
-
-
-#### Curl Example
-
-```bash
-$ curl -n https://api.hello.com/apps/$APP_ID
-```
-
-
-#### Response Example
-
-```
-HTTP/1.1 200 OK
-```
-
-```json
-{
-  "created_at": "2015-01-01T12:00:00Z",
-  "description": "example",
-  "id": 42,
-  "name": "example",
-  "created_user": {
-    "created_at": "2015-01-01T12:00:00Z",
-    "id": "01234567-89ab-cdef-0123-456789abcdef",
-    "name": "example",
-    "updated_at": "2015-01-01T12:00:00Z"
-  },
-  "updated_at": "2015-01-01T12:00:00Z"
-}
-```
-
-### App List
-
-List existing apps.
-
-```
-GET /apps
-```
-
-
-#### Curl Example
-
-```bash
-$ curl -n https://api.hello.com/apps
-```
-
-
-#### Response Example
-
-```
-HTTP/1.1 200 OK
-```
-
-```json
-{
-  "list": [
-    {
-      "created_at": "2015-01-01T12:00:00Z",
-      "description": "example",
-      "id": 42,
-      "name": "example",
-      "created_user": {
-        "created_at": "2015-01-01T12:00:00Z",
-        "id": "01234567-89ab-cdef-0123-456789abcdef",
-        "name": "example",
-        "updated_at": "2015-01-01T12:00:00Z"
-      },
-      "updated_at": "2015-01-01T12:00:00Z"
-    }
-  ],
-  "meta": {
-    "page": 42
-  }
-}
-```
-
-### App Update
-
-Update an existing app.
-
-```
-PATCH /apps/{app_id}
-```
-
-
-#### Curl Example
-
-```bash
-$ curl -n -X PATCH https://api.hello.com/apps/$APP_ID \
-  -d '{
-}' \
-  -H "Content-Type: application/json"
-```
-
-
-#### Response Example
-
-```
-HTTP/1.1 200 OK
-```
-
-```json
-{
-  "created_at": "2015-01-01T12:00:00Z",
-  "description": "example",
-  "id": 42,
-  "name": "example",
-  "created_user": {
-    "created_at": "2015-01-01T12:00:00Z",
-    "id": "01234567-89ab-cdef-0123-456789abcdef",
-    "name": "example",
-    "updated_at": "2015-01-01T12:00:00Z"
-  },
-  "updated_at": "2015-01-01T12:00:00Z"
-}
-```
-
-
-## <a name="resource-user"></a>User
-
-FIXME
-
-### Attributes
+#### Optional Parameters
 
 | Name | Type | Description | Example |
 | ------- | ------- | ------- | ------- |
-| **created_at** | *date-time* | when user was created | `"2015-01-01T12:00:00Z"` |
-| **id** | *uuid* | unique identifier of user | `"01234567-89ab-cdef-0123-456789abcdef"` |
-| **name** | *string* | unique name of user | `"example"` |
-| **updated_at** | *date-time* | when user was updated | `"2015-01-01T12:00:00Z"` |
-
-### User Create
-
-Create a new user.
-
-```
-POST /users
-```
+| **count** | *integer* | Specifies the number of kyouen.<br/> **Range:** `value <= 200` | `42` |
+| **start_stage_no** | *integer* | Returns results with an ID greater than the specified ID. | `42` |
 
 
 #### Curl Example
 
 ```bash
-$ curl -n -X POST https://api.hello.com/users \
-  -d '{
-}' \
-  -H "Content-Type: application/json"
-```
-
-
-#### Response Example
-
-```
-HTTP/1.1 201 Created
-```
-
-```json
-{
-  "created_at": "2015-01-01T12:00:00Z",
-  "id": "01234567-89ab-cdef-0123-456789abcdef",
-  "name": "example",
-  "updated_at": "2015-01-01T12:00:00Z"
-}
-```
-
-### User Delete
-
-Delete an existing user.
-
-```
-DELETE /users/{user_id_or_name}
-```
-
-
-#### Curl Example
-
-```bash
-$ curl -n -X DELETE https://api.hello.com/users/$USER_ID_OR_NAME \
-  -H "Content-Type: application/json"
+$ curl -n https://api.hello.com/kyouen
+ -G \
+  -d start_stage_no=42 \
+  -d count=42
 ```
 
 
@@ -293,91 +92,37 @@ HTTP/1.1 200 OK
 
 ```json
 {
-  "created_at": "2015-01-01T12:00:00Z",
-  "id": "01234567-89ab-cdef-0123-456789abcdef",
-  "name": "example",
-  "updated_at": "2015-01-01T12:00:00Z"
-}
-```
-
-### User Info
-
-Info for existing user.
-
-```
-GET /users/{user_id_or_name}
-```
-
-
-#### Curl Example
-
-```bash
-$ curl -n https://api.hello.com/users/$USER_ID_OR_NAME
-```
-
-
-#### Response Example
-
-```
-HTTP/1.1 200 OK
-```
-
-```json
-{
-  "created_at": "2015-01-01T12:00:00Z",
-  "id": "01234567-89ab-cdef-0123-456789abcdef",
-  "name": "example",
-  "updated_at": "2015-01-01T12:00:00Z"
-}
-```
-
-### User List
-
-List existing users.
-
-```
-GET /users
-```
-
-
-#### Curl Example
-
-```bash
-$ curl -n https://api.hello.com/users
-```
-
-
-#### Response Example
-
-```
-HTTP/1.1 200 OK
-```
-
-```json
-[
-  {
-    "created_at": "2015-01-01T12:00:00Z",
-    "id": "01234567-89ab-cdef-0123-456789abcdef",
-    "name": "example",
-    "updated_at": "2015-01-01T12:00:00Z"
+  "items": {
+    "id": 42,
+    "size": 6,
+    "stage": "000000010000001100001100000000001000",
+    "creator": "example",
+    "created_at": "2015-01-01T12:00:00Z"
   }
-]
+}
 ```
 
-### User Update
+### Kyouen clear kyouen
 
-Update an existing user.
+Post cleared kyouen.
 
 ```
-PATCH /users/{user_id_or_name}
+PUT /kyouen/{kyouen_id}/clear
 ```
+
+#### Optional Parameters
+
+| Name | Type | Description | Example |
+| ------- | ------- | ------- | ------- |
+| **stage** | *string* | check is kyouen<br/> **pattern:** <code>^[0&#124;1&#124;2]*$</code> | `"000000010000002200002200000000001000"` |
 
 
 #### Curl Example
 
 ```bash
-$ curl -n -X PATCH https://api.hello.com/users/$USER_ID_OR_NAME \
+$ curl -n -X PUT https://api.hello.com/kyouen/$KYOUEN_ID/clear \
   -d '{
+  "stage": "000000010000002200002200000000001000"
 }' \
   -H "Content-Type: application/json"
 ```
@@ -391,10 +136,11 @@ HTTP/1.1 200 OK
 
 ```json
 {
-  "created_at": "2015-01-01T12:00:00Z",
-  "id": "01234567-89ab-cdef-0123-456789abcdef",
-  "name": "example",
-  "updated_at": "2015-01-01T12:00:00Z"
+  "id": 42,
+  "size": 6,
+  "stage": "000000010000001100001100000000001000",
+  "creator": "example",
+  "created_at": "2015-01-01T12:00:00Z"
 }
 ```
 
