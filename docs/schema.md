@@ -91,15 +91,15 @@ HTTP/1.1 200 OK
 ```
 
 ```json
-{
-  "items": {
+[
+  {
     "id": 42,
     "size": 6,
     "stage": "000000010000001100001100000000001000",
     "creator": "example",
     "created_at": "2015-01-01T12:00:00Z"
   }
-}
+]
 ```
 
 ### Kyouen clear kyouen
@@ -141,6 +141,116 @@ HTTP/1.1 200 OK
   "stage": "000000010000001100001100000000001000",
   "creator": "example",
   "created_at": "2015-01-01T12:00:00Z"
+}
+```
+
+
+## <a name="resource-user"></a>User
+
+logged in user
+
+### Attributes
+
+| Name | Type | Description | Example |
+| ------- | ------- | ------- | ------- |
+| **access_secret** | *string* | token secret of twitter. | `"example"` |
+| **access_token** | *string* | token of twitter. | `"example"` |
+| **clear_stage_count** | *integer* | count of cleared stage. | `42` |
+| **id** | *integer* | unique identifier of user. | `42` |
+| **image_path** | *string* | when user was created | `"http://my-android-server.appspot.com/image/icon.png"` |
+| **screen_name** | *string* | screen name of twitter | `"twitter_name"` |
+
+### User Login
+
+Login user.
+
+```
+POST /user/login
+```
+
+#### Optional Parameters
+
+| Name | Type | Description | Example |
+| ------- | ------- | ------- | ------- |
+| **access_secret** | *string* | token secret of twitter. | `"example"` |
+| **access_token** | *string* | token of twitter. | `"example"` |
+
+
+#### Curl Example
+
+```bash
+$ curl -n -X POST https://api.hello.com/user/login \
+  -d '{
+  "access_token": "example",
+  "access_secret": "example"
+}' \
+  -H "Content-Type: application/json"
+```
+
+
+#### Response Example
+
+```
+HTTP/1.1 201 Created
+```
+
+```json
+{
+  "id": 42,
+  "screen_name": "twitter_name",
+  "access_token": "example",
+  "access_secret": "example",
+  "clear_stage_count": 42,
+  "image_path": "http://my-android-server.appspot.com/image/icon.png"
+}
+```
+
+### User Sync
+
+Sync user.
+
+```
+POST /user/sync
+```
+
+#### Optional Parameters
+
+| Name | Type | Description | Example |
+| ------- | ------- | ------- | ------- |
+| **cleared/cleared_at** | *date-time* |  | `"2015-01-01T12:00:00Z"` |
+| **cleared/id** | *integer* | unique identifier of kyouen. | `42` |
+
+
+#### Curl Example
+
+```bash
+$ curl -n -X POST https://api.hello.com/user/sync \
+  -d '{
+  "cleared": [
+    {
+      "id": 42,
+      "cleared_at": "2015-01-01T12:00:00Z"
+    }
+  ]
+}' \
+  -H "Content-Type: application/json"
+```
+
+
+#### Response Example
+
+```
+HTTP/1.1 200 OK
+```
+
+```json
+{
+  "cleared": [
+    {
+      "id": 42,
+      "cleared_at": "2015-01-01T12:00:00Z"
+    }
+  ]
 }
 ```
 

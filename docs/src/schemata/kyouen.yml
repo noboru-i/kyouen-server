@@ -62,11 +62,9 @@ links:
         description: Specifies the number of kyouen.
         maximum: 200
   targetSchema:
-    type: object
-    properties:
-      items:
-        type: object
-        $ref: "/schemata/kyouen#"
+    type: array
+    items:
+      $ref: "/schemata/kyouen#"
 - description: Post cleared kyouen.
   href: "/kyouen/{(%2Fschemata%2Fkyouen%23%2Fdefinitions%2Fidentity)}/clear"
   method: PUT
