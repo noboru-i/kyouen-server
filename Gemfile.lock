@@ -2,7 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     erubis (2.7.0)
-    json_schema (0.10.0)
+    json_schema (0.12.1)
     prmd (0.11.4)
       erubis (~> 2.7)
       json_schema (~> 0.3, >= 0.3.1)
@@ -14,4 +14,4 @@ DEPENDENCIES
   prmd
 
 BUNDLED WITH
-   1.10.6
+   1.11.2

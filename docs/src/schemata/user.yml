@@ -1,0 +1,89 @@
+---
+"$schema": http://json-schema.org/draft-04/hyper-schema
+id: schemata/user
+title: User
+description: logged in user
+stability: prototype
+type: object
+definitions:
+  id:
+    description: unique identifier of user.
+    readOnly: true
+    type: integer
+  identity:
+    anyOf:
+    - "$ref": "/schemata/user#/definitions/id"
+  screen_name:
+    description: screen name of twitter
+    type: string
+    example: "twitter_name"
+  access_token:
+    description: token of twitter.
+    type: string
+  access_secret:
+    description: token secret of twitter.
+    type: string
+  clear_stage_count:
+    description: count of cleared stage.
+    type: integer
+  image_path:
+    description: when user was created
+    type: string
+    example: "http://my-android-server.appspot.com/image/icon.png"
+links:
+- description: Login user.
+  href: "/user/login"
+  method: POST
+  rel: create
+  title: Login
+  schema:
+    type: object
+    properties:
+      access_token:
+        "$ref": "/schemata/user#/definitions/access_token"
+      access_secret:
+        "$ref": "/schemata/user#/definitions/access_secret"
+- description: Sync user.
+  href: "/user/sync"
+  method: POST
+  rel: update
+  title: Sync
+  schema:
+    type: object
+    properties:
+      cleared:
+        description: cleared kyouen stages
+        type: array
+        items:
+          properties:
+            id:
+              "$ref": "/schemata/kyouen#/definitions/id"
+            cleared_at:
+              type: string
+              format: date-time
+  targetSchema:
+    type: object
+    properties:
+      cleared:
+        description: cleared kyouen stages that hold on server-side.
+        type: array
+        items:
+          properties:
+            id:
+              "$ref": "/schemata/kyouen#/definitions/id"
+            cleared_at:
+              type: string
+              format: date-time
+properties:
+  id:
+    "$ref": "/schemata/user#/definitions/id"
+  screen_name:
+    "$ref": "/schemata/user#/definitions/screen_name"
+  access_token:
+    "$ref": "/schemata/user#/definitions/access_token"
+  access_secret:
+    "$ref": "/schemata/user#/definitions/access_secret"
+  clear_stage_count:
+    "$ref": "/schemata/user#/definitions/clear_stage_count"
+  image_path:
+    "$ref": "/schemata/user#/definitions/image_path"
