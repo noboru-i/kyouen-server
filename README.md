@@ -29,6 +29,16 @@ Things you may want to cover:
 bundle exec prmd combine --meta docs/src/meta.json docs/src/schemata/ | bundle exec prmd verify | bundle exec prmd doc --prepend docs/src/overview.md > docs/schema.md
 ```
 
+## Run Vagrant
+
+```
+vagrant up
+vagrant rsync-auto
+vagrant ssh
+cd /app
+rails s -p 3000 -b '0.0.0.0'
+```
+
 ## Run Docker
 
 ```
