@@ -35,3 +35,6 @@ gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
 # for doc
 gem 'prmd'
+
+# AWS
+gem 'aws-sdk-core', '~> 2.2'
