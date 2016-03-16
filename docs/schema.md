@@ -1,3 +1,7 @@
+# Overview
+
+Sample of overview message.
+
 ## <a name="resource-kyouen"></a>Kyouen
 
 kyouen stages
@@ -7,7 +11,7 @@ kyouen stages
 | Name | Type | Description | Example |
 | ------- | ------- | ------- | ------- |
 | **created_at** | *date-time* | when kyouen was created | `"2015-01-01T12:00:00Z"` |
-| **creator** | *string* | creator name. | `"example"` |
+| **creator** | *string* | creator name. | `"no name"` |
 | **id** | *integer* | unique identifier of kyouen. | `42` |
 | **size** | *integer* | size of kyouen.<br/> **one of:**`6` or `9` | `6` |
 | **stage** | *string* | stage of kyouen.<br/> **pattern:** <code>^[0&#124;1]*$</code> | `"000000010000001100001100000000001000"` |
@@ -24,7 +28,7 @@ POST /kyouen
 
 | Name | Type | Description | Example |
 | ------- | ------- | ------- | ------- |
-| **creator** | *string* | creator name. | `"example"` |
+| **creator** | *string* | creator name. | `"no name"` |
 | **size** | *integer* | size of kyouen.<br/> **one of:**`6` or `9` | `6` |
 | **stage** | *string* | stage of kyouen.<br/> **pattern:** <code>^[0&#124;1]*$</code> | `"000000010000001100001100000000001000"` |
 
@@ -36,7 +40,7 @@ $ curl -n -X POST https://api.hello.com/kyouen \
   -d '{
   "size": 6,
   "stage": "000000010000001100001100000000001000",
-  "creator": "example"
+  "creator": "no name"
 }' \
   -H "Content-Type: application/json"
 ```
@@ -53,7 +57,7 @@ HTTP/1.1 201 Created
   "id": 42,
   "size": 6,
   "stage": "000000010000001100001100000000001000",
-  "creator": "example",
+  "creator": "no name",
   "created_at": "2015-01-01T12:00:00Z"
 }
 ```
@@ -70,8 +74,8 @@ GET /kyouen
 
 | Name | Type | Description | Example |
 | ------- | ------- | ------- | ------- |
-| **count** | *integer* | Specifies the number of kyouen.<br/> **Range:** `value <= 200` | `42` |
-| **start_stage_no** | *integer* | Returns results with an ID greater than the specified ID. | `42` |
+| **count** | *integer* | Specifies the number of kyouen.<br/> **Range:** `value <= 200` | `10` |
+| **start_stage_no** | *integer* | Returns results with an ID greater than the specified ID. | `1` |
 
 
 #### Curl Example
@@ -79,8 +83,8 @@ GET /kyouen
 ```bash
 $ curl -n https://api.hello.com/kyouen
  -G \
-  -d start_stage_no=42 \
-  -d count=42
+  -d start_stage_no=1 \
+  -d count=10
 ```
 
 
@@ -96,7 +100,7 @@ HTTP/1.1 200 OK
     "id": 42,
     "size": 6,
     "stage": "000000010000001100001100000000001000",
-    "creator": "example",
+    "creator": "no name",
     "created_at": "2015-01-01T12:00:00Z"
   }
 ]
@@ -139,7 +143,7 @@ HTTP/1.1 200 OK
   "id": 42,
   "size": 6,
   "stage": "000000010000001100001100000000001000",
-  "creator": "example",
+  "creator": "no name",
   "created_at": "2015-01-01T12:00:00Z"
 }
 ```

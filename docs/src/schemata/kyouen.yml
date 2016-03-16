@@ -8,6 +8,7 @@ type: object
 definitions:
   id:
     description: unique identifier of kyouen.
+    example: 42
     readOnly: true
     type: integer
   identity:
@@ -26,6 +27,7 @@ definitions:
     example: "000000010000001100001100000000001000"
   creator:
     description: creator name.
+    example: no name
     type: string
   created_at:
     description: when kyouen was created
@@ -57,10 +59,12 @@ links:
       start_stage_no:
         type: integer
         description: Returns results with an ID greater than the specified ID.
+        example: 1
       count:
         type: integer
         description: Specifies the number of kyouen.
         maximum: 200
+        example: 10
   targetSchema:
     type: array
     items:
