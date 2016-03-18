@@ -33,8 +33,10 @@ end
 # Windows does not include zoneinfo files, so bundle the tzinfo-data gem
 gem 'tzinfo-data', platforms: [:mingw, :mswin, :x64_mingw, :jruby]
 
-# for doc
-gem 'prmd'
+group :development do
+  # for doc
+  gem 'prmd'
+end
 
 # AWS
 gem 'aws-sdk-core', '~> 2.2'

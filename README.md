@@ -26,17 +26,32 @@ Things you may want to cover:
 ## How to create prmd doc
 
 ```
-bundle exec prmd combine --meta docs/src/meta.json docs/src/schemata/ | bundle exec prmd verify | bundle exec prmd doc --prepend docs/src/overview.md > docs/schema.md
+prmd combine --meta docs/src/meta.json docs/src/schemata/ | prmd verify | prmd doc --prepend docs/src/overview.md > docs/schema.md
 ```
 
 ## Run Vagrant
 
+prepare plugin
+
+```
+vagrant plugin install vagrant-rsync-back
+```
+
 ```
 vagrant up
-vagrant rsync-auto
 vagrant ssh
 cd /app
 rails s -p 3000 -b '0.0.0.0'
+```
+
+host machine -> virtual machine
+```
+vagrant rsync-auto
+```
+
+virtual machine -> host machine
+```
+vagrant rsync-back
 ```
 
 ## Run Docker
