@@ -20,17 +20,23 @@ dependencies:
 test:
   pre:
     - |
+      cd infra
       terraform remote config -backend=S3 -backend-config="bucket=kyouen-terraform-state" -backend-config="key=terraform.tfstate"
       terraform remote pull
   override:
-    - terraform plan
+    - |
+      cd infra
+      terraform plan
   post:
-    - terraform remote push
+    - |
+      cd infra
+      terraform remote push
 deployment:
   production:
     branch: master
     commands:
       - |
+        cd infra
         terraform remote config -backend=S3 -backend-config="bucket=kyouen-terraform-state" -backend-config="key=terraform.tfstate"
         terraform remote pull
         terraform apply
