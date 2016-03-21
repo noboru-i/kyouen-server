@@ -26,7 +26,10 @@ test:
   override:
     - |
       cd infra
-      terraform plan
+      terraform plan -detailed-exitcode > $CIRCLE_ARTIFACTS/plan.txt
+      if [ "$?" -eq 2 ]; then
+        curl -X POST --data-urlencode 'payload={"channel": "#ci", "username": "webhookbot", "text": "terraform plan is changed", "icon_emoji": ":ghost:"}' $SLACK_WEBHOOK_URL
+      fi
   post:
     - |
       cd infra
