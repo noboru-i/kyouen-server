@@ -39,7 +39,7 @@ resource "aws_route53_record" "www" {
   type = "A"
 
   alias {
-    name = "s3-website-ap-northeast-1.amazonaws.com"
+    name = "${aws_s3_bucket.main.website_domain}"
     zone_id = "${aws_s3_bucket.main.hosted_zone_id}"
     evaluate_target_health = true
   }
