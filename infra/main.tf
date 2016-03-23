@@ -45,6 +45,78 @@ resource "aws_route53_record" "www" {
   }
 }
 
+resource "aws_instance" "ecs-instance" {
+    ami = "ami-b3afa2dd"
+    instance_type = "t2.micro"
+}
+
+resource "aws_iam_role" "ecs_role" {
+    name = "ecs_role"
+    assume_role_policy = "${file("aws_iam_role_policies/ecs_role.json")}"
+}
+
+resource "aws_iam_role_policy" "ecs_policy" {
+    name = "ecs_policy"
+    role = "${aws_iam_role.ecs_role.id}"
+    policy = "${file("aws_iam_group_policies/ecs_policy.json")}"
+}
+
+resource "aws_ecs_cluster" "kyouen-cluster" {
+  name = "kyouen-cluster"
+}
+
+resource "aws_ecs_task_definition" "kyouen-registry" {
+  family = "kyouen-registry"
+  container_definitions = "${file("task-definitions/kyouen-registry.json")}"
+}
+
+resource "aws_elb" "kyouen-elb" {
+  name = "kyouen-elb"
+  availability_zones = ["ap-northeast-1a"]
+
+  /*access_logs {
+    bucket = "foo"
+    bucket_prefix = "bar"
+    interval = 60
+  }*/
+
+  listener {
+    instance_port = 80
+    instance_protocol = "http"
+    lb_port = 80
+    lb_protocol = "http"
+  }
+
+  health_check {
+    healthy_threshold = 2
+    unhealthy_threshold = 2
+    timeout = 3
+    target = "HTTP:8000/"
+    interval = 30
+  }
+
+  /*instances = ["${aws_instance.foo.id}"]*/
+  cross_zone_load_balancing = true
+  idle_timeout = 400
+  connection_draining = true
+  connection_draining_timeout = 400
+}
+
+resource "aws_ecs_service" "kyouen-service" {
+  name = "kyouen-service"
+  cluster = "${aws_ecs_cluster.kyouen-cluster.id}"
+  task_definition = "${aws_ecs_task_definition.kyouen-registry.arn}"
+  desired_count = 1
+  iam_role = "${aws_iam_role.ecs_role.arn}"
+  depends_on = ["aws_iam_role_policy.ecs_policy"]
+
+  load_balancer {
+    elb_name = "${aws_elb.kyouen-elb.id}"
+    container_name = "wordpress"
+    container_port = 80
+  }
+}
+
 /*output "name_servers.0" {
   value = "${aws_route53_zone.kyouen-net.name_servers.0}"
 }

@@ -1,0 +1,16 @@
+[
+  {
+    "environment": [],
+    "image": "tutum/wordpress-stackable",
+    "name": "wordpress",
+    "cpu": 1,
+    "memory": 500,
+    "essential": true,
+    "portMappings": [
+      {
+        "containerPort": 80,
+        "hostPort": 80
+      }
+    ]
+  }
+]
