@@ -111,7 +111,7 @@ resource "aws_elb" "kyouen-elb" {
   }*/
 
   listener {
-    instance_port = 80
+    instance_port = 3000
     instance_protocol = "http"
     lb_port = 80
     lb_protocol = "http"
@@ -125,7 +125,7 @@ resource "aws_elb" "kyouen-elb" {
     interval = 30
   }
 
-  /*instances = ["${aws_instance.foo.id}"]*/
+  instances = ["${aws_instance.ecs-instance.id}"]
   cross_zone_load_balancing = true
   idle_timeout = 400
   connection_draining = true
@@ -142,8 +142,8 @@ resource "aws_ecs_service" "kyouen-service" {
 
   load_balancer {
     elb_name = "${aws_elb.kyouen-elb.id}"
-    container_name = "wordpress"
-    container_port = 80
+    container_name = "kyouen"
+    container_port = 3000
   }
 }
 

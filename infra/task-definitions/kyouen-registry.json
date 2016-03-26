@@ -1,15 +1,15 @@
 [
   {
     "environment": [],
-    "image": "tutum/wordpress-stackable",
-    "name": "wordpress",
+    "image": "noboru/kyouen",
+    "name": "kyouen",
     "cpu": 1,
     "memory": 500,
     "essential": true,
     "portMappings": [
       {
-        "containerPort": 80,
-        "hostPort": 80
+        "containerPort": 3000,
+        "hostPort": 3000
       }
     ]
   }
