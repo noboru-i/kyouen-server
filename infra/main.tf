@@ -48,6 +48,24 @@ resource "aws_route53_record" "www" {
 resource "aws_instance" "ecs-instance" {
     ami = "ami-b3afa2dd"
     instance_type = "t2.micro"
+    iam_instance_profile = "ec2_profile"
+    user_data = "${file("user_data/userdata.sh")}"
+}
+
+resource "aws_iam_instance_profile" "ec2_profile" {
+    name = "ec2_profile"
+    roles = ["${aws_iam_role.ec2_role.name}"]
+}
+
+resource "aws_iam_role" "ec2_role" {
+    name = "ec2_role"
+    assume_role_policy = "${file("aws_iam_role_policies/ec2_role.json")}"
+}
+
+resource "aws_iam_role_policy" "AmazonEC2ContainerServiceforEC2Role" {
+    name = "AmazonEC2ContainerServiceforEC2Role"
+    role = "${aws_iam_role.ec2_role.id}"
+    policy = "${file("aws_iam_group_policies/AmazonEC2ContainerServiceforEC2Role.json")}"
 }
 
 resource "aws_iam_role" "ecs_role" {
@@ -55,10 +73,10 @@ resource "aws_iam_role" "ecs_role" {
     assume_role_policy = "${file("aws_iam_role_policies/ecs_role.json")}"
 }
 
-resource "aws_iam_role_policy" "ecs_policy" {
-    name = "ecs_policy"
+resource "aws_iam_role_policy" "AmazonEC2ContainerServiceRole" {
+    name = "AmazonEC2ContainerServiceRole"
     role = "${aws_iam_role.ecs_role.id}"
-    policy = "${file("aws_iam_group_policies/ecs_policy.json")}"
+    policy = "${file("aws_iam_group_policies/AmazonEC2ContainerServiceRole.json")}"
 }
 
 resource "aws_ecs_cluster" "kyouen-cluster" {
@@ -108,7 +126,7 @@ resource "aws_ecs_service" "kyouen-service" {
   task_definition = "${aws_ecs_task_definition.kyouen-registry.arn}"
   desired_count = 1
   iam_role = "${aws_iam_role.ecs_role.arn}"
-  depends_on = ["aws_iam_role_policy.ecs_policy"]
+  depends_on = ["aws_iam_role_policy.AmazonEC2ContainerServiceRole"]
 
   load_balancer {
     elb_name = "${aws_elb.kyouen-elb.id}"
