@@ -45,6 +45,18 @@ resource "aws_route53_record" "www" {
   }
 }
 
+resource "aws_route53_record" "web" {
+  zone_id = "${aws_route53_zone.kyouen-net.zone_id}"
+  name = "web.xn--b6qvb.net"
+  type = "A"
+
+  alias {
+    name = "${aws_elb.kyouen-elb.dns_name}"
+    zone_id = "${aws_elb.kyouen-elb.zone_id}"
+    evaluate_target_health = true
+  }
+}
+
 resource "aws_instance" "ecs-instance" {
     ami = "ami-b3afa2dd"
     instance_type = "t2.micro"
