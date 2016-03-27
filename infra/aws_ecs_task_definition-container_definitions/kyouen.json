@@ -1,0 +1,16 @@
+[
+  {
+    "environment": [],
+    "image": "sken/gitbucket",
+    "name": "kyouen",
+    "cpu": 1,
+    "memory": 500,
+    "essential": true,
+    "portMappings": [
+      {
+        "containerPort": 8080,
+        "hostPort": 8080
+      }
+    ]
+  }
+]
