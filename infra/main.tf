@@ -11,13 +11,47 @@ resource "aws_route53_zone" "kyouen-net" {
 }
 
 resource "aws_vpc" "kyouen-vpc" {
-  cidr_block = "10.1.0.0/16"
+  cidr_block = "10.0.0.0/16"
   instance_tenancy = "default"
   enable_dns_support = "true"
   enable_dns_hostnames = "false"
   tags {
     Name = "kyouen-vpc"
   }
+}
+
+resource "aws_internet_gateway" "kyouen-gw" {
+  vpc_id = "${aws_vpc.kyouen-vpc.id}"
+
+  tags {
+    Name = "kyouen-gw"
+  }
+}
+
+resource "aws_subnet" "kyouen-subnet" {
+  vpc_id = "${aws_vpc.kyouen-vpc.id}"
+  cidr_block = "10.0.0.0/24"
+  map_public_ip_on_launch = true
+
+  tags {
+    Name = "kyouen-subnet"
+  }
+}
+
+resource "aws_route_table" "kyouen-vpc-public-rt" {
+  vpc_id = "${aws_vpc.kyouen-vpc.id}"
+  route {
+    cidr_block = "0.0.0.0/0"
+    gateway_id = "${aws_internet_gateway.kyouen-gw.id}"
+  }
+  tags {
+    Name = "kyouen-vpc-public-rt"
+  }
+}
+
+resource "aws_route_table_association" "kyouen-vpc-rta" {
+  subnet_id = "${aws_subnet.kyouen-subnet.id}"
+  route_table_id = "${aws_route_table.kyouen-vpc-public-rt.id}"
 }
 
 resource "aws_s3_bucket" "main" {
@@ -60,8 +94,12 @@ resource "aws_route53_record" "web" {
 resource "aws_instance" "ecs-instance" {
     ami = "ami-b3afa2dd"
     instance_type = "t2.micro"
-    iam_instance_profile = "ec2_profile"
+    key_name = "aws_key"
+    monitoring = true
+    subnet_id = "${aws_subnet.kyouen-subnet.id}"
+    associate_public_ip_address = true
     user_data = "${file("user_data/userdata.sh")}"
+    iam_instance_profile = "ec2_profile"
 }
 
 resource "aws_iam_instance_profile" "ec2_profile" {
@@ -102,7 +140,7 @@ resource "aws_ecs_task_definition" "kyouen-registry" {
 
 resource "aws_elb" "kyouen-elb" {
   name = "kyouen-elb"
-  availability_zones = ["ap-northeast-1a"]
+  subnets = ["${aws_subnet.kyouen-subnet.id}"]
 
   /*access_logs {
     bucket = "foo"
@@ -147,7 +185,7 @@ resource "aws_ecs_service" "kyouen-service" {
   }
 }
 
-/*output "name_servers.0" {
+output "name_servers.0" {
   value = "${aws_route53_zone.kyouen-net.name_servers.0}"
 }
 output "name_servers.1" {
@@ -158,4 +196,4 @@ output "name_servers.2" {
 }
 output "name_servers.3" {
   value = "${aws_route53_zone.kyouen-net.name_servers.3}"
-}*/
+}
