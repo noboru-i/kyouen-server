@@ -54,6 +54,27 @@ resource "aws_route_table_association" "kyouen-vpc-rta" {
   route_table_id = "${aws_route_table.kyouen-vpc-public-rt.id}"
 }
 
+resource "aws_security_group" "allow_all" {
+  vpc_id = "${aws_vpc.kyouen-vpc.id}"
+  name = "allow-all"
+  description = "Allow all inbound traffic"
+  ingress {
+    from_port = 0
+    to_port = 65535
+    protocol = "tcp"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  egress {
+    from_port = 0
+    to_port = 0
+    protocol = "-1"
+    cidr_blocks = ["0.0.0.0/0"]
+  }
+  tags {
+    Name = "allow-all"
+  }
+}
+
 resource "aws_s3_bucket" "main" {
     bucket = "www.xn--b6qvb.net"
     acl = "public-read"
@@ -95,6 +116,7 @@ resource "aws_instance" "ecs-instance" {
     ami = "ami-b3afa2dd"
     instance_type = "t2.micro"
     key_name = "aws_key"
+    security_groups = ["${aws_security_group.allow_all.id}"]
     monitoring = true
     subnet_id = "${aws_subnet.kyouen-subnet.id}"
     associate_public_ip_address = true
@@ -141,15 +163,10 @@ resource "aws_ecs_task_definition" "kyouen-registry" {
 resource "aws_elb" "kyouen-elb" {
   name = "kyouen-elb"
   subnets = ["${aws_subnet.kyouen-subnet.id}"]
-
-  /*access_logs {
-    bucket = "foo"
-    bucket_prefix = "bar"
-    interval = 60
-  }*/
+  security_groups = ["${aws_security_group.allow_all.id}"]
 
   listener {
-    instance_port = 3000
+    instance_port = 8080
     instance_protocol = "http"
     lb_port = 80
     lb_protocol = "http"
@@ -159,7 +176,7 @@ resource "aws_elb" "kyouen-elb" {
     healthy_threshold = 2
     unhealthy_threshold = 2
     timeout = 3
-    target = "HTTP:8000/"
+    target = "HTTP:8080/"
     interval = 30
   }
 
@@ -181,7 +198,7 @@ resource "aws_ecs_service" "kyouen-service" {
   load_balancer {
     elb_name = "${aws_elb.kyouen-elb.id}"
     container_name = "kyouen"
-    container_port = 3000
+    container_port = 8080
   }
 }
 
