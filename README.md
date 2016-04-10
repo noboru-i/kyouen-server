@@ -60,3 +60,13 @@ vagrant rsync-back
 docker-compose build
 docker-compose up
 ```
+
+## Deploy
+
+```
+docker build -t noboru/kyouen:0.0.1 .
+docker push noboru/kyouen:0.0.1
+cd infra
+vim aws_ecs_task_definition-container_definitions/kyouen.json # update version
+terraform apply
+```

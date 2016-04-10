@@ -16,7 +16,7 @@ resource "aws_elb" "kyouen-elb" {
   security_groups = ["${aws_security_group.allow_all.id}"]
 
   listener {
-    instance_port = 8080
+    instance_port = 3000
     instance_protocol = "http"
     lb_port = 80
     lb_protocol = "http"
@@ -26,7 +26,7 @@ resource "aws_elb" "kyouen-elb" {
     healthy_threshold = 2
     unhealthy_threshold = 2
     timeout = 3
-    target = "HTTP:8080/"
+    target = "HTTP:3000/"
     interval = 30
   }
 

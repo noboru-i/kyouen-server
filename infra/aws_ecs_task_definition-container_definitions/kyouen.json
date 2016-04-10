@@ -1,15 +1,15 @@
 [
   {
     "environment": [],
-    "image": "sken/gitbucket",
+    "image": "noboru/kyouen:0.0.2",
     "name": "kyouen",
     "cpu": 1,
-    "memory": 500,
+    "memory": 250,
     "essential": true,
     "portMappings": [
       {
-        "containerPort": 8080,
-        "hostPort": 8080
+        "containerPort": 3000,
+        "hostPort": 3000
       }
     ]
   }
