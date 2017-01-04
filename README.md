@@ -29,44 +29,10 @@ Things you may want to cover:
 prmd combine --meta docs/src/meta.json docs/src/schemata/ | prmd verify | prmd doc --prepend docs/src/overview.md > docs/schema.md
 ```
 
-## Run Vagrant
-
-prepare plugin
+## Run local
 
 ```
-vagrant plugin install vagrant-rsync-back
+heroku local
 ```
 
-```
-vagrant up
-vagrant ssh
-cd /app
-rails s -p 3000 -b '0.0.0.0'
-```
-
-host machine -> virtual machine
-```
-vagrant rsync-auto
-```
-
-virtual machine -> host machine
-```
-vagrant rsync-back
-```
-
-## Run Docker
-
-```
-docker-compose build
-docker-compose up
-```
-
-## Deploy
-
-```
-docker build -t noboru/kyouen:0.0.1 .
-docker push noboru/kyouen:0.0.1
-cd infra
-vim aws_ecs_task_definition-container_definitions/kyouen.json # update version
-terraform apply
-```
+access to http://localhost:5000/
