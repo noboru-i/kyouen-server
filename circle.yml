@@ -1,13 +1,11 @@
 machine:
   ruby:
-    version: 2.2.3
+    version: 2.4.0
+database:
+  override:
+    - exit 0
 deployment:
-  production:
+  staging:
     branch: master
-    commands:
-      - |
-        cd infra
-        terraform remote config -backend=S3 -backend-config="bucket=kyouen-terraform-state" -backend-config="key=terraform.tfstate"
-        terraform remote pull
-        terraform apply
-        terraform remote push
+    heroku:
+      appname: kyouen-server
