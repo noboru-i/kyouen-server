@@ -4,6 +4,9 @@ machine:
 database:
   override:
     - exit 0
+test:
+  override:
+    - bin/rails test
 deployment:
   staging:
     branch: master
