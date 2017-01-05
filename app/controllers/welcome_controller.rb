@@ -21,7 +21,6 @@ class WelcomeController < ApplicationController
           Datastore::AUTH_DATASTORE
         ]
     )
-    datastore.authorization.fetch_access_token!
 
     query = GqlQuery.new(
         query_string: 'SELECT * FROM GcmModel LIMIT @limit',
