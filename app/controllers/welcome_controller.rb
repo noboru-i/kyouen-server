@@ -22,12 +22,15 @@ class WelcomeController < ApplicationController
     datastore.authorization.fetch_access_token!
 
     query = GqlQuery.new(
-        query_string: 'SELECT * FROM GcmModel LIMIT 5',
-        allow_literals: true
+        query_string: 'SELECT * FROM GcmModel LIMIT @limit',
+        named_bindings: {
+          limit: GqlQueryParameter.new(value: Value.new(integer_value: '5'))
+        }
     )
     request = RunQueryRequest.new(gql_query: query)
     result = datastore.run_project_query('my-android-server', request)
     print result.batch.entity_results[0].entity.as_json
-    render json: result.batch.entity_results[0].entity.as_json
+    # render json: result.batch.entity_results[0].entity.as_json
+    render json: result.batch.entity_results.size
   end
 end
