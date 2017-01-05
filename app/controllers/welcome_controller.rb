@@ -12,8 +12,10 @@ class WelcomeController < ApplicationController
   def index
     datastore = Google::Apis::DatastoreV1::DatastoreService.new
 
+    dummyFile = nil
+    dummyFile = DummyFile.new(ENV['GCP_KEY']) if ENV['GCP_KEY'].present?
     datastore.authorization = ServiceAccountCredentials.make_creds(
-        json_key_io: File.open('cert/my-android-server-91c8d931db89.json'),
+        json_key_io: dummyFile || File.open('cert/my-android-server-91c8d931db89.json'),
         scope: [
           Datastore::AUTH_CLOUD_PLATFORM,
           Datastore::AUTH_DATASTORE
@@ -32,5 +34,12 @@ class WelcomeController < ApplicationController
     print result.batch.entity_results[0].entity.as_json
     # render json: result.batch.entity_results[0].entity.as_json
     render json: result.batch.entity_results.size
+  end
+
+  class DummyFile
+    attr_accessor :read
+    def initialize(read)
+       @read = read
+    end
   end
 end
