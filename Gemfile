@@ -25,3 +25,5 @@ group :development do
 end
 
 gem 'grape'
+gem 'grape-swagger'
+gem 'grape-swagger-rails'

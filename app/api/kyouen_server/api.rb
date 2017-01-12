@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module SharedParams
+  extend Grape::API::Helpers
+
   params :pagination do
     optional :offset, type: Integer, default: 0
     optional :limit, type: Integer, default: 10, max_value: 100
@@ -12,6 +14,7 @@ module KyouenServer
     version 'v1', using: :header, vendor: 'kyouen'
     format :json
 
+    require_relative '../validations/max_value'
     helpers SharedParams
 
     resource :stages do
@@ -23,5 +26,7 @@ module KyouenServer
         KyouenPuzzle.fetch(params[:offset].to_i, params[:limit].to_i)
       end
     end
+
+    add_swagger_documentation
   end
 end
