@@ -11,11 +11,14 @@ class KyouenPuzzle
   end
 
   class << self
-    def recent(limit = 5)
+    def fetch(offset, limit)
       client = Datastore::Client.new
       result = client.query(
-        'SELECT * FROM KyouenPuzzle ORDER BY stageNo LIMIT @1',
-        [Datastore::Parameter.new(limit)]
+        'SELECT * FROM KyouenPuzzle ORDER BY stageNo LIMIT @1 OFFSET @2',
+        [
+          Datastore::Parameter.new(limit),
+          Datastore::Parameter.new(offset)
+        ]
       )
       result.map { |r| KyouenPuzzle.new(r.entity) }
     end
