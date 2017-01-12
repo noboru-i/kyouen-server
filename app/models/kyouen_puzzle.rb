@@ -1,3 +1,4 @@
+# frozen_string_literal: true
 class KyouenPuzzle
   attr_accessor :id, :stage_no, :size, :stage, :creator
 
@@ -16,9 +17,7 @@ class KyouenPuzzle
         'SELECT * FROM KyouenPuzzle ORDER BY stageNo LIMIT @1',
         [Datastore::Parameter.new(limit)]
       )
-      return result.map{|r|
-        puzzle = KyouenPuzzle.new(r.entity)
-      }
+      result.map { |r| KyouenPuzzle.new(r.entity) }
     end
   end
 end
