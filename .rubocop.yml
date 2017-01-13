@@ -1,0 +1,27 @@
+AllCops:
+  TargetRubyVersion: 2.4
+  Include:
+    - '**/Capfile'
+    - '**/config.ru'
+    - '**/Guardfile'
+    - '**/Rakefile'
+  Exclude:
+    - 'db/fixtures/**/*'
+    - 'db/schema.rb'
+    - 'test/fixtures/**/*'
+    - 'vendor/**/*'
+    - 'bin/**/*'
+  DisplayCopNames: true
+  DisplayStyleGuide: true
+
+Rails:
+  Enabled: true
+
+Metrics/AbcSize:
+  Max: 17
+
+Metrics/LineLength:
+  Max: 120
+
+Style/Documentation:
+  Enabled: false
