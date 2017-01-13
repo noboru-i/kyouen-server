@@ -26,4 +26,5 @@ end
 
 gem 'grape'
 gem 'grape-swagger'
+gem 'grape-swagger-entity'
 gem 'grape-swagger-rails'
