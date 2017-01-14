@@ -26,6 +26,23 @@ module KyouenServer
     require_relative '../validations/max_value'
     helpers SharedParams
 
+    resource :users do
+      desc 'Login.'
+      params do
+        requires :token
+        requires :token_secret
+      end
+      post :login do
+        twitter_user = TwitterModel.new(params[:token], params[:token_secret]).me
+        raise 'twitter login error' if twitter_user.blank?
+        user = User.find_by_user_id(twitter_user.id)
+        if user.blank?
+          user = User.create_new_user(twitter_user.id, twitter_user.screen_name, twitter_user.profile_image_url_https)
+        end
+        user
+      end
+    end
+
     resource :stages do
       desc 'Return list of stages.', \
            entity: Entities::Stage,

@@ -3,6 +3,7 @@ require 'googleauth'
 require 'google/apis/datastore_v1'
 
 module Datastore
+  PROJECT = 'my-android-server'
   # https://github.com/google/google-api-ruby-client/blob/master/generated/google/apis/datastore_v1/classes.rb
   ServiceAccountCredentials = Google::Auth::ServiceAccountCredentials
   GCPDatastore = Google::Apis::DatastoreV1
@@ -10,6 +11,11 @@ module Datastore
   GqlQuery = GCPDatastore::GqlQuery
   GqlQueryParameter = GCPDatastore::GqlQueryParameter
   Value = GCPDatastore::Value
+  CommitRequest = GCPDatastore::CommitRequest
+  Mutation = GCPDatastore::Mutation
+  Entity = GCPDatastore::Entity
+  Key = GCPDatastore::Key
+  PathElement = GCPDatastore::PathElement
 
   class Client
     def initialize
@@ -32,8 +38,25 @@ module Datastore
         positional_bindings: positional_bindings
       )
       request = RunQueryRequest.new(gql_query: query)
-      result = @datastore.run_project_query('my-android-server', request)
+      result = @datastore.run_project_query(PROJECT, request)
       result.batch.entity_results
+    end
+
+    def insert # TODO need entity parameter
+      transaction_id = @datastore.begin_project_transaction(PROJECT).transaction
+      path = PathElement.new(kind: 'User', name: 'KEY1')
+      key = Key.new(path: [path])
+      properties = {
+        'userId': Value.new(string_value: '1')
+      }
+      print 'properties = ' + properties.to_s
+      entity = Entity.new(key: key, properties: properties)
+      mutations = [
+        Mutation.new(insert: entity)
+      ]
+      request = CommitRequest.new(transaction: transaction_id, mutations: mutations)
+      result = @datastore.commit_project(PROJECT, request)
+      print result.to_json.to_s
     end
   end
 
@@ -48,6 +71,8 @@ module Datastore
       case @value
       when Integer
         GqlQueryParameter.new(value: Value.new(integer_value: @value))
+      when String
+        GqlQueryParameter.new(value: Value.new(string_value: @value))
       end
     end
   end
