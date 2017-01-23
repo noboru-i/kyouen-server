@@ -7,14 +7,19 @@ class User
     @user_id = entity.properties['userId'].string_value
     @screen_name = entity.properties['screenName'].string_value
     @image = entity.properties['image'].string_value
-    @clear_stage_count = entity.properties['clearStageCount'].integer_value
+    @clear_stage_count = entity.properties['clearStageCount']&.integer_value
   end
 
   class << self
     def create_new_user(user_id, screen_name, image)
       client = Datastore::Client.new
-      result = client.insert()
-      self::find_by_user_id(user_id)
+      params = {
+        'userId': Datastore::Parameter.new(user_id.to_s),
+        'screenName': Datastore::Parameter.new(screen_name),
+        'image': Datastore::Parameter.new(image.to_s)
+      }
+      client.insert(params, user_id.to_s)
+      find_by_user_id(user_id)
     end
 
     def find_by_user_id(user_id)

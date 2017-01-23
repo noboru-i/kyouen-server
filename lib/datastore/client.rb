@@ -42,21 +42,21 @@ module Datastore
       result.batch.entity_results
     end
 
-    def insert # TODO need entity parameter
+    def insert(parameters, id = nil)
       transaction_id = @datastore.begin_project_transaction(PROJECT).transaction
-      path = PathElement.new(kind: 'User', name: 'KEY1')
+      path = if id.present?
+               PathElement.new(kind: 'User', name: 'KEY' + id)
+             else
+               PathElement.new(kind: 'User')
+             end
       key = Key.new(path: [path])
-      properties = {
-        'userId': Value.new(string_value: '1')
-      }
-      print 'properties = ' + properties.to_s
-      entity = Entity.new(key: key, properties: properties)
+      params = parameters.map { |k, v| [k.to_s, v.generate_value] }.to_h
+      entity = Entity.new(key: key, properties: params)
       mutations = [
         Mutation.new(insert: entity)
       ]
       request = CommitRequest.new(transaction: transaction_id, mutations: mutations)
-      result = @datastore.commit_project(PROJECT, request)
-      print result.to_json.to_s
+      @datastore.commit_project(PROJECT, request)
     end
   end
 
@@ -67,13 +67,19 @@ module Datastore
       @value = value
     end
 
-    def generate_query_parameter
+    def generate_value
       case @value
       when Integer
-        GqlQueryParameter.new(value: Value.new(integer_value: @value))
+        Value.new(integer_value: @value)
       when String
-        GqlQueryParameter.new(value: Value.new(string_value: @value))
+        Value.new(string_value: @value)
+      else
+        puts @value.class
       end
+    end
+
+    def generate_query_parameter
+      GqlQueryParameter.new(value: generate_value)
     end
   end
 

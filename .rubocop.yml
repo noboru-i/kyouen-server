@@ -25,3 +25,7 @@ Metrics/LineLength:
 
 Style/Documentation:
   Enabled: false
+
+# This project is not using ActiveRecord
+Rails/DynamicFindBy:
+  Enabled: false
