@@ -29,4 +29,6 @@ gem 'grape-swagger'
 gem 'grape-swagger-entity'
 gem 'grape-swagger-rails'
 
+gem 'twitter'
+
 gem 'newrelic_rpm'
