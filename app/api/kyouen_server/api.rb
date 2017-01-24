@@ -57,6 +57,18 @@ module KyouenServer
       end
     end
 
+    resource :answers do
+      desc 'Send answer of stage.', \
+           success: { code: 200, model: Entities::Stage }
+      params do
+        requires :stage_no, type: Integer
+        requires :stage, type: String
+      end
+      post '/' do
+        # check(params[:stage_no], params[:stage])
+      end
+    end
+
     add_swagger_documentation \
       info: {
         title: 'API documentation of kyouen app.'
