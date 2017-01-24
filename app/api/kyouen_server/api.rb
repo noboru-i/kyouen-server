@@ -39,6 +39,7 @@ module KyouenServer
         if user.blank?
           user = User.create_new_user(twitter_user.id, twitter_user.screen_name, twitter_user.profile_image_url_https)
         end
+        user.generate_api_token
         user
       end
     end

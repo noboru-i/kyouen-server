@@ -45,7 +45,7 @@ module Datastore
     def insert(parameters, id = nil)
       transaction_id = @datastore.begin_project_transaction(PROJECT).transaction
       path = if id.present?
-               PathElement.new(kind: 'User', name: 'KEY' + id)
+               PathElement.new(kind: 'User', name: id)
              else
                PathElement.new(kind: 'User')
              end
@@ -54,6 +54,19 @@ module Datastore
       entity = Entity.new(key: key, properties: params)
       mutations = [
         Mutation.new(insert: entity)
+      ]
+      request = CommitRequest.new(transaction: transaction_id, mutations: mutations)
+      @datastore.commit_project(PROJECT, request)
+    end
+
+    def update(id, parameters)
+      transaction_id = @datastore.begin_project_transaction(PROJECT).transaction
+      path = PathElement.new(kind: 'User', name: id)
+      key = Key.new(path: [path])
+      params = parameters.map { |k, v| [k.to_s, v.generate_value] }.to_h
+      entity = Entity.new(key: key, properties: params)
+      mutations = [
+        Mutation.new(update: entity)
       ]
       request = CommitRequest.new(transaction: transaction_id, mutations: mutations)
       @datastore.commit_project(PROJECT, request)
