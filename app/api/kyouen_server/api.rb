@@ -65,7 +65,8 @@ module KyouenServer
         requires :stage, type: String
       end
       post '/' do
-        # check(params[:stage_no], params[:stage])
+        result = Usecase::CheckKyouen.check(params[:stage])
+        result
       end
     end
 
