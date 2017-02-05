@@ -45,5 +45,16 @@ class User
       )
       result.map { |r| User.new(r.entity) }.first if result.present?
     end
+
+    def find_by_api_token(api_token)
+      client = Datastore::Client.new
+      result = client.query(
+        'SELECT * FROM User WHERE apiToken = @1',
+        [
+          Datastore::Parameter.new(api_token)
+        ]
+      )
+      result.map { |r| User.new(r.entity) }.first if result.present?
+    end
   end
 end

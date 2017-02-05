@@ -9,6 +9,25 @@ module SharedParams
   end
 end
 
+module Authenticate
+  extend Grape::API::Helpers
+
+  def authenticate!
+    error!('Unauthorized. Invalid api token.', 401) unless current_user
+  end
+
+  def current_user
+    return false if request.headers['X-Authorization'].blank?
+
+    user = User.find_by_api_token(request.headers['X-Authorization'])
+    if user
+      @current_user = user
+    else
+      false
+    end
+  end
+end
+
 module KyouenServer
   module Entities
     class Stage < Grape::Entity
@@ -25,6 +44,7 @@ module KyouenServer
 
     require_relative '../validations/max_value'
     helpers SharedParams
+    helpers Authenticate
 
     resource :users do
       desc 'Login.'
@@ -65,7 +85,10 @@ module KyouenServer
         requires :stage, type: String
       end
       post '/' do
-        result = Usecase::CheckKyouen.check(params[:stage])
+        authenticate!
+        puzzle = KyouenPuzzle.find_by_stage_no(params[:stage_no])
+        result = Usecase::CheckKyouen.check(params[:stage], puzzle)
+        error! 'Not Kyouen', 400 unless result
         result
       end
     end

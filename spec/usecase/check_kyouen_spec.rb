@@ -1,16 +1,33 @@
 # frozen_string_literal: true
-require 'spec_helper'
-require 'usecase/check_kyouen'
+require 'rails_helper'
 
 describe Usecase::CheckKyouen, lib: true do
   describe :check do
     it 'when selected stone is 3, fail' do
-      result = Usecase::CheckKyouen.check('111000000000000000000000000000000000')
+      puzzle = create_puzzle(1, 1, 6, '111000000000000000000000000000000000')
+      result = Usecase::CheckKyouen.check('111000000000000000000000000000000000', puzzle)
       expect(result).to eq false
     end
+
+    it 'when wrong stage, fail' do
+      puzzle = create_puzzle(1, 1, 6, '000000000010001100001000010000000000')
+      result = Usecase::CheckKyouen.check('000000000000001100001100000000000000', puzzle)
+      expect(result).to eq false
+    end
+
     it 'when selected stone is 4, success' do
-      result = Usecase::CheckKyouen.check('111100000000000000000000000000000000')
-      expect(result).to eq true
+      puzzle = create_puzzle(1, 1, 6, '000000000000001100001100000000000000')
+      result = Usecase::CheckKyouen.check('000000000000001100001100000000000000', puzzle)
+      expect(result).not_to eq false
+    end
+
+    def create_puzzle(id, stage_no, size, stage)
+      puzzle = KyouenPuzzle.new
+      puzzle.id = id
+      puzzle.stage_no = stage_no
+      puzzle.size = size
+      puzzle.stage = stage
+      puzzle
     end
   end
 

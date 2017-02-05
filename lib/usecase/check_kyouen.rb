@@ -6,11 +6,20 @@ module Usecase
     KyouenData = Struct.new(:points, :lineKyouen)
 
     class << self
-      def check(stage)
+      def check(stage, puzzle)
+        # check selected stone count
         stones = to_stones(stage)
         return false if stones.size != 4
 
-        true
+        # check is selected kyouen
+        is_kyouen = kyouen?(stones)
+        return false unless is_kyouen
+
+        # check correct stage
+        puzzle_stones = to_stones(puzzle.stage)
+        return false unless stones.select { |s| puzzle_stones.include?(s) }.length == 4
+
+        is_kyouen
       end
 
       private
