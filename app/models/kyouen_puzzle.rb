@@ -5,8 +5,8 @@ class KyouenPuzzle
   def initialize(entity = nil)
     return if entity.nil?
     @id = entity.key.path[0].id
-    @stage_no = entity.properties['stageNo'].integer_value
-    @size = entity.properties['size'].integer_value
+    @stage_no = entity.properties['stageNo'].integer_value.to_i
+    @size = entity.properties['size'].integer_value.to_i
     @stage = entity.properties['stage'].string_value
     @creator = entity.properties['creator'].string_value
   end
