@@ -2,7 +2,8 @@
 class KyouenPuzzle
   attr_accessor :id, :stage_no, :size, :stage, :creator
 
-  def initialize(entity)
+  def initialize(entity = nil)
+    return if entity.nil?
     @id = entity.key.path[0].id
     @stage_no = entity.properties['stageNo'].integer_value
     @size = entity.properties['size'].integer_value
@@ -11,6 +12,17 @@ class KyouenPuzzle
   end
 
   class << self
+    def find_by_stage_no(stage_no)
+      client = Datastore::Client.new
+      result = client.query(
+        'SELECT * FROM KyouenPuzzle WHERE stageNo = @1',
+        [
+          Datastore::Parameter.new(stage_no)
+        ]
+      )
+      result.map { |r| KyouenPuzzle.new(r.entity) }.first if result.present?
+    end
+
     def fetch(offset, limit)
       client = Datastore::Client.new
       result = client.query(

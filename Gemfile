@@ -32,3 +32,8 @@ gem 'grape-swagger-rails'
 gem 'twitter'
 
 gem 'newrelic_rpm'
+
+group :test do
+  gem 'rspec'
+  gem 'rspec-rails'
+end
