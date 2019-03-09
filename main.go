@@ -1,11 +1,26 @@
 package main
 
 import (
+	"context"
+	"encoding/json"
 	"fmt"
 	"log"
 	"net/http"
 	"os"
+	"time"
+
+	"cloud.google.com/go/datastore"
 )
+
+type KyouenPuzzleSummary struct {
+	Count    int
+	LastDate time.Time
+}
+
+type Statics struct {
+	Count    int       `json:"count"`
+	LastDate time.Time `json:"last_updated_at"`
+}
 
 func main() {
 	http.HandleFunc("/", indexHandler)
@@ -25,5 +40,21 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		http.NotFound(w, r)
 		return
 	}
-	fmt.Fprint(w, "Hello, World!")
+
+	ctx := context.Background()
+	projectID := "my-android-server"
+	client, err := datastore.NewClient(ctx, projectID)
+	if err != nil {
+		log.Fatalf("Failed to create client: %v", err)
+	}
+
+	var entities []KyouenPuzzleSummary
+	q := datastore.NewQuery("KyouenPuzzleSummary").Limit(1)
+	if _, err := client.GetAll(ctx, q, &entities); err != nil {
+		fmt.Fprintf(w, "error!!! : %v", err)
+		return
+	}
+
+	statics := Statics{Count: entities[0].Count, LastDate: entities[0].LastDate}
+	json.NewEncoder(w).Encode(statics)
 }
