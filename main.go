@@ -46,12 +46,13 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 	client, err := datastore.NewClient(ctx, projectID)
 	if err != nil {
 		log.Fatalf("Failed to create client: %v", err)
+		return
 	}
 
 	var entities []KyouenPuzzleSummary
 	q := datastore.NewQuery("KyouenPuzzleSummary").Limit(1)
 	if _, err := client.GetAll(ctx, q, &entities); err != nil {
-		fmt.Fprintf(w, "error!!! : %v", err)
+		fmt.Fprintf(w, "error! : %v", err)
 		return
 	}
 
