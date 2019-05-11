@@ -1,25 +1,16 @@
 package main
 
 import (
-	"context"
-	"encoding/json"
 	"fmt"
-	"kyouen-server/openapi"
 	"log"
 	"net/http"
 	"os"
-	"time"
 
-	"cloud.google.com/go/datastore"
+	"kyouen-server/handlers"
 )
 
-type KyouenPuzzleSummary struct {
-	Count    int64
-	LastDate time.Time
-}
-
 func main() {
-	http.HandleFunc("/", indexHandler)
+	http.HandleFunc("/", handlers.IndexHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
@@ -29,29 +20,4 @@ func main() {
 
 	log.Printf("Listening on port %s", port)
 	log.Fatal(http.ListenAndServe(fmt.Sprintf(":%s", port), nil))
-}
-
-func indexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
-
-	ctx := context.Background()
-	projectID := "my-android-server"
-	client, err := datastore.NewClient(ctx, projectID)
-	if err != nil {
-		log.Fatalf("Failed to create client: %v", err)
-		return
-	}
-
-	var entities []KyouenPuzzleSummary
-	q := datastore.NewQuery("KyouenPuzzleSummary").Limit(1)
-	if _, err := client.GetAll(ctx, q, &entities); err != nil {
-		fmt.Fprintf(w, "error! : %v", err)
-		return
-	}
-
-	statics := openapi.Statics{Count: entities[0].Count, LastUpdatedAt: entities[0].LastDate}
-	json.NewEncoder(w).Encode(statics)
 }
