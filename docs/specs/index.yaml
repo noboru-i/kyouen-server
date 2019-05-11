@@ -1,0 +1,28 @@
+openapi: 3.0.0
+info:
+  title: Kyouen API
+  description: Kyouen server's API.
+  version: 0.0.1
+servers:
+  - url: https://my-android-server.appspot.com/v2
+    description: Production server
+paths:
+  /statics:
+    get:
+      summary: Returns statics of kyouen stages.
+      responses:
+        '200':
+          description: successful operation
+          content:
+            application/json:
+              schema: 
+                type: object
+                properties: 
+                  count:
+                    type: integer
+                    format: int64
+                    example: 1234
+                  last_updated_at:
+                    type: string
+                    format: date-time
+                    description: "date in UTC"
