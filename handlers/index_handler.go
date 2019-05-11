@@ -12,12 +12,7 @@ import (
 	"cloud.google.com/go/datastore"
 )
 
-func IndexHandler(w http.ResponseWriter, r *http.Request) {
-	if r.URL.Path != "/" {
-		http.NotFound(w, r)
-		return
-	}
-
+func StaticsHandler(w http.ResponseWriter, r *http.Request) {
 	ctx := context.Background()
 	projectID := "my-android-server"
 	client, err := datastore.NewClient(ctx, projectID)

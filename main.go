@@ -10,7 +10,7 @@ import (
 )
 
 func main() {
-	http.HandleFunc("/", handlers.IndexHandler)
+	http.HandleFunc("/statics", handlers.StaticsHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
