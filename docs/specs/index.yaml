@@ -16,13 +16,19 @@ paths:
           content:
             application/json:
               schema: 
-                type: object
-                properties: 
-                  count:
-                    type: integer
-                    format: int64
-                    example: 1234
-                  last_updated_at:
-                    type: string
-                    format: date-time
-                    description: "date in UTC"
+                $ref: "#/components/schemas/Statics"
+components:
+  schemas:
+    Statics:
+      required:
+        - count
+        - last_updated_at
+      properties:
+        count:
+          type: integer
+          format: int64
+          example: 1234
+        last_updated_at:
+          type: string
+          format: date-time
+          description: "date in UTC"

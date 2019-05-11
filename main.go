@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"kyouen-server/openapi"
 	"log"
 	"net/http"
 	"os"
@@ -13,13 +14,8 @@ import (
 )
 
 type KyouenPuzzleSummary struct {
-	Count    int
+	Count    int64
 	LastDate time.Time
-}
-
-type Statics struct {
-	Count    int       `json:"count"`
-	LastDate time.Time `json:"last_updated_at"`
 }
 
 func main() {
@@ -56,6 +52,6 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	statics := Statics{Count: entities[0].Count, LastDate: entities[0].LastDate}
+	statics := openapi.Statics{Count: entities[0].Count, LastUpdatedAt: entities[0].LastDate}
 	json.NewEncoder(w).Encode(statics)
 }
