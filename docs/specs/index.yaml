@@ -4,9 +4,40 @@ info:
   description: Kyouen server's API.
   version: 0.0.1
 servers:
-  - url: https://my-android-server.appspot.com/v2
+  - url: https://kyouen.app/v2
     description: Production server
 paths:
+  /stages:
+    get:
+      summary: Returns kyouen stages.
+      parameters:
+        - name: start_stage_no
+          in: query
+          required: true
+          description: Returns results with an stage number greater than or equals the specified number.
+          schema:
+            type: int64
+            example: 120
+        - name: limit
+          in: query
+          required: false
+          description: Specifies the number of stage to retrieve, up to a maximum of 100 per request.
+          schema:
+            type: int64
+            example: 120
+      responses:
+        '200':
+          description: successful get stages.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stages"
+        '404':
+          description: cannot get stages.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
   /statics:
     get:
       summary: Returns statics of kyouen stages.
@@ -19,6 +50,38 @@ paths:
                 $ref: "#/components/schemas/Statics"
 components:
   schemas:
+    Stages:
+      type: array
+      items:
+        $ref: "#/components/schemas/Stage"
+    Stage:
+      required:
+        - stageNo
+        - size
+        - stage
+        - creator
+        - registDate
+      properties:
+        stageNo:
+          type: integer
+          format: int64
+          example: 12
+        size:
+          type: integer
+          format: int64
+          example: 6
+        stage:
+          type: integer
+          format: string
+          example: "000000010000001100001100000000001000"
+        creator:
+          type: integer
+          format: int64
+          example: "noboru"
+        registDate:
+          type: string
+          format: date-time
+          description: "date in UTC"
     Statics:
       required:
         - count
@@ -32,3 +95,14 @@ components:
           type: string
           format: date-time
           description: "date in UTC"
+    Error:
+      required:
+        - code
+        - message
+      properties:
+        code:
+          type: integer
+          format: int64
+          example: 123
+        message:
+          type: string
