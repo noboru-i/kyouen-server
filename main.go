@@ -6,10 +6,12 @@ import (
 	"net/http"
 	"os"
 
+	"kyouen-server/db"
 	"kyouen-server/handlers"
 )
 
 func main() {
+	db.InitDB()
 	http.HandleFunc("/statics", handlers.StaticsHandler)
 
 	port := os.Getenv("PORT")
