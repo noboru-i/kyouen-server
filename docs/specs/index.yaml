@@ -38,6 +38,27 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+  /stages/{stage_no}/clear:
+    put:
+      summary: Save clear data.
+      parameters:
+        - name: stage_no
+          in: path
+          required: true
+          description: Stage number of cleared.
+          schema:
+            type: int64
+            example: 120
+      requestBody:
+        description: Clear data to save.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ClearStage'
+      responses:
+        '201':
+          description: successful saved cleared data.
   /statics:
     get:
       summary: Returns statics of kyouen stages.
@@ -71,8 +92,7 @@ components:
           format: int64
           example: 6
         stage:
-          type: integer
-          format: string
+          type: string
           example: "000000010000001100001100000000001000"
         creator:
           type: integer
@@ -82,6 +102,13 @@ components:
           type: string
           format: date-time
           description: "date in UTC"
+    ClearStage:
+      required:
+        - stage
+      properties:
+        stage:
+          type: string
+          example: "000000010000002200002200000000001000"
     Statics:
       required:
         - count
