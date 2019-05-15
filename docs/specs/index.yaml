@@ -38,6 +38,24 @@ paths:
             application/json:
               schema:
                 $ref: "#/components/schemas/Error"
+    post:
+      summary: Create new stage.
+      requestBody:
+        description: Clear data to save.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/NewStage'
+      responses:
+        '200':
+          description: successful create stages.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Stage"
+        '409':
+          description: sent stage is already exists.
   /stages/{stage_no}/clear:
     put:
       summary: Save clear data.
@@ -95,13 +113,28 @@ components:
           type: string
           example: "000000010000001100001100000000001000"
         creator:
-          type: integer
-          format: int64
+          type: string
           example: "noboru"
         registDate:
           type: string
           format: date-time
           description: "date in UTC"
+    NewStage:
+      required:
+        - size
+        - stage
+        - creator
+      properties:
+        size:
+          type: integer
+          format: int64
+          example: 6
+        stage:
+          type: string
+          example: "000000010000002200002200000000001000"
+        creator:
+          type: string
+          example: "noboru"
     ClearStage:
       required:
         - stage
