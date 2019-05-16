@@ -10,6 +10,8 @@ paths:
   /stages:
     get:
       summary: Returns kyouen stages.
+      tags:
+        - stage
       parameters:
         - name: start_stage_no
           in: query
@@ -40,6 +42,8 @@ paths:
                 $ref: "#/components/schemas/Error"
     post:
       summary: Create new stage.
+      tags:
+        - stage
       requestBody:
         description: Clear data to save.
         required: true
@@ -59,6 +63,8 @@ paths:
   /stages/{stage_no}/clear:
     put:
       summary: Save clear data.
+      tags:
+        - stage
       parameters:
         - name: stage_no
           in: path
@@ -80,6 +86,8 @@ paths:
   /statics:
     get:
       summary: Returns statics of kyouen stages.
+      tags:
+        - statics
       responses:
         '200':
           description: successful operation
