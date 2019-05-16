@@ -7,6 +7,26 @@ servers:
   - url: https://kyouen.app/v2
     description: Production server
 paths:
+  /login:
+    post:
+      summary: Login with twitter account.
+      tags:
+        - user
+      requestBody:
+        description: Account data for login.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginParam'
+      responses:
+        '200':
+          description: successful login.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/LoginResult"
+
   /stages:
     get:
       summary: Returns kyouen stages.
@@ -83,6 +103,7 @@ paths:
       responses:
         '201':
           description: successful saved cleared data.
+
   /statics:
     get:
       summary: Returns statics of kyouen stages.
@@ -97,6 +118,24 @@ paths:
                 $ref: "#/components/schemas/Statics"
 components:
   schemas:
+    LoginParam:
+      required:
+        - token
+        - tokenSecret
+      properties:
+        token:
+          type: string
+          example: AAA
+        tokenSecret:
+          type: string
+          example: BBB
+    LoginResult:
+      required:
+        - screenName
+      properties:
+        screenName:
+          type: string
+          example: Alice
     Stages:
       type: array
       items:
