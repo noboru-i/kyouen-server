@@ -103,6 +103,25 @@ paths:
       responses:
         '201':
           description: successful saved cleared data.
+  /stages/sync:
+    post:
+      summary: Sync cleared stage data.
+      tags:
+        - stage
+      requestBody:
+        description: Clear data to save.
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SyncRequest"
+      responses:
+        '200':
+          description: successful syned cleared data.
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/SyncResponse"
 
   /statics:
     get:
@@ -136,6 +155,7 @@ components:
         screenName:
           type: string
           example: Alice
+
     Stages:
       type: array
       items:
@@ -189,6 +209,29 @@ components:
         stage:
           type: string
           example: "000000010000002200002200000000001000"
+
+    SyncRequest:
+      type: array
+      items:
+        $ref: "#/components/schemas/ClearedStage"
+    SyncResponse:
+      type: array
+      items:
+        $ref: "#/components/schemas/ClearedStage"
+    ClearedStage:
+      required:
+        - stageNo
+        - clearDate
+      properties:
+        stageNo:
+          type: integer
+          format: int64
+          example: 12
+        clearDate:
+          type: string
+          format: date-time
+          description: "date in UTC"
+
     Statics:
       required:
         - count
@@ -202,6 +245,7 @@ components:
           type: string
           format: date-time
           description: "date in UTC"
+
     Error:
       required:
         - code
