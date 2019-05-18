@@ -12,6 +12,9 @@ import (
 
 func main() {
 	db.InitDB()
+
+	http.HandleFunc("/v2/stages", handlers.StagesHandler)
+
 	http.HandleFunc("/v2/statics", handlers.StaticsHandler)
 
 	port := os.Getenv("PORT")
