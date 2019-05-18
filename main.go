@@ -12,7 +12,7 @@ import (
 
 func main() {
 	db.InitDB()
-	http.HandleFunc("/statics", handlers.StaticsHandler)
+	http.HandleFunc("/v2/statics", handlers.StaticsHandler)
 
 	port := os.Getenv("PORT")
 	if port == "" {
