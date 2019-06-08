@@ -3,6 +3,7 @@ package handlers
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"kyouen-server/db"
 	"kyouen-server/openapi"
@@ -47,12 +48,12 @@ func stagesGetHandler(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(stageList)
 }
 
-type GetParam struct {
+type getParam struct {
 	startStageNo int
 	limit        int
 }
 
-func parseGetParam(r *http.Request) GetParam {
+func parseGetParam(r *http.Request) getParam {
 	startStageNo, err := strconv.Atoi(r.FormValue("start_stage_no"))
 	if err != nil {
 		startStageNo = 0
@@ -65,85 +66,52 @@ func parseGetParam(r *http.Request) GetParam {
 		limit = 100
 	}
 
-	return GetParam{startStageNo: startStageNo, limit: limit}
+	return getParam{startStageNo: startStageNo, limit: limit}
 }
 
 func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
+	param, err := parsePostParam(r)
+	if err != nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// TODO check stone count
+
+	// TODO check stones is kyouen
+
+	// TODO check registered
+	result := hasRegisteredStageAll(param.stage)
+	if result {
+		w.Write([]byte("registered"))
+	} else {
+		w.Write([]byte("not registered"))
+	}
+
+	// TODO register KyouenPuzzle
 	// newStageNo := getNextStageNo()
 	// w.Write([]byte(strconv.FormatInt(newStageNo, 10)))
 
-	// result := hasRegisteredStage("000000001010000000010010000000001010")
-	// if result {
-	// 	w.Write([]byte("ok"))
-	// } else {
-	// 	w.Write([]byte("ng"))
-	// }
+	// TODO update KyouenPuzzleSummary
 
-	// result := rotateMatrix("000000001010000000010010000000001010", 6)
-	// w.Write([]byte(result))
-	// w.Write([]byte("\n"))
-	// result2 := mirrorMatrix("000000001010000000010010000000001010", 6)
-	// w.Write([]byte(result2))
+	// TODO create response
+}
 
-	result := hasRegisteredStageAll("000000001010000000010010000000001010")
-	w.Write([]byte(strconv.FormatBool(result)))
+type postParam struct {
+	size    int
+	stage   string
+	creator string
+}
 
-	// # POSTリクエストを処理します。
-	// def post(self):
-	//     # パラメータ名：dataを取得
-	//     data = self.request.get('data').split(',')
-	//     logging.debug("post data:" + str(data))
+func parsePostParam(r *http.Request) (postParam, error) {
+	size, err := strconv.Atoi(r.FormValue("size"))
+	if err != nil {
+		return postParam{}, errors.New("size is invalid")
+	}
+	stage := r.FormValue("stage")
+	creator := r.FormValue("creator")
 
-	//     if len(data) != 3:
-	//         # 要素が3つ取得できない場合はエラー
-	//         self.response.headers['Content-Type'] = 'text/plain'
-	//         self.response.out.write('error' + str(data))
-	//         return
-
-	//     from kyouenmodule import hasKyouen, getPoints
-	//     if len(getPoints(data[1], int(data[0]))) <= 4:
-	//         # 石の数が4以下の場合
-	//         self.response.headers['Content-Type'] = 'text/plain'
-	//         self.response.out.write("not enough stone")
-	//         logging.error('not enough stone.' + data[1])
-	//         return
-	//     if not hasKyouen(getPoints(data[1], int(data[0]))):
-	//         # 共円でない場合
-	//         self.response.headers['Content-Type'] = 'text/plain'
-	//         self.response.out.write("not kyouen")
-	//         logging.error('not kyouen.' + data[1])
-	//         return
-
-	//     if self.checkRegistered(data[1], int(data[0])):
-	//         # 登録済みの場合
-	//         self.response.headers['Content-Type'] = 'text/plain'
-	//         self.response.out.write("registered")
-	//         return
-
-	//     # 入力データの登録
-	//     model = KyouenPuzzle(stageNo=self.getNextStageNo(),
-	//                          size=int(data[0]),
-	//                          stage=data[1],
-	//                          creator=data[2].replace('\n', ''))
-	//     model.put()
-
-	//     # DB登録
-	//     regist_model = RegistModel(stageInfo=model.key)
-	//     regist_model.put()
-
-	//     # サマリの再計算
-	//     summary = KyouenPuzzleSummary.query().get()
-	//     if not summary:
-	//         c = KyouenPuzzle.query().count()
-	//         summary = KyouenPuzzleSummary(count=c)
-	//     else:
-	//         summary.count += 1
-	//     summary.put()
-
-	//     # レスポンスの返却
-	//     self.response.headers['Content-Type'] = 'text/plain'
-	//     self.response.out.write('success stageNo=' + str(model.stageNo))
-	//     return
+	return postParam{size: size, stage: stage, creator: creator}, nil
 }
 
 func getNextStageNo() int64 {
@@ -194,6 +162,8 @@ func hasRegisteredStageAll(stage string) bool {
 
 	return false
 }
+
+// TODO extract to other file.
 
 func rotateMatrix(stage string, size int) string {
 	result := make([]string, size*size)
