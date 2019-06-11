@@ -12,6 +12,10 @@ type FloatPoint struct {
 	y float64
 }
 
+func NewFloatPoint(p Point) *FloatPoint {
+	return &FloatPoint{x: float64(p.x), y: float64(p.y)}
+}
+
 func GetMidpoint(p1 FloatPoint, p2 FloatPoint) *FloatPoint {
 	x := (p1.x + p2.x) / 2
 	y := (p1.y + p2.y) / 2

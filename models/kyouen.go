@@ -11,7 +11,7 @@ type KyouenStage struct {
 }
 
 type KyouenData struct {
-	points     []FloatPoint
+	points     []Point
 	lineKyouen bool
 	center     FloatPoint
 	radius     float64
@@ -31,16 +31,16 @@ func NewKyouenStage(size int, stage string) *KyouenStage {
 	return &KyouenStage{size: size, stonePointList: points}
 }
 
-func NewKyouenDataWithLine(p1 FloatPoint, p2 FloatPoint, p3 FloatPoint, p4 FloatPoint, aLine Line) *KyouenData {
+func NewKyouenDataWithLine(p1 Point, p2 Point, p3 Point, p4 Point, aLine Line) *KyouenData {
 	return NewKyouenData(p1, p2, p3, p4, true, FloatPoint{}, 0.0, aLine)
 }
 
-func NewKyouenDataWithOval(p1 FloatPoint, p2 FloatPoint, p3 FloatPoint, p4 FloatPoint, aCenter FloatPoint, aRadius float64) *KyouenData {
+func NewKyouenDataWithOval(p1 Point, p2 Point, p3 Point, p4 Point, aCenter FloatPoint, aRadius float64) *KyouenData {
 	return NewKyouenData(p1, p2, p3, p4, false, aCenter, aRadius, Line{})
 }
 
-func NewKyouenData(p1 FloatPoint, p2 FloatPoint, p3 FloatPoint, p4 FloatPoint, aIsLine bool, aCenter FloatPoint, aRadius float64, aLine Line) *KyouenData {
-	points := []FloatPoint{p1, p2, p3, p4}
+func NewKyouenData(p1 Point, p2 Point, p3 Point, p4 Point, aIsLine bool, aCenter FloatPoint, aRadius float64, aLine Line) *KyouenData {
+	points := []Point{p1, p2, p3, p4}
 	return &KyouenData{points, aIsLine, aCenter, aRadius, aLine}
 }
 
@@ -56,25 +56,51 @@ func (k KyouenStage) toString() string {
 	return strings.Join(result, "")
 }
 
-func IsKyouen(p1 FloatPoint, p2 FloatPoint, p3 FloatPoint, p4 FloatPoint) *KyouenData {
+func HasKyouen(points []Point) *KyouenData {
+	size := len(points)
+	for i := 0; i < size-3; i++ {
+		p1 := points[i]
+		for j := i + 1; j < size-2; j++ {
+			p2 := points[j]
+			for k := j + 1; k < size-1; k++ {
+				p3 := points[k]
+				for l := k + 1; l < size; l++ {
+					p4 := points[l]
+					result := IsKyouen(p1, p2, p3, p4)
+					if result != nil {
+						return result
+					}
+				}
+			}
+		}
+	}
+	return nil
+}
+
+func IsKyouen(p1 Point, p2 Point, p3 Point, p4 Point) *KyouenData {
+	fp1 := *NewFloatPoint(p1)
+	fp2 := *NewFloatPoint(p2)
+	fp3 := *NewFloatPoint(p3)
+	fp4 := *NewFloatPoint(p4)
+
 	// p1,p2の垂直二等分線を求める
-	l12 := *GetMidperpendicular(p1, p2)
+	l12 := *GetMidperpendicular(fp1, fp2)
 	// p2,p3の垂直二等分線を求める
-	l23 := *GetMidperpendicular(p2, p3)
+	l23 := *GetMidperpendicular(fp2, fp3)
 
 	// 交点を求める
 	intersection123 := GetIntersection(l12, l23)
 	if intersection123 == nil {
 		// p1,p2,p3が直線上に存在する場合
-		l34 := *GetMidperpendicular(p3, p4)
+		l34 := *GetMidperpendicular(fp3, fp4)
 		// p2,p3,p4が直線上に存在する場合
 		intersection234 := GetIntersection(l23, l34)
 		if intersection234 == nil {
-			return NewKyouenDataWithLine(p1, p2, p3, p4, *NewLine(p1, p2))
+			return NewKyouenDataWithLine(p1, p2, p3, p4, *NewLine(fp1, fp2))
 		}
 	} else {
-		dist1 := p1.Distance(*intersection123)
-		dist2 := p4.Distance(*intersection123)
+		dist1 := fp1.Distance(*intersection123)
+		dist2 := fp4.Distance(*intersection123)
 		if math.Abs(dist1-dist2) < 0.0000001 {
 			return NewKyouenDataWithOval(p1, p2, p3, p4, *intersection123, dist1)
 		}

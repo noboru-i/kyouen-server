@@ -1,6 +1,7 @@
 package models
 
 import (
+	"reflect"
 	"testing"
 )
 
@@ -23,11 +24,42 @@ func TestToString(t *testing.T) {
 	}
 }
 
-func TestIsKyouenOval(t *testing.T) {
-	p1 := FloatPoint{x: 2, y: 2}
-	p2 := FloatPoint{x: 3, y: 2}
-	p3 := FloatPoint{x: 2, y: 3}
-	p4 := FloatPoint{x: 3, y: 3}
+func TestHasKyouen(t *testing.T) {
+	points := []Point{
+		Point{x: 1, y: 1},
+		Point{x: 2, y: 2},
+		Point{x: 3, y: 2},
+		Point{x: 2, y: 3},
+		Point{x: 3, y: 3},
+	}
+	actual := HasKyouen(points)
+	expectPoints := []Point{
+		Point{x: 2, y: 2},
+		Point{x: 3, y: 2},
+		Point{x: 2, y: 3},
+		Point{x: 3, y: 3},
+	}
+	if !reflect.DeepEqual(actual.points, expectPoints) {
+		t.Errorf("2,2 , 3,2 , 2,3 , 3,3 must be oval kyouen. actual = %v", actual)
+	}
+}
+
+func TestIsKyouenWithNotKyouen(t *testing.T) {
+	p1 := Point{x: 2, y: 2}
+	p2 := Point{x: 3, y: 2}
+	p3 := Point{x: 2, y: 3}
+	p4 := Point{x: 3, y: 4}
+	actual := IsKyouen(p1, p2, p3, p4)
+	if actual != nil {
+		t.Errorf("2,3 , 3,2 , 2,3 , 3,4 must be oval kyouen. actual = %v", actual)
+	}
+}
+
+func TestIsKyouenWithOval(t *testing.T) {
+	p1 := Point{x: 2, y: 2}
+	p2 := Point{x: 3, y: 2}
+	p3 := Point{x: 2, y: 3}
+	p4 := Point{x: 3, y: 3}
 	actual := *IsKyouen(p1, p2, p3, p4)
 	if actual.lineKyouen == true {
 		t.Errorf("2,3 , 3,2 , 2,3 , 3,3 must be oval kyouen. actual = %v", actual)
@@ -37,11 +69,11 @@ func TestIsKyouenOval(t *testing.T) {
 	}
 }
 
-func TestIsKyouenLine(t *testing.T) {
-	p1 := FloatPoint{x: 0, y: 2}
-	p2 := FloatPoint{x: 2, y: 2}
-	p3 := FloatPoint{x: 4, y: 2}
-	p4 := FloatPoint{x: 5, y: 2}
+func TestIsKyouenWithLine(t *testing.T) {
+	p1 := Point{x: 0, y: 2}
+	p2 := Point{x: 2, y: 2}
+	p3 := Point{x: 4, y: 2}
+	p4 := Point{x: 5, y: 2}
 	actual := *IsKyouen(p1, p2, p3, p4)
 	if actual.lineKyouen == false {
 		t.Errorf("0,2 , 2,2 , 4,2 , 5,2 must be line kyouen. actual = %v", actual)
