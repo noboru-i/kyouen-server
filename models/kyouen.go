@@ -56,7 +56,7 @@ func (k KyouenStage) toString() string {
 	return strings.Join(result, "")
 }
 
-func CheckKyouen(p1 FloatPoint, p2 FloatPoint, p3 FloatPoint, p4 FloatPoint) *KyouenData {
+func IsKyouen(p1 FloatPoint, p2 FloatPoint, p3 FloatPoint, p4 FloatPoint) *KyouenData {
 	// p1,p2の垂直二等分線を求める
 	l12 := *GetMidperpendicular(p1, p2)
 	// p2,p3の垂直二等分線を求める

@@ -23,12 +23,12 @@ func TestToString(t *testing.T) {
 	}
 }
 
-func TestCheckKyouenOval(t *testing.T) {
+func TestIsKyouenOval(t *testing.T) {
 	p1 := FloatPoint{x: 2, y: 2}
 	p2 := FloatPoint{x: 3, y: 2}
 	p3 := FloatPoint{x: 2, y: 3}
 	p4 := FloatPoint{x: 3, y: 3}
-	actual := *CheckKyouen(p1, p2, p3, p4)
+	actual := *IsKyouen(p1, p2, p3, p4)
 	if actual.lineKyouen == true {
 		t.Errorf("2,3 , 3,2 , 2,3 , 3,3 must be oval kyouen. actual = %v", actual)
 	}
@@ -37,12 +37,12 @@ func TestCheckKyouenOval(t *testing.T) {
 	}
 }
 
-func TestCheckKyouenLine(t *testing.T) {
+func TestIsKyouenLine(t *testing.T) {
 	p1 := FloatPoint{x: 0, y: 2}
 	p2 := FloatPoint{x: 2, y: 2}
 	p3 := FloatPoint{x: 4, y: 2}
 	p4 := FloatPoint{x: 5, y: 2}
-	actual := *CheckKyouen(p1, p2, p3, p4)
+	actual := *IsKyouen(p1, p2, p3, p4)
 	if actual.lineKyouen == false {
 		t.Errorf("0,2 , 2,2 , 4,2 , 5,2 must be line kyouen. actual = %v", actual)
 	}
