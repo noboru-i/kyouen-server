@@ -56,16 +56,16 @@ func (k KyouenStage) toString() string {
 	return strings.Join(result, "")
 }
 
-func HasKyouen(points []Point) *KyouenData {
-	size := len(points)
+func (stage KyouenStage) HasKyouen() *KyouenData {
+	size := len(stage.stonePointList)
 	for i := 0; i < size-3; i++ {
-		p1 := points[i]
+		p1 := stage.stonePointList[i]
 		for j := i + 1; j < size-2; j++ {
-			p2 := points[j]
+			p2 := stage.stonePointList[j]
 			for k := j + 1; k < size-1; k++ {
-				p3 := points[k]
+				p3 := stage.stonePointList[k]
 				for l := k + 1; l < size; l++ {
-					p4 := points[l]
+					p4 := stage.stonePointList[l]
 					result := IsKyouen(p1, p2, p3, p4)
 					if result != nil {
 						return result
