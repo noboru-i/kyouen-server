@@ -5,11 +5,13 @@ import (
 	"strings"
 )
 
+// KyouenStage hold a stage of kyouen.
 type KyouenStage struct {
 	size           int
 	stonePointList []Point
 }
 
+// KyouenData hold kyouen result.
 type KyouenData struct {
 	points     []Point
 	lineKyouen bool
@@ -18,6 +20,7 @@ type KyouenData struct {
 	line       Line
 }
 
+// NewKyouenStage create stage by string.
 func NewKyouenStage(size int, stage string) *KyouenStage {
 	points := []Point{}
 	for i, s := range stage {
@@ -31,15 +34,17 @@ func NewKyouenStage(size int, stage string) *KyouenStage {
 	return &KyouenStage{size: size, stonePointList: points}
 }
 
+// NewKyouenDataWithLine create kyouen result of line.
 func NewKyouenDataWithLine(p1 Point, p2 Point, p3 Point, p4 Point, aLine Line) *KyouenData {
-	return NewKyouenData(p1, p2, p3, p4, true, FloatPoint{}, 0.0, aLine)
+	return newKyouenData(p1, p2, p3, p4, true, FloatPoint{}, 0.0, aLine)
 }
 
+// NewKyouenDataWithOval create kyouen result of oval.
 func NewKyouenDataWithOval(p1 Point, p2 Point, p3 Point, p4 Point, aCenter FloatPoint, aRadius float64) *KyouenData {
-	return NewKyouenData(p1, p2, p3, p4, false, aCenter, aRadius, Line{})
+	return newKyouenData(p1, p2, p3, p4, false, aCenter, aRadius, Line{})
 }
 
-func NewKyouenData(p1 Point, p2 Point, p3 Point, p4 Point, aIsLine bool, aCenter FloatPoint, aRadius float64, aLine Line) *KyouenData {
+func newKyouenData(p1 Point, p2 Point, p3 Point, p4 Point, aIsLine bool, aCenter FloatPoint, aRadius float64, aLine Line) *KyouenData {
 	points := []Point{p1, p2, p3, p4}
 	return &KyouenData{points, aIsLine, aCenter, aRadius, aLine}
 }
@@ -56,17 +61,18 @@ func (k KyouenStage) toString() string {
 	return strings.Join(result, "")
 }
 
-func (stage KyouenStage) HasKyouen() *KyouenData {
-	size := len(stage.stonePointList)
+// HasKyouen is checking stage has kyouen.
+func (k KyouenStage) HasKyouen() *KyouenData {
+	size := len(k.stonePointList)
 	for i := 0; i < size-3; i++ {
-		p1 := stage.stonePointList[i]
+		p1 := k.stonePointList[i]
 		for j := i + 1; j < size-2; j++ {
-			p2 := stage.stonePointList[j]
-			for k := j + 1; k < size-1; k++ {
-				p3 := stage.stonePointList[k]
-				for l := k + 1; l < size; l++ {
-					p4 := stage.stonePointList[l]
-					result := IsKyouen(p1, p2, p3, p4)
+			p2 := k.stonePointList[j]
+			for l := j + 1; l < size-1; l++ {
+				p3 := k.stonePointList[l]
+				for m := l + 1; m < size; m++ {
+					p4 := k.stonePointList[m]
+					result := isKyouen(p1, p2, p3, p4)
 					if result != nil {
 						return result
 					}
@@ -77,7 +83,7 @@ func (stage KyouenStage) HasKyouen() *KyouenData {
 	return nil
 }
 
-func IsKyouen(p1 Point, p2 Point, p3 Point, p4 Point) *KyouenData {
+func isKyouen(p1 Point, p2 Point, p3 Point, p4 Point) *KyouenData {
 	fp1 := *NewFloatPoint(p1)
 	fp2 := *NewFloatPoint(p2)
 	fp3 := *NewFloatPoint(p3)

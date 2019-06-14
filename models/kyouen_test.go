@@ -53,7 +53,7 @@ func TestIsKyouenWithNotKyouen(t *testing.T) {
 	p2 := Point{x: 3, y: 2}
 	p3 := Point{x: 2, y: 3}
 	p4 := Point{x: 3, y: 4}
-	actual := IsKyouen(p1, p2, p3, p4)
+	actual := isKyouen(p1, p2, p3, p4)
 	if actual != nil {
 		t.Errorf("2,3 , 3,2 , 2,3 , 3,4 must be oval kyouen. actual = %v", actual)
 	}
@@ -64,7 +64,7 @@ func TestIsKyouenWithOval(t *testing.T) {
 	p2 := Point{x: 3, y: 2}
 	p3 := Point{x: 2, y: 3}
 	p4 := Point{x: 3, y: 3}
-	actual := *IsKyouen(p1, p2, p3, p4)
+	actual := *isKyouen(p1, p2, p3, p4)
 	if actual.lineKyouen == true {
 		t.Errorf("2,3 , 3,2 , 2,3 , 3,3 must be oval kyouen. actual = %v", actual)
 	}
@@ -78,7 +78,7 @@ func TestIsKyouenWithLine(t *testing.T) {
 	p2 := Point{x: 2, y: 2}
 	p3 := Point{x: 4, y: 2}
 	p4 := Point{x: 5, y: 2}
-	actual := *IsKyouen(p1, p2, p3, p4)
+	actual := *isKyouen(p1, p2, p3, p4)
 	if actual.lineKyouen == false {
 		t.Errorf("0,2 , 2,2 , 4,2 , 5,2 must be line kyouen. actual = %v", actual)
 	}
