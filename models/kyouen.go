@@ -34,6 +34,24 @@ func NewKyouenStage(size int, stage string) *KyouenStage {
 	return &KyouenStage{size: size, stonePointList: points}
 }
 
+// NewRotatedKyouenStage create new kyouen stage with rotated 90 degrees to the right by stage.
+func NewRotatedKyouenStage(stage KyouenStage) *KyouenStage {
+	result := []Point{}
+	for _, s := range stage.stonePointList {
+		result = append(result, Point{x: stage.size - 1 - s.y, y: s.x})
+	}
+	return &KyouenStage{size: stage.size, stonePointList: result}
+}
+
+// NewMirroredKyouenStage create new kyouen stage with rotated 90 degrees to the right by stage.
+func NewMirroredKyouenStage(stage KyouenStage) *KyouenStage {
+	result := []Point{}
+	for _, s := range stage.stonePointList {
+		result = append(result, Point{x: stage.size - 1 - s.x, y: s.y})
+	}
+	return &KyouenStage{size: stage.size, stonePointList: result}
+}
+
 // NewKyouenDataWithLine create kyouen result of line.
 func NewKyouenDataWithLine(p1 Point, p2 Point, p3 Point, p4 Point, aLine Line) *KyouenData {
 	return newKyouenData(p1, p2, p3, p4, true, FloatPoint{}, 0.0, aLine)

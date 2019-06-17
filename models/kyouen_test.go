@@ -16,6 +16,26 @@ func TestNewKyouenStage(t *testing.T) {
 	}
 }
 
+func TestNewRotatedKyouenStage(t *testing.T) {
+	stage := "000000010000001100001100000000001000"
+	s := *NewKyouenStage(6, stage)
+	actual := NewRotatedKyouenStage(s)
+	expect := "000000000010101100001100000000000000"
+	if actual.toString() != expect {
+		t.Errorf("when %v rotate, it becomes %v. but %v.", stage, expect, actual.toString())
+	}
+}
+
+func TestNewMirroredKyouenStage(t *testing.T) {
+	stage := "000000010000001100001100000000001000"
+	s := *NewKyouenStage(6, stage)
+	actual := NewMirroredKyouenStage(s)
+	expect := "000000000010001100001100000000000100"
+	if actual.toString() != expect {
+		t.Errorf("when %v mirror, it becomes %v. but %v.", stage, expect, actual.toString())
+	}
+}
+
 func TestToString(t *testing.T) {
 	s := KyouenStage{size: 6, stonePointList: []Point{Point{x: 2, y: 1}}}
 	expect := "000000001000000000000000000000000000"
