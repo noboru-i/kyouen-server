@@ -21,8 +21,8 @@ func TestNewRotatedKyouenStage(t *testing.T) {
 	s := *NewKyouenStage(6, stage)
 	actual := NewRotatedKyouenStage(s)
 	expect := "000000000010101100001100000000000000"
-	if actual.toString() != expect {
-		t.Errorf("when %v rotate, it becomes %v. but %v.", stage, expect, actual.toString())
+	if actual.ToString() != expect {
+		t.Errorf("when %v rotate, it becomes %v. but %v.", stage, expect, actual.ToString())
 	}
 }
 
@@ -31,15 +31,15 @@ func TestNewMirroredKyouenStage(t *testing.T) {
 	s := *NewKyouenStage(6, stage)
 	actual := NewMirroredKyouenStage(s)
 	expect := "000000000010001100001100000000000100"
-	if actual.toString() != expect {
-		t.Errorf("when %v mirror, it becomes %v. but %v.", stage, expect, actual.toString())
+	if actual.ToString() != expect {
+		t.Errorf("when %v mirror, it becomes %v. but %v.", stage, expect, actual.ToString())
 	}
 }
 
 func TestToString(t *testing.T) {
 	s := KyouenStage{size: 6, stonePointList: []Point{Point{x: 2, y: 1}}}
 	expect := "000000001000000000000000000000000000"
-	if s.toString() != expect {
+	if s.ToString() != expect {
 		t.Errorf("{x:2, y:1} must be %q. string = %q", expect, s)
 	}
 }
@@ -139,7 +139,7 @@ func TestSomeKyouen(t *testing.T) {
 		s.stonePointList = newPoints
 		newActual := s.HasKyouen()
 		if newActual != nil {
-			t.Errorf("%s must not be kyouen. actual = %v", s.toString(), newActual)
+			t.Errorf("%s must not be kyouen. actual = %v", s.ToString(), newActual)
 		}
 	}
 }

@@ -6,11 +6,11 @@ import (
 	"errors"
 	"fmt"
 	"kyouen-server/db"
+	"kyouen-server/models"
 	"kyouen-server/openapi"
 	"math"
 	"net/http"
 	"strconv"
-	"strings"
 
 	"cloud.google.com/go/datastore"
 )
@@ -140,47 +140,20 @@ func hasRegisteredStage(stage string) bool {
 	return count != 0
 }
 
-func hasRegisteredStageAll(stage string) bool {
-	if hasRegisteredStage(stage) {
-		return true
-	}
+func hasRegisteredStageAll(stageStr string) bool {
+	size := int(math.Sqrt(float64(len(stageStr))))
+	stage := models.NewKyouenStage(size, stageStr)
+	for i := 0; i < 4; i++ {
+		mirror := models.NewMirroredKyouenStage(*stage)
+		if hasRegisteredStage(mirror.ToString()) {
+			return true
+		}
 
-	size := int(math.Sqrt(float64(len(stage))))
-
-	rotate := stage
-	for i := 0; i < 3; i++ {
-		rotate = rotateMatrix(rotate, size)
-		if hasRegisteredStage(rotate) {
+		stage = models.NewRotatedKyouenStage(*stage)
+		if hasRegisteredStage(stage.ToString()) {
 			return true
 		}
 	}
 
-	mirror := mirrorMatrix(stage, size)
-	if hasRegisteredStage(mirror) {
-		return true
-	}
-
 	return false
-}
-
-// TODO extract to other file.
-
-func rotateMatrix(stage string, size int) string {
-	result := make([]string, size*size)
-	for i, s := range stage {
-		x := i % size
-		y := i / size
-		result[(size-y-1)+x*size] = string(s)
-	}
-	return strings.Join(result, "")
-}
-
-func mirrorMatrix(stage string, size int) string {
-	result := make([]string, size*size)
-	for i, s := range stage {
-		x := i % size
-		y := i / size
-		result[(size-x-1)+y*size] = string(s)
-	}
-	return strings.Join(result, "")
 }

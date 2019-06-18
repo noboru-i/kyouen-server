@@ -67,7 +67,8 @@ func newKyouenData(p1 Point, p2 Point, p3 Point, p4 Point, aIsLine bool, aCenter
 	return &KyouenData{points, aIsLine, aCenter, aRadius, aLine}
 }
 
-func (k KyouenStage) toString() string {
+// ToString returns stage as string.
+func (k KyouenStage) ToString() string {
 	result := make([]string, k.size*k.size)
 	for i := 0; i < k.size*k.size; i++ {
 		result[i] = "0"
