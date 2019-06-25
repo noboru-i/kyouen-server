@@ -12,7 +12,7 @@ import (
 	"strconv"
 	"time"
 
-	"google.golang.org/appengine/datastore"
+	"cloud.google.com/go/datastore"
 )
 
 func StagesHandler(w http.ResponseWriter, r *http.Request) {
@@ -31,7 +31,7 @@ func stagesGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	var entities []db.KyouenPuzzle
 	q := datastore.NewQuery("KyouenPuzzle").Filter("stageNo >=", param.startStageNo).Limit(param.limit)
-	if _, err := q.GetAll(ctx, &entities); err != nil {
+	if _, err := db.DB().GetAll(ctx, q, &entities); err != nil {
 		fmt.Fprintf(w, "error! : %v", err)
 		return
 	}
@@ -128,7 +128,7 @@ func getNextStageNo() int64 {
 
 	var entities []db.KyouenPuzzle
 	q := datastore.NewQuery("KyouenPuzzle").Order("-stageNo").Limit(1)
-	if _, err := q.GetAll(ctx, &entities); err != nil {
+	if _, err := db.DB().GetAll(ctx, q, &entities); err != nil {
 		return 1
 	}
 	if len(entities) == 0 {
@@ -142,7 +142,7 @@ func hasRegisteredStage(stage string) bool {
 	ctx := context.Background()
 
 	q := datastore.NewQuery("KyouenPuzzle").Filter("stage =", stage).Limit(1)
-	count, err := q.Count(ctx)
+	count, err := db.DB().Count(ctx, q)
 	if err != nil {
 		panic("database error." + err.Error())
 	}
@@ -175,8 +175,8 @@ func saveStage(param postParam, newStageNo int64) db.KyouenPuzzle {
 		Creator:    param.creator,
 		RegistDate: time.Now(),
 	}
-	key := datastore.NewIncompleteKey(ctx, "KyouenPuzzle", nil)
-	if _, err := datastore.Put(ctx, key, stage); err != nil {
+	key := datastore.IncompleteKey("KyouenPuzzle", nil)
+	if _, err := db.DB().Put(ctx, key, stage); err != nil {
 		panic("database error.")
 	}
 
@@ -188,12 +188,12 @@ func saveStage(param postParam, newStageNo int64) db.KyouenPuzzle {
 func increaseSummaryCount() {
 	ctx := context.Background()
 
-	k := datastore.NewKey(ctx, "KyouenPuzzleSummary", "", 1, nil)
+	k := datastore.IDKey("KyouenPuzzleSummary", 1, nil)
 	var summary db.KyouenPuzzleSummary
-	err := datastore.Get(ctx, k, &summary)
+	err := db.DB().Get(ctx, k, &summary)
 	if err != nil {
 		q := datastore.NewQuery("KyouenPuzzle").KeysOnly()
-		count, err := q.Count(ctx)
+		count, err := db.DB().Count(ctx, q)
 		if err != nil {
 			panic("database error.")
 		}
@@ -205,7 +205,7 @@ func increaseSummaryCount() {
 		summary.Count++
 	}
 
-	_, err = datastore.Put(ctx, k, &summary)
+	_, err = db.DB().Put(ctx, k, &summary)
 	if err != nil {
 		panic("database error.")
 	}
