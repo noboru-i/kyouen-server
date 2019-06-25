@@ -10,8 +10,9 @@ import (
 	"kyouen-server/openapi"
 	"net/http"
 	"strconv"
+	"time"
 
-	"cloud.google.com/go/datastore"
+	"google.golang.org/appengine/datastore"
 )
 
 func StagesHandler(w http.ResponseWriter, r *http.Request) {
@@ -30,7 +31,7 @@ func stagesGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	var entities []db.KyouenPuzzle
 	q := datastore.NewQuery("KyouenPuzzle").Filter("stageNo >=", param.startStageNo).Limit(param.limit)
-	if _, err := db.DB().GetAll(ctx, q, &entities); err != nil {
+	if _, err := q.GetAll(ctx, &entities); err != nil {
 		fmt.Fprintf(w, "error! : %v", err)
 		return
 	}
@@ -93,17 +94,16 @@ func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
 	// check registered
 	if hasRegisteredStageAll(stage) {
 		// TODO change result
-		w.WriteHeader(http.StatusBadRequest)
+		w.WriteHeader(http.StatusConflict)
+		fmt.Fprintf(w, "sent stage is already exists.")
 		return
 	}
 
-	// TODO register KyouenPuzzle
-	// newStageNo := getNextStageNo()
-	// w.Write([]byte(strconv.FormatInt(newStageNo, 10)))
+	// save to datastore
+	savedStage := saveStage(param, getNextStageNo())
 
-	// TODO update KyouenPuzzleSummary
-
-	// TODO create response
+	// create response
+	json.NewEncoder(w).Encode(savedStage)
 }
 
 type postParam struct {
@@ -128,7 +128,7 @@ func getNextStageNo() int64 {
 
 	var entities []db.KyouenPuzzle
 	q := datastore.NewQuery("KyouenPuzzle").Order("-stageNo").Limit(1)
-	if _, err := db.DB().GetAll(ctx, q, &entities); err != nil {
+	if _, err := q.GetAll(ctx, &entities); err != nil {
 		return 1
 	}
 	if len(entities) == 0 {
@@ -142,9 +142,9 @@ func hasRegisteredStage(stage string) bool {
 	ctx := context.Background()
 
 	q := datastore.NewQuery("KyouenPuzzle").Filter("stage =", stage).Limit(1)
-	count, err := db.DB().Count(ctx, q)
+	count, err := q.Count(ctx)
 	if err != nil {
-		panic("database error.")
+		panic("database error." + err.Error())
 	}
 	return count != 0
 }
@@ -163,4 +163,50 @@ func hasRegisteredStageAll(stage models.KyouenStage) bool {
 	}
 
 	return false
+}
+
+func saveStage(param postParam, newStageNo int64) db.KyouenPuzzle {
+	ctx := context.Background()
+
+	stage := db.KyouenPuzzle{
+		StageNo:    newStageNo,
+		Size:       int64(param.size),
+		Stage:      param.stage,
+		Creator:    param.creator,
+		RegistDate: time.Now(),
+	}
+	key := datastore.NewIncompleteKey(ctx, "KyouenPuzzle", nil)
+	if _, err := datastore.Put(ctx, key, stage); err != nil {
+		panic("database error.")
+	}
+
+	increaseSummaryCount()
+
+	return stage
+}
+
+func increaseSummaryCount() {
+	ctx := context.Background()
+
+	k := datastore.NewKey(ctx, "KyouenPuzzleSummary", "", 1, nil)
+	var summary db.KyouenPuzzleSummary
+	err := datastore.Get(ctx, k, &summary)
+	if err != nil {
+		q := datastore.NewQuery("KyouenPuzzle").KeysOnly()
+		count, err := q.Count(ctx)
+		if err != nil {
+			panic("database error.")
+		}
+		summary = db.KyouenPuzzleSummary{
+			Count:    int64(count),
+			LastDate: time.Now(),
+		}
+	} else {
+		summary.Count++
+	}
+
+	_, err = datastore.Put(ctx, k, &summary)
+	if err != nil {
+		panic("database error.")
+	}
 }

@@ -54,6 +54,7 @@ require (
 	golang.org/x/perf v0.0.0-20190306144031-151b6387e3f2 // indirect
 	golang.org/x/sys v0.0.0-20190308023053-584f3b12f43e // indirect
 	golang.org/x/tools v0.0.0-20190308142131-b40df0fb21c3 // indirect
+	google.golang.org/appengine v1.4.0
 	google.golang.org/genproto v0.0.0-20190307195333-5fe7a883aa19 // indirect
 	gotest.tools/gotestsum v0.3.4 // indirect
 	honnef.co/go/tools v0.0.0-20190215041234-466a0476246c // indirect
