@@ -8,7 +8,6 @@ import (
 	"kyouen-server/db"
 	"kyouen-server/models"
 	"kyouen-server/openapi"
-	"math"
 	"net/http"
 	"strconv"
 
@@ -76,16 +75,26 @@ func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// TODO check stone count
+	stage := *models.NewKyouenStage(param.size, param.stage)
 
-	// TODO check stones is kyouen
+	// check stone count
+	if stage.StoneCount() <= 4 {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
-	// TODO check registered
-	result := hasRegisteredStageAll(param.stage)
-	if result {
-		w.Write([]byte("registered"))
-	} else {
-		w.Write([]byte("not registered"))
+	// check stones is kyouen
+	kyouenData := stage.HasKyouen()
+	if kyouenData == nil {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
+
+	// check registered
+	if hasRegisteredStageAll(stage) {
+		// TODO change result
+		w.WriteHeader(http.StatusBadRequest)
+		return
 	}
 
 	// TODO register KyouenPuzzle
@@ -140,16 +149,14 @@ func hasRegisteredStage(stage string) bool {
 	return count != 0
 }
 
-func hasRegisteredStageAll(stageStr string) bool {
-	size := int(math.Sqrt(float64(len(stageStr))))
-	stage := models.NewKyouenStage(size, stageStr)
+func hasRegisteredStageAll(stage models.KyouenStage) bool {
 	for i := 0; i < 4; i++ {
-		mirror := models.NewMirroredKyouenStage(*stage)
+		mirror := models.NewMirroredKyouenStage(stage)
 		if hasRegisteredStage(mirror.ToString()) {
 			return true
 		}
 
-		stage = models.NewRotatedKyouenStage(*stage)
+		stage = *models.NewRotatedKyouenStage(stage)
 		if hasRegisteredStage(stage.ToString()) {
 			return true
 		}

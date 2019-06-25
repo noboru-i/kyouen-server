@@ -44,6 +44,15 @@ func TestToString(t *testing.T) {
 	}
 }
 
+func TestStoneCount(t *testing.T) {
+	stage := "001000000000100000000100000000000000"
+	s := NewKyouenStage(6, stage)
+	expect := 3
+	if s.StoneCount() != expect {
+		t.Errorf("%q has %v stones. current = %v", stage, expect, s.StoneCount())
+	}
+}
+
 func TestHasKyouen(t *testing.T) {
 	stage := "000000010000001100001100000000001000"
 	s := NewKyouenStage(6, stage)

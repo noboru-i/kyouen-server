@@ -80,6 +80,11 @@ func (k KyouenStage) ToString() string {
 	return strings.Join(result, "")
 }
 
+// StoneCount returns count of stones.
+func (k KyouenStage) StoneCount() int {
+	return len(k.stonePointList)
+}
+
 // HasKyouen is checking stage has kyouen.
 func (k KyouenStage) HasKyouen() *KyouenData {
 	size := len(k.stonePointList)
