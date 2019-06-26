@@ -81,6 +81,7 @@ func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
 	// check stone count
 	if stage.StoneCount() <= 4 {
 		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "stage must have 5 stones.")
 		return
 	}
 
@@ -88,6 +89,7 @@ func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
 	kyouenData := stage.HasKyouen()
 	if kyouenData == nil {
 		w.WriteHeader(http.StatusBadRequest)
+		fmt.Fprintf(w, "sent stage don't have kyouen.")
 		return
 	}
 
