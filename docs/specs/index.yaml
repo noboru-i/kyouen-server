@@ -25,7 +25,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/LoginResult"
+                $ref: '#/components/schemas/LoginResult'
 
   /stages:
     get:
@@ -53,13 +53,13 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Stages"
+                $ref: '#/components/schemas/Stages'
         '404':
           description: cannot get stages.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Error"
+                $ref: '#/components/schemas/Error'
     post:
       summary: Create new stage.
       tags:
@@ -77,7 +77,7 @@ paths:
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/Stage"
+                $ref: '#/components/schemas/Stage'
         '409':
           description: sent stage is already exists.
   /stages/{stage_no}/clear:
@@ -114,14 +114,14 @@ paths:
         content:
           application/json:
             schema:
-              $ref: "#/components/schemas/SyncRequest"
+              $ref: '#/components/schemas/SyncRequest'
       responses:
         '200':
           description: successful syned cleared data.
           content:
             application/json:
               schema:
-                $ref: "#/components/schemas/SyncResponse"
+                $ref: '#/components/schemas/SyncResponse'
 
   /statics:
     get:
@@ -134,7 +134,7 @@ paths:
           content:
             application/json:
               schema: 
-                $ref: "#/components/schemas/Statics"
+                $ref: '#/components/schemas/Statics'
 components:
   schemas:
     LoginParam:
@@ -159,7 +159,7 @@ components:
     Stages:
       type: array
       items:
-        $ref: "#/components/schemas/Stage"
+        $ref: '#/components/schemas/Stage'
     Stage:
       required:
         - stageNo
@@ -178,14 +178,14 @@ components:
           example: 6
         stage:
           type: string
-          example: "000000010000001100001100000000001000"
+          example: '000000010000001100001100000000001000'
         creator:
           type: string
-          example: "noboru"
+          example: 'noboru'
         registDate:
           type: string
           format: date-time
-          description: "date in UTC"
+          description: 'date in UTC'
     NewStage:
       required:
         - size
@@ -198,26 +198,26 @@ components:
           example: 6
         stage:
           type: string
-          example: "000000010000002200002200000000001000"
+          example: '000000010000002200002200000000001000'
         creator:
           type: string
-          example: "noboru"
+          example: 'noboru'
     ClearStage:
       required:
         - stage
       properties:
         stage:
           type: string
-          example: "000000010000002200002200000000001000"
+          example: '000000010000002200002200000000001000'
 
     SyncRequest:
       type: array
       items:
-        $ref: "#/components/schemas/ClearedStage"
+        $ref: '#/components/schemas/ClearedStage'
     SyncResponse:
       type: array
       items:
-        $ref: "#/components/schemas/ClearedStage"
+        $ref: '#/components/schemas/ClearedStage'
     ClearedStage:
       required:
         - stageNo
@@ -230,7 +230,7 @@ components:
         clearDate:
           type: string
           format: date-time
-          description: "date in UTC"
+          description: 'date in UTC'
 
     Statics:
       required:
@@ -244,7 +244,7 @@ components:
         last_updated_at:
           type: string
           format: date-time
-          description: "date in UTC"
+          description: 'date in UTC'
 
     Error:
       required:
