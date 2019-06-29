@@ -7,7 +7,7 @@ servers:
   - url: https://kyouen.app/v2
     description: Production server
 paths:
-  /login:
+  /users/login:
     post:
       summary: Login with twitter account.
       tags:
