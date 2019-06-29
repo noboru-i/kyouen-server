@@ -8,10 +8,13 @@ import (
 
 	"kyouen-server/db"
 	"kyouen-server/handlers"
+	usersHandler "kyouen-server/handlers/users"
 )
 
 func main() {
 	db.InitDB()
+
+	http.HandleFunc("/v2/users/login", usersHandler.LoginHandler)
 
 	http.HandleFunc("/v2/stages", handlers.StagesHandler)
 
