@@ -37,12 +37,7 @@ func stagesGetHandler(w http.ResponseWriter, r *http.Request) {
 
 	var stageList []openapi.Stage
 	for _, value := range entities {
-		stageList = append(stageList, openapi.Stage{
-			StageNo:    value.StageNo,
-			Size:       value.Size,
-			Stage:      value.Stage,
-			Creator:    value.Creator,
-			RegistDate: value.RegistDate})
+		stageList = append(stageList, convertStageForResponse(value))
 	}
 	json.NewEncoder(w).Encode(stageList)
 }
@@ -66,6 +61,16 @@ func parseGetParam(r *http.Request) getParam {
 	}
 
 	return getParam{startStageNo: startStageNo, limit: limit}
+}
+
+func convertStageForResponse(stage db.KyouenPuzzle) openapi.Stage {
+	return openapi.Stage{
+		StageNo:    stage.StageNo,
+		Size:       stage.Size,
+		Stage:      stage.Stage,
+		Creator:    stage.Creator,
+		RegistDate: stage.RegistDate,
+	}
 }
 
 func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
@@ -105,7 +110,7 @@ func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
 	savedStage := saveStage(param, getNextStageNo())
 
 	// create response
-	json.NewEncoder(w).Encode(savedStage)
+	json.NewEncoder(w).Encode(convertStageForResponse(savedStage))
 }
 
 func getNextStageNo() int64 {
@@ -150,7 +155,7 @@ func hasRegisteredStageAll(stage models.KyouenStage) bool {
 	return false
 }
 
-func saveStage(param openapi.NewStage, newStageNo int64) openapi.Stage {
+func saveStage(param openapi.NewStage, newStageNo int64) db.KyouenPuzzle {
 	ctx := context.Background()
 
 	stage := db.KyouenPuzzle{
@@ -167,13 +172,7 @@ func saveStage(param openapi.NewStage, newStageNo int64) openapi.Stage {
 
 	increaseSummaryCount()
 
-	return openapi.Stage{
-		StageNo:    stage.StageNo,
-		Size:       stage.Size,
-		Stage:      stage.Stage,
-		Creator:    stage.Creator,
-		RegistDate: stage.RegistDate,
-	}
+	return stage
 }
 
 func increaseSummaryCount() {
