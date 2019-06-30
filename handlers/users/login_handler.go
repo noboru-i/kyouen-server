@@ -17,7 +17,9 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	param := parsePostParam(r)
+	var param openapi.LoginParam
+	err := json.NewDecoder(r.Body).Decode(&param)
+
 	twitterAPI := getTwitterAPI(r, param.Token, param.TokenSecret)
 	v := url.Values{}
 	user, err := twitterAPI.GetSelf(v)
@@ -26,13 +28,6 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	json.NewEncoder(w).Encode(openapi.LoginResult{ScreenName: user.ScreenName})
-}
-
-func parsePostParam(r *http.Request) openapi.LoginParam {
-	token := r.FormValue("token")
-	tokenSecret := r.FormValue("token_secret")
-
-	return openapi.LoginParam{Token: token, TokenSecret: tokenSecret}
 }
 
 func getTwitterAPI(r *http.Request, token string, tokenSecret string) *anaconda.TwitterApi {
