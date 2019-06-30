@@ -15,7 +15,7 @@ import (
 
 type Stage struct {
 
-	StageNo int64 `json:"stageNo"`
+	StageNo int64 `json:"stage_no"`
 
 	Size int64 `json:"size"`
 
@@ -24,5 +24,5 @@ type Stage struct {
 	Creator string `json:"creator"`
 
 	// date in UTC
-	RegistDate time.Time `json:"registDate"`
+	RegistDate time.Time `json:"regist_date"`
 }

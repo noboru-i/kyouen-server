@@ -2,10 +2,11 @@ package users
 
 import (
 	"encoding/json"
-	"fmt"
 	"net/http"
 	"net/url"
 	"os"
+
+	"kyouen-server/openapi"
 
 	"github.com/ChimeraCoder/anaconda"
 )
@@ -17,31 +18,21 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	}
 
 	param := parsePostParam(r)
-	twitterAPI := getTwitterAPI(r, param.token, param.tokenSecret)
+	twitterAPI := getTwitterAPI(r, param.Token, param.TokenSecret)
 	v := url.Values{}
 	user, err := twitterAPI.GetSelf(v)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
-		fmt.Fprintf(w, "error: %v", err)
 		return
 	}
-	json.NewEncoder(w).Encode(postResponse{ScreenName: user.ScreenName})
+	json.NewEncoder(w).Encode(openapi.LoginResult{ScreenName: user.ScreenName})
 }
 
-type postParam struct {
-	token       string
-	tokenSecret string
-}
-
-func parsePostParam(r *http.Request) postParam {
+func parsePostParam(r *http.Request) openapi.LoginParam {
 	token := r.FormValue("token")
-	tokenSecret := r.FormValue("tokenSecret")
+	tokenSecret := r.FormValue("token_secret")
 
-	return postParam{token: token, tokenSecret: tokenSecret}
-}
-
-type postResponse struct {
-	ScreenName string `json:"screenName"`
+	return openapi.LoginParam{Token: token, TokenSecret: tokenSecret}
 }
 
 func getTwitterAPI(r *http.Request, token string, tokenSecret string) *anaconda.TwitterApi {

@@ -13,5 +13,5 @@ type LoginParam struct {
 
 	Token string `json:"token"`
 
-	TokenSecret string `json:"tokenSecret"`
+	TokenSecret string `json:"token_secret"`
 }

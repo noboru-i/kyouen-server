@@ -11,5 +11,5 @@ package openapi
 
 type LoginResult struct {
 
-	ScreenName string `json:"screenName"`
+	ScreenName string `json:"screen_name"`
 }

@@ -15,8 +15,8 @@ import (
 
 type ClearedStage struct {
 
-	StageNo int64 `json:"stageNo"`
+	StageNo int64 `json:"stage_no"`
 
 	// date in UTC
-	ClearDate time.Time `json:"clearDate"`
+	ClearDate time.Time `json:"clear_date"`
 }
