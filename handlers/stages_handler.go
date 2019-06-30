@@ -3,7 +3,6 @@ package handlers
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"kyouen-server/db"
 	"kyouen-server/models"
@@ -70,13 +69,14 @@ func parseGetParam(r *http.Request) getParam {
 }
 
 func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
-	param, err := parsePostParam(r)
+	var param openapi.NewStage
+	err := json.NewDecoder(r.Body).Decode(&param)
 	if err != nil {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
 
-	stage := *models.NewKyouenStage(param.size, param.stage)
+	stage := *models.NewKyouenStage(int(param.Size), param.Stage)
 
 	// check stone count
 	if stage.StoneCount() <= 4 {
@@ -106,23 +106,6 @@ func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
 
 	// create response
 	json.NewEncoder(w).Encode(savedStage)
-}
-
-type postParam struct {
-	size    int
-	stage   string
-	creator string
-}
-
-func parsePostParam(r *http.Request) (postParam, error) {
-	size, err := strconv.Atoi(r.FormValue("size"))
-	if err != nil {
-		return postParam{}, errors.New("size is invalid")
-	}
-	stage := r.FormValue("stage")
-	creator := r.FormValue("creator")
-
-	return postParam{size: size, stage: stage, creator: creator}, nil
 }
 
 func getNextStageNo() int64 {
@@ -167,14 +150,14 @@ func hasRegisteredStageAll(stage models.KyouenStage) bool {
 	return false
 }
 
-func saveStage(param postParam, newStageNo int64) db.KyouenPuzzle {
+func saveStage(param openapi.NewStage, newStageNo int64) openapi.Stage {
 	ctx := context.Background()
 
 	stage := db.KyouenPuzzle{
 		StageNo:    newStageNo,
-		Size:       int64(param.size),
-		Stage:      param.stage,
-		Creator:    param.creator,
+		Size:       param.Size,
+		Stage:      param.Stage,
+		Creator:    param.Creator,
 		RegistDate: time.Now(),
 	}
 	key := datastore.IncompleteKey("KyouenPuzzle", nil)
@@ -184,7 +167,13 @@ func saveStage(param postParam, newStageNo int64) db.KyouenPuzzle {
 
 	increaseSummaryCount()
 
-	return stage
+	return openapi.Stage{
+		StageNo:    stage.StageNo,
+		Size:       stage.Size,
+		Stage:      stage.Stage,
+		Creator:    stage.Creator,
+		RegistDate: stage.RegistDate,
+	}
 }
 
 func increaseSummaryCount() {
