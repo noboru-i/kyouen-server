@@ -140,19 +140,19 @@ components:
     LoginParam:
       required:
         - token
-        - tokenSecret
+        - token_secret
       properties:
         token:
           type: string
           example: AAA
-        tokenSecret:
+        token_secret:
           type: string
           example: BBB
     LoginResult:
       required:
-        - screenName
+        - screen_name
       properties:
-        screenName:
+        screen_name:
           type: string
           example: Alice
 
@@ -162,13 +162,13 @@ components:
         $ref: '#/components/schemas/Stage'
     Stage:
       required:
-        - stageNo
+        - stage_no
         - size
         - stage
         - creator
-        - registDate
+        - regist_date
       properties:
-        stageNo:
+        stage_no:
           type: integer
           format: int64
           example: 12
@@ -182,7 +182,7 @@ components:
         creator:
           type: string
           example: 'noboru'
-        registDate:
+        regist_date:
           type: string
           format: date-time
           description: 'date in UTC'
@@ -220,14 +220,14 @@ components:
         $ref: '#/components/schemas/ClearedStage'
     ClearedStage:
       required:
-        - stageNo
-        - clearDate
+        - stage_no
+        - clear_date
       properties:
-        stageNo:
+        stage_no:
           type: integer
           format: int64
           example: 12
-        clearDate:
+        clear_date:
           type: string
           format: date-time
           description: 'date in UTC'
