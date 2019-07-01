@@ -39,6 +39,7 @@ func stagesGetHandler(w http.ResponseWriter, r *http.Request) {
 	for _, value := range entities {
 		stageList = append(stageList, convertStageForResponse(value))
 	}
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(stageList)
 }
 
@@ -110,6 +111,7 @@ func stagesPostHandler(w http.ResponseWriter, r *http.Request) {
 	savedStage := saveStage(param, getNextStageNo())
 
 	// create response
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(convertStageForResponse(savedStage))
 }
 

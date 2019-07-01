@@ -21,6 +21,7 @@ func StaticsHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	w.Header().Set("Content-Type", "application/json")
 	statics := openapi.Statics{Count: entities[0].Count, LastUpdatedAt: entities[0].LastDate}
 	json.NewEncoder(w).Encode(statics)
 }
