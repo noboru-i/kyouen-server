@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -24,6 +25,7 @@ func LoginHandler(w http.ResponseWriter, r *http.Request) {
 	v := url.Values{}
 	user, err := twitterAPI.GetSelf(v)
 	if err != nil {
+		log.Printf("auth error: %v", err)
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
