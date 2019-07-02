@@ -15,7 +15,7 @@ http://localhost:8000/
 ## deploy to production
 
 ```sh
-$ gcloud app deploy --no-promote
+$ gcloud app deploy --no-promote --version=v2
 ```
 
 ## OpenAPI(Swagger)
@@ -28,8 +28,18 @@ $ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=
 
 ### generate struct for go
 
+#### golang
+
 ```sh
 $ openapi-generator generate -i docs/specs/index.yaml -g go-server -o ./tmp
 $ cp tmp/go/model_*.go openapi
+$ rm -rf tmp
+```
+
+#### Android client
+
+```sh
+$ openapi-generator generate -i docs/specs/index.yaml -g kotlin -o ./tmp --additional-properties="packageName=hm.orz.chaos114.android.tumekyouen.network"
+$ cp -r tmp/src/main/kotlin/hm/orz/chaos114/android/tumekyouen/network/models ../kyouen-android/app/src/main/java/hm/orz/chaos114/android/tumekyouen/network
 $ rm -rf tmp
 ```
