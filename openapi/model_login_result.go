@@ -12,4 +12,6 @@ package openapi
 type LoginResult struct {
 
 	ScreenName string `json:"screen_name"`
+
+	Token string `json:"token"`
 }

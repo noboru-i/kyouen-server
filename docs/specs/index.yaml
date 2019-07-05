@@ -151,10 +151,14 @@ components:
     LoginResult:
       required:
         - screen_name
+        - token
       properties:
         screen_name:
           type: string
           example: Alice
+        token:
+          type: string
+          example: XXXXXX
 
     Stages:
       type: array

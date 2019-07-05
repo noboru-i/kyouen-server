@@ -16,3 +16,15 @@ type KyouenPuzzle struct {
 	Creator    string    `datastore:"creator"`
 	RegistDate time.Time `datastore:"registDate"`
 }
+
+type User struct {
+	UserID          string `datastore:"userId"`
+	ScreenName      string `datastore:"screenName"`
+	Image           string `datastore:"image"`
+	ClearStageCount int64  `datastore:"clearStageCount"`
+
+	// TODO remove later (Don't use it now.)
+	AccessToken  string `datastore:"accessToken"`
+	AccessSecret string `datastore:"accessSecret"`
+	APIToken     string `datastore:"apiToken"`
+}
