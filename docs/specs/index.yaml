@@ -4,6 +4,8 @@ info:
   description: Kyouen server's API.
   version: 0.0.1
 servers:
+  - url: http://localhost:8080/v2
+    description: Development server
   - url: https://kyouen.app/v2
     description: Production server
 paths:
@@ -32,17 +34,16 @@ paths:
       summary: Returns kyouen stages.
       tags:
         - stage
+      required: [start_stage_no, limit]
       parameters:
         - name: start_stage_no
           in: query
-          required: true
           description: Returns results with an stage number greater than or equals the specified number.
           schema:
             type: int64
             example: 120
         - name: limit
           in: query
-          required: false
           description: Specifies the number of stage to retrieve, up to a maximum of 100 per request.
           schema:
             type: int64
@@ -85,10 +86,12 @@ paths:
       summary: Save clear data.
       tags:
         - stage
+      security:
+        - bearerAuth: []
+      required: [stage_no]
       parameters:
         - name: stage_no
           in: path
-          required: true
           description: Stage number of cleared.
           schema:
             type: int64
@@ -136,6 +139,12 @@ paths:
               schema: 
                 $ref: '#/components/schemas/Statics'
 components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
   schemas:
     LoginParam:
       required:
