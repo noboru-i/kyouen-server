@@ -2,6 +2,8 @@ package db
 
 import (
 	"time"
+
+	"cloud.google.com/go/datastore"
 )
 
 type KyouenPuzzleSummary struct {
@@ -27,4 +29,10 @@ type User struct {
 	AccessToken  string `datastore:"accessToken"`
 	AccessSecret string `datastore:"accessSecret"`
 	APIToken     string `datastore:"apiToken"`
+}
+
+type StageUser struct {
+	StageKey  *datastore.Key `datastore:"stage"`
+	UserKey   *datastore.Key `datastore:"user"`
+	ClearDate time.Time      `datastore:"clearDate"`
 }

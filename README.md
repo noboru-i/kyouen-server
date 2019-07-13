@@ -3,7 +3,7 @@
 ## local development
 
 ```sh
-$ dev_appserver.py app.yaml --datastore_path=`pwd`/database/db.datastore -A my-android-server --support_datastore_emulator True
+$ dev_appserver.py app.yaml --datastore_path=`pwd`/database/db.datastore -A my-android-server --support_datastore_emulator True --enable_host_checking=false
 ```
 
 link to server
