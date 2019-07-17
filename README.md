@@ -15,7 +15,13 @@ http://localhost:8000/
 ## deploy to production
 
 ```sh
-$ gcloud app deploy --no-promote --version=v2
+$ gcloud app deploy --no-promote
+```
+
+### deploy dispatch.yaml
+
+```sh
+$ gcloud app deploy dispatch.yaml
 ```
 
 ## OpenAPI(Swagger)
