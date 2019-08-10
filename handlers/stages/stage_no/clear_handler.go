@@ -4,7 +4,9 @@ import (
 	"context"
 	"encoding/json"
 	"kyouen-server/db"
+	"kyouen-server/models"
 	"log"
+	"math"
 	"net/http"
 	"strconv"
 	"strings"
@@ -35,7 +37,14 @@ func ClearHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// TODO check param.Stage is kyouen.
+	log.Printf("param: %v", param)
+	size := int(math.Sqrt(float64(len(param.Stage))))
+	paramKyouenStage := models.NewKyouenStage(size, param.Stage)
+
+	if !isKyouen(paramKyouenStage) {
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	var entities []db.KyouenPuzzle
 	q := datastore.NewQuery("KyouenPuzzle").Filter("stageNo =", stageNo).Limit(1)
@@ -50,10 +59,16 @@ func ClearHandler(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusBadRequest)
 		return
 	}
-	// TODO check path stage no is body stage string.
+
 	stageKey := keys[0]
 	stage := entities[0]
 	log.Printf("stage: %v", stage)
+
+	if stage.Stage != strings.Replace(paramKyouenStage.ToString(), "2", "1", -1) {
+		log.Printf("stage is wrong.")
+		w.WriteHeader(http.StatusBadRequest)
+		return
+	}
 
 	userKey, user := getUser(r)
 	log.Printf("user: %v", user)
@@ -61,10 +76,17 @@ func ClearHandler(w http.ResponseWriter, r *http.Request) {
 	saveStageUser(stageKey, userKey, user)
 }
 
+func isKyouen(kyouenStage *models.KyouenStage) bool {
+	return kyouenStage.IsKyouenByWhite() != nil
+}
+
 func getUser(r *http.Request) (*datastore.Key, *db.User) {
 	ctx := context.Background()
 	idToken := strings.TrimPrefix(r.Header.Get("Authorization"), "Bearer ")
 	log.Printf("idToken: %v", idToken)
+	if len(idToken) == 0 {
+		log.Fatalf("error idToken is needed.")
+	}
 
 	opt := option.WithCredentialsFile("api-project-1046368181881-firebase-adminsdk-df1u6-039d87ad7a.json")
 	app, err := firebase.NewApp(ctx, nil, opt)

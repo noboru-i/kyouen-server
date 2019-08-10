@@ -222,6 +222,7 @@ components:
         stage:
           type: string
           example: '000000010000002200002200000000001000'
+          description: '0: no stone<br>1: black stone<br>2: white stone (selected)'
 
     SyncRequest:
       type: array

@@ -7,8 +7,9 @@ import (
 
 // KyouenStage hold a stage of kyouen.
 type KyouenStage struct {
-	size           int
-	stonePointList []Point
+	size                int
+	stonePointList      []Point
+	whiteStonePointList []Point
 }
 
 // KyouenData hold kyouen result.
@@ -23,15 +24,21 @@ type KyouenData struct {
 // NewKyouenStage create stage by string.
 func NewKyouenStage(size int, stage string) *KyouenStage {
 	points := []Point{}
+	whitePoints := []Point{}
 	for i, s := range stage {
-		if string(s) == "1" {
+		if string(s) == "1" || string(s) == "2" {
 			x := i % size
 			y := i / size
 			p := Point{x: x, y: y}
-			points = append(points, p)
+			if string(s) == "1" {
+				points = append(points, p)
+			} else {
+				// `s` == "2"
+				whitePoints = append(whitePoints, p)
+			}
 		}
 	}
-	return &KyouenStage{size: size, stonePointList: points}
+	return &KyouenStage{size: size, stonePointList: points, whiteStonePointList: whitePoints}
 }
 
 // NewRotatedKyouenStage create new kyouen stage with rotated 90 degrees to the right by stage.
@@ -77,6 +84,10 @@ func (k KyouenStage) ToString() string {
 		index := point.x + point.y*k.size
 		result[index] = "1"
 	}
+	for _, point := range k.whiteStonePointList {
+		index := point.x + point.y*k.size
+		result[index] = "2"
+	}
 	return strings.Join(result, "")
 }
 
@@ -105,6 +116,20 @@ func (k KyouenStage) HasKyouen() *KyouenData {
 		}
 	}
 	return nil
+}
+
+// IsKyouenByWhite is checking stage has kyouen by white stones.
+func (k KyouenStage) IsKyouenByWhite() *KyouenData {
+	size := len(k.whiteStonePointList)
+	if size != 4 {
+		return nil
+	}
+
+	result := isKyouen(k.whiteStonePointList[0],
+		k.whiteStonePointList[1],
+		k.whiteStonePointList[2],
+		k.whiteStonePointList[3])
+	return result
 }
 
 func isKyouen(p1 Point, p2 Point, p3 Point, p4 Point) *KyouenData {
