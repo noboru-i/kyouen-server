@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"os"
 
 	"cloud.google.com/go/datastore"
 )
@@ -10,7 +11,7 @@ var client *datastore.Client
 
 func InitDB() {
 	ctx := context.Background()
-	projectID := "my-android-server"
+	projectID := os.Getenv("GOOGLE_CLOUD_PROJECT")
 	c, err := datastore.NewClient(ctx, projectID)
 	if err != nil {
 		panic(err)
