@@ -12,6 +12,14 @@ http://localhost:8080/
 link to admin console
 http://localhost:8000/
 
+## setup env
+
+For dev.
+
+```sh
+gcloud config set project api-project-732262258565
+```
+
 ## deploy to production
 
 ```sh
