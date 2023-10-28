@@ -89,7 +89,7 @@ func upsertUser(user *anaconda.User, param *openapi.LoginParam) db.User {
 	if err == datastore.ErrNoSuchEntity {
 		log.Printf("new user. name=%s", user.ScreenName)
 		dbUser = db.User{
-			UserID:          string(user.Id),
+			UserID:          fmt.Printf(user.Id),
 			ClearStageCount: 0,
 		}
 	}
