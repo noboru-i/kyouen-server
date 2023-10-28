@@ -2,6 +2,7 @@ package users
 
 import (
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"net/url"
@@ -89,7 +90,7 @@ func upsertUser(user *anaconda.User, param *openapi.LoginParam) db.User {
 	if err == datastore.ErrNoSuchEntity {
 		log.Printf("new user. name=%s", user.ScreenName)
 		dbUser = db.User{
-			UserID:          string(user.Id),
+			UserID:          fmt.Sprint(user.Id),
 			ClearStageCount: 0,
 		}
 	}
