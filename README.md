@@ -39,14 +39,8 @@ go run cmd/test_server/main.go
 ```
 Datastore接続テスト用です。
 
-#### 4. レガシーApp Engineサーバー
-```bash
-dev_appserver.py app.yaml --datastore_path=`pwd`/database/db.datastore -A my-android-server --support_datastore_emulator True --enable_host_checking=false
-```
-
 **アクセス先:**
 - サーバー: http://localhost:8080/
-- 管理コンソール: http://localhost:8000/ (App Engineのみ)
 
 ## 🔄 API エンドポイント
 
@@ -111,11 +105,6 @@ gcloud run deploy kyouen-server \
   --allow-unauthenticated
 ```
 
-### レガシーApp Engineへのデプロイ
-```bash
-gcloud app deploy --no-promote
-gcloud app deploy dispatch.yaml
-```
 
 ## 🧪 テスト
 
@@ -171,8 +160,7 @@ kyouen-server/
 │   ├── demo_server/       # デモ用
 │   └── test_server/       # テスト用
 ├── handlers/              # APIハンドラー
-│   ├── v2/               # 新しいGin対応API
-│   └── (legacy)/         # レガシーApp Engine用
+│   └── v2/               # Gin対応API
 ├── models/               # ゲームロジック
 │   └── kyouen.go        # 共円判定アルゴリズム
 ├── services/            # サービス層
@@ -202,10 +190,10 @@ CONSUMER_SECRET=your_twitter_secret # Twitter OAuth
 
 ## 🔄 移行履歴
 
-このプロジェクトは以下の移行を完了しています：
-- App Engine → Cloud Run
-- Gorilla Mux → Gin
-- Datastore → DatastoreモードFirestore（互換性保持）
+このプロジェクトは以下の技術で構築されています：
+- **プラットフォーム**: Cloud Run (コンテナベース)
+- **フレームワーク**: Gin (Go製高速Webフレームワーク)  
+- **データベース**: DatastoreモードFirestore
 
 詳細は以下のドキュメントを参照：
 - `tasks/migration-plan.md` - 完了した移行計画

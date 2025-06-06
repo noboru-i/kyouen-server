@@ -15,16 +15,12 @@
 
 ### ローカル開発
 ```bash
-# データストアエミュレーターを使用したローカル開発サーバーの起動（レガシーApp Engine）
-dev_appserver.py app.yaml --datastore_path=`pwd`/database/db.datastore -A my-android-server --support_datastore_emulator True --enable_host_checking=false
-
-# 新しいCloud Run対応サーバーの起動
+# Cloud Run対応サーバーの起動
 go run cmd/server/main.go  # 本番Datastoreに接続
 go run cmd/demo_server/main.go  # デモデータで動作確認
 go run cmd/test_server/main.go  # Datastore接続テスト
 
 # ローカルサーバーへのアクセス: http://localhost:8080/
-# 管理コンソールへのアクセス: http://localhost:8000/ (App Engineのみ)
 ```
 
 ### テスト
@@ -57,11 +53,7 @@ rm -rf tmp
 
 ### デプロイ
 ```bash
-# レガシーApp Engine環境へのデプロイ
-gcloud app deploy --no-promote
-gcloud app deploy dispatch.yaml
-
-# 新しいCloud Run環境へのデプロイ
+# Cloud Run環境へのデプロイ
 ./scripts/deploy.sh  # 自動デプロイスクリプト
 
 # 手動デプロイ
@@ -105,13 +97,6 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - **ローカル開発**: ファイルベースストレージのデータストアエミュレーターを使用
 
 ### 主要ハンドラー
-**レガシーハンドラー（App Engine）:**
-- `handlers/stages_handler.go`: 共円検証付きのステージCRUD
-- `handlers/stages/stage_no/clear_handler.go`: ステージ完了追跡
-- `handlers/users/login_handler.go`: Twitter OAuth認証
-- `handlers/statics_handler.go`: グローバル統計
-
-**新しいハンドラー（Cloud Run + Gin）:**
 - `handlers/v2/stages.go`: 共円検証付きのステージCRUD（Gin対応）
 - `handlers/v2/statics.go`: グローバル統計（Gin対応）
 - `services/datastore.go`: Datastoreサービス層
@@ -119,12 +104,10 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 
 ## 重要ファイル
 - `models/kyouen.go`: 共円判定のコアゲームロジック
-- `main.go`: レガシーApp Engineサーバー設定
 - `cmd/server/main.go`: Cloud Run本番用エントリーポイント
 - `cmd/demo_server/main.go`: 認証不要のデモサーバー
 - `cmd/test_server/main.go`: Datastore接続テスト用サーバー
 - `docs/specs/index.yaml`: OpenAPI仕様
-- `app.yaml`: Google App Engine設定（レガシー）
 - `Dockerfile`: Cloud Run用Dockerイメージ設定
 - `cloudbuild.yaml`: Cloud Build自動デプロイ設定
 - `scripts/deploy.sh`: Cloud Run手動デプロイスクリプト

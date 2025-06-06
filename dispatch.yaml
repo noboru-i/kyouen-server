@@ -1,3 +1,0 @@
-dispatch:
-  - url: "*/v2/*"
-    service: v2
