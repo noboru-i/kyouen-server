@@ -60,8 +60,16 @@ rm -rf tmp
 gcloud app deploy --no-promote
 gcloud app deploy dispatch.yaml
 
-# 新しいCloud Run環境へのデプロイ（Docker化が必要）
-# TODO: Dockerfileの作成とCloud Runデプロイ手順を追加
+# 新しいCloud Run環境へのデプロイ
+./scripts/deploy.sh  # 自動デプロイスクリプト
+
+# 手動デプロイ
+docker build -t gcr.io/my-android-server/kyouen-server:latest .
+docker push gcr.io/my-android-server/kyouen-server:latest
+gcloud run deploy kyouen-server --image gcr.io/my-android-server/kyouen-server:latest --region asia-northeast1
+
+# Cloud Build使用（推奨）
+gcloud builds submit --config cloudbuild.yaml
 ```
 
 ### Swagger UI
@@ -106,12 +114,17 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `handlers/v2/stages.go`: 共円検証付きのステージCRUD（Gin対応）
 - `handlers/v2/statics.go`: グローバル統計（Gin対応）
 - `services/datastore.go`: Datastoreサービス層
+- `cmd/server/main.go`: Cloud Run用メインエントリーポイント
 
 ## 重要ファイル
 - `models/kyouen.go`: 共円判定のコアゲームロジック
 - `main.go`: レガシーApp Engineサーバー設定
-- `main_v2.go`: 新しいCloud Run + Ginサーバー設定
+- `main_v2.go`: 新しいCloud Run + Ginサーバー設定（テスト用）
+- `cmd/server/main.go`: Cloud Run本番用エントリーポイント
 - `cmd/demo_server/main.go`: 認証不要のデモサーバー
 - `docs/specs/index.yaml`: OpenAPI仕様
 - `app.yaml`: Google App Engine設定（レガシー）
+- `Dockerfile`: Cloud Run用Dockerイメージ設定
+- `cloudbuild.yaml`: Cloud Build自動デプロイ設定
+- `scripts/deploy.sh`: Cloud Run手動デプロイスクリプト
 - `tasks/datastore-mode-migration.md`: 移行戦略ドキュメント

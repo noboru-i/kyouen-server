@@ -45,15 +45,20 @@ func Load() *Config {
 }
 
 func validateConfig(config *Config) error {
-	required := map[string]string{
-		"GOOGLE_CLOUD_PROJECT": config.ProjectID,
+	// 必須設定の確認
+	if config.ProjectID == "" {
+		log.Printf("Warning: GOOGLE_CLOUD_PROJECT is not set, using default: my-android-server")
+	}
+
+	// オプション設定の確認（開発用）
+	optional := map[string]string{
 		"CONSUMER_KEY":         config.TwitterConfig.ConsumerKey,
 		"CONSUMER_SECRET":      config.TwitterConfig.ConsumerSecret,
 	}
 
-	for key, value := range required {
+	for key, value := range optional {
 		if value == "" {
-			log.Printf("Warning: Environment variable %s is not set", key)
+			log.Printf("Info: Optional environment variable %s is not set (authentication features will be limited)", key)
 		}
 	}
 

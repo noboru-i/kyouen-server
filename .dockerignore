@@ -1,0 +1,17 @@
+.git
+.gitignore
+README.md
+Dockerfile
+.dockerignore
+node_modules
+firebase-debug.log
+.firebase/
+database/
+tmp/
+*.log
+.env
+.env.local
+tasks/
+docs/
+cmd/demo_server/
+cmd/test_server/
