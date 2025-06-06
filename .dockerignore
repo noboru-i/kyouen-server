@@ -15,3 +15,6 @@ tasks/
 docs/
 cmd/demo_server/
 cmd/test_server/
+secret.yaml
+main_new
+test_server

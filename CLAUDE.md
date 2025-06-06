@@ -19,8 +19,9 @@
 dev_appserver.py app.yaml --datastore_path=`pwd`/database/db.datastore -A my-android-server --support_datastore_emulator True --enable_host_checking=false
 
 # 新しいCloud Run対応サーバーの起動
-go run main_v2.go  # 本番Datastoreに接続
+go run cmd/server/main.go  # 本番Datastoreに接続
 go run cmd/demo_server/main.go  # デモデータで動作確認
+go run cmd/test_server/main.go  # Datastore接続テスト
 
 # ローカルサーバーへのアクセス: http://localhost:8080/
 # 管理コンソールへのアクセス: http://localhost:8000/ (App Engineのみ)
@@ -119,12 +120,13 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 ## 重要ファイル
 - `models/kyouen.go`: 共円判定のコアゲームロジック
 - `main.go`: レガシーApp Engineサーバー設定
-- `main_v2.go`: 新しいCloud Run + Ginサーバー設定（テスト用）
 - `cmd/server/main.go`: Cloud Run本番用エントリーポイント
 - `cmd/demo_server/main.go`: 認証不要のデモサーバー
+- `cmd/test_server/main.go`: Datastore接続テスト用サーバー
 - `docs/specs/index.yaml`: OpenAPI仕様
 - `app.yaml`: Google App Engine設定（レガシー）
 - `Dockerfile`: Cloud Run用Dockerイメージ設定
 - `cloudbuild.yaml`: Cloud Build自動デプロイ設定
 - `scripts/deploy.sh`: Cloud Run手動デプロイスクリプト
 - `tasks/datastore-mode-migration.md`: 移行戦略ドキュメント
+- `tasks/migration-plan.md`: 完了した移行計画ドキュメント
