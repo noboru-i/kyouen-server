@@ -1,5 +1,6 @@
 .git
 .gitignore
+.github/
 README.md
 Dockerfile
 .dockerignore
@@ -16,3 +17,4 @@ docs/
 cmd/demo_server/
 cmd/test_server/
 secret.yaml
+coverage.out

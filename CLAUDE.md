@@ -111,5 +111,7 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `Dockerfile`: Cloud Run用Dockerイメージ設定
 - `cloudbuild.yaml`: Cloud Build自動デプロイ設定
 - `scripts/deploy.sh`: Cloud Run手動デプロイスクリプト
+- `.github/workflows/pr_validation.yml`: GitHub Actions CI設定
+- `.github/workflows/deploy.yml`: GitHub Actions CD設定
 - `tasks/datastore-mode-migration.md`: 移行戦略ドキュメント
 - `tasks/migration-plan.md`: 完了した移行計画ドキュメント

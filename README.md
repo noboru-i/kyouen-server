@@ -123,6 +123,27 @@ go test -v ./models
 go build -v ./...
 ```
 
+### カバレッジテスト
+```bash
+go test -race -coverprofile=coverage.out -covermode=atomic ./...
+go tool cover -html=coverage.out
+```
+
+## 🚀 CI/CD
+
+### GitHub Actions
+プロジェクトはGitHub Actionsによる自動CI/CDを設定済みです：
+
+- **PR検証** (`.github/workflows/pr_validation.yml`)
+  - Go 1.23での自動テスト・ビルド
+  - 全エントリーポイントのビルド確認
+  - Dockerイメージビルドテスト
+
+- **自動デプロイ** (`.github/workflows/deploy.yml`)
+  - mainブランチプッシュ時の自動Cloud Runデプロイ
+  - Workload Identity認証
+  - デプロイ後のヘルスチェック
+
 ## 📚 OpenAPI (Swagger)
 
 ### Swagger UI表示
