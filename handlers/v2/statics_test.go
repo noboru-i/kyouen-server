@@ -14,12 +14,12 @@ func TestGetStatics(t *testing.T) {
 	// Set Gin to test mode
 	gin.SetMode(gin.TestMode)
 	
-	// Create a mock Firestore service (for now, we'll use nil since it's a placeholder)
-	var firestoreService *services.FirestoreService = nil
+	// Create a mock Datastore service (for now, we'll use nil since it's a placeholder)
+	var datastoreService *services.DatastoreService = nil
 	
 	// Create a Gin router
 	router := gin.New()
-	router.GET("/v2/statics", GetStatics(firestoreService))
+	router.GET("/v2/statics", GetStatics(datastoreService))
 	
 	// Create a test request
 	req, _ := http.NewRequest("GET", "/v2/statics", nil)

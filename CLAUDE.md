@@ -4,7 +4,7 @@
 
 ## プロジェクト概要
 
-これは「共円」パズルゲーム用のGo製REST APIサーバーです。プレイヤーはグリッド上に石を配置し、ちょうど4つの石で円や直線を形成します。サーバーはGoogle App Engine上で動作し、Google Cloud Datastoreを永続化に使用します。
+これは「共円」パズルゲーム用のGo製REST APIサーバーです。プレイヤーはグリッド上に石を配置し、ちょうど4つの石で円や直線を形成します。サーバーはCloud Run上で動作し、DatastoreモードのFirestore（既存Datastoreデータと互換）を永続化に使用します。
 
 ### コアゲームロジック
 - **共円判定**: メインアルゴリズム（`models/kyouen.go`）が4つの石が有効な共円（円または直線）を形成するかを判定
@@ -15,11 +15,15 @@
 
 ### ローカル開発
 ```bash
-# データストアエミュレーターを使用したローカル開発サーバーの起動
+# データストアエミュレーターを使用したローカル開発サーバーの起動（レガシーApp Engine）
 dev_appserver.py app.yaml --datastore_path=`pwd`/database/db.datastore -A my-android-server --support_datastore_emulator True --enable_host_checking=false
 
+# 新しいCloud Run対応サーバーの起動
+go run main_v2.go  # 本番Datastoreに接続
+go run cmd/demo_server/main.go  # デモデータで動作確認
+
 # ローカルサーバーへのアクセス: http://localhost:8080/
-# 管理コンソールへのアクセス: http://localhost:8000/
+# 管理コンソールへのアクセス: http://localhost:8000/ (App Engineのみ)
 ```
 
 ### テスト
@@ -52,11 +56,12 @@ rm -rf tmp
 
 ### デプロイ
 ```bash
-# 本番環境へのデプロイ（テスト用にno-promote）
+# レガシーApp Engine環境へのデプロイ
 gcloud app deploy --no-promote
-
-# dispatch設定のデプロイ
 gcloud app deploy dispatch.yaml
+
+# 新しいCloud Run環境へのデプロイ（Docker化が必要）
+# TODO: Dockerfileの作成とCloud Runデプロイ手順を追加
 ```
 
 ### Swagger UI
@@ -86,19 +91,27 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `"2"`: 白石（ユーザーの解答）
 
 ### データベース
-- **Google Cloud Datastore**: メインの永続化レイヤー
-- **プロジェクトID**: `my-android-server`（db/db.goにハードコード）
+- **DatastoreモードのFirestore**: 既存Datastoreデータと互換性を保持
+- **プロジェクトID**: `my-android-server`（services/datastore.goで設定）
 - **ローカル開発**: ファイルベースストレージのデータストアエミュレーターを使用
 
 ### 主要ハンドラー
+**レガシーハンドラー（App Engine）:**
 - `handlers/stages_handler.go`: 共円検証付きのステージCRUD
 - `handlers/stages/stage_no/clear_handler.go`: ステージ完了追跡
 - `handlers/users/login_handler.go`: Twitter OAuth認証
 - `handlers/statics_handler.go`: グローバル統計
 
+**新しいハンドラー（Cloud Run + Gin）:**
+- `handlers/v2/stages.go`: 共円検証付きのステージCRUD（Gin対応）
+- `handlers/v2/statics.go`: グローバル統計（Gin対応）
+- `services/datastore.go`: Datastoreサービス層
+
 ## 重要ファイル
 - `models/kyouen.go`: 共円判定のコアゲームロジック
-- `main.go`: ルーティングとCORSミドルウェアを含むサーバー設定
+- `main.go`: レガシーApp Engineサーバー設定
+- `main_v2.go`: 新しいCloud Run + Ginサーバー設定
+- `cmd/demo_server/main.go`: 認証不要のデモサーバー
 - `docs/specs/index.yaml`: OpenAPI仕様
-- `app.yaml`: Google App Engine設定
-- `secret.yaml`: OAuthキー用の環境変数（設定が必要）
+- `app.yaml`: Google App Engine設定（レガシー）
+- `tasks/datastore-mode-migration.md`: 移行戦略ドキュメント

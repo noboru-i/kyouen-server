@@ -5,44 +5,38 @@ import (
 	"log"
 	"os"
 
-	"cloud.google.com/go/firestore"
-	"google.golang.org/api/iterator"
+	"cloud.google.com/go/datastore"
 )
 
-func SetupFirestoreTest() *firestore.Client {
+func SetupDatastoreTest() *datastore.Client {
 	// Set emulator host for testing
-	os.Setenv("FIRESTORE_EMULATOR_HOST", "localhost:8080")
+	os.Setenv("DATASTORE_EMULATOR_HOST", "localhost:8081")
 	
 	ctx := context.Background()
-	client, err := firestore.NewClient(ctx, "test-project")
+	client, err := datastore.NewClient(ctx, "test-project")
 	if err != nil {
 		log.Fatal(err)
 	}
 	return client
 }
 
-func CleanupFirestore(client *firestore.Client) {
+func CleanupDatastore(client *datastore.Client) {
 	ctx := context.Background()
-	collections := []string{"stages", "users", "stage_users", "summaries"}
+	entities := []string{"KyouenPuzzle", "User", "StageUser", "KyouenPuzzleSummary"}
 	
-	for _, collection := range collections {
-		iter := client.Collection(collection).Documents(ctx)
-		batch := client.Batch()
-		
-		for {
-			doc, err := iter.Next()
-			if err == iterator.Done {
-				break
-			}
-			if err != nil {
-				log.Printf("Error getting document: %v", err)
-				continue
-			}
-			batch.Delete(doc.Ref)
+	for _, entityKind := range entities {
+		query := datastore.NewQuery(entityKind).KeysOnly()
+		keys, err := client.GetAll(ctx, query, nil)
+		if err != nil {
+			log.Printf("Error getting keys for %s: %v", entityKind, err)
+			continue
 		}
 		
-		if _, err := batch.Commit(ctx); err != nil {
-			log.Printf("Error cleaning up collection %s: %v", collection, err)
+		if len(keys) > 0 {
+			err = client.DeleteMulti(ctx, keys)
+			if err != nil {
+				log.Printf("Error cleaning up %s: %v", entityKind, err)
+			}
 		}
 	}
 }

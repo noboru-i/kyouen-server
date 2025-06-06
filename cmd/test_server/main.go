@@ -11,23 +11,35 @@ import (
 	"kyouen-server/config"
 	handlers "kyouen-server/handlers/v2"
 	"kyouen-server/middleware"
+	"kyouen-server/services"
 )
 
 type App struct {
-	Config *config.Config
+	Config           *config.Config
+	DatastoreService *services.DatastoreService
 }
 
 func main() {
 	// Set environment variables for testing
-	os.Setenv("GOOGLE_CLOUD_PROJECT", "test-project")
+	os.Setenv("GOOGLE_CLOUD_PROJECT", "my-android-server")
 	os.Setenv("GIN_MODE", "debug")
+	// Comment out emulator for production testing
+	// os.Setenv("DATASTORE_EMULATOR_HOST", "localhost:8081")
 	
 	// Load configuration
 	cfg := config.Load()
 	
-	// Create application instance (without Firestore for now)
+	// Initialize Datastore service
+	datastoreService, err := services.NewDatastoreService(cfg.ProjectID)
+	if err != nil {
+		log.Fatalf("Failed to initialize Datastore service: %v", err)
+	}
+	defer datastoreService.Close()
+	
+	// Create application instance
 	app := &App{
-		Config: cfg,
+		Config:           cfg,
+		DatastoreService: datastoreService,
 	}
 	
 	// Set Gin mode
@@ -81,24 +93,24 @@ func setupRouter(app *App) *gin.Engine {
 		})
 	})
 	
-	// API v2 routes (with nil Firestore service for testing)
+	// API v2 routes
 	v2 := router.Group("/v2")
 	{
 		// Statistics endpoint
-		v2.GET("/statics", handlers.GetStatics(nil))
+		v2.GET("/statics", handlers.GetStatics(app.DatastoreService))
 		
 		// Stages endpoints
 		stages := v2.Group("/stages")
 		{
-			stages.GET("", handlers.GetStages(nil))
-			stages.POST("", handlers.CreateStage(nil))
-			stages.POST("/:stageNo/clear", handlers.ClearStage(nil))
+			stages.GET("", handlers.GetStages(app.DatastoreService))
+			stages.POST("", handlers.CreateStage(app.DatastoreService))
+			stages.POST("/:stageNo/clear", handlers.ClearStage(app.DatastoreService))
 		}
 		
 		// Users endpoints
 		users := v2.Group("/users")
 		{
-			users.POST("/login", handlers.Login(nil, app.Config))
+			users.POST("/login", handlers.Login(app.DatastoreService, app.Config))
 		}
 	}
 	

@@ -7,14 +7,17 @@ import (
 	"kyouen-server/services"
 )
 
-func GetStatics(firestoreService *services.FirestoreService) gin.HandlerFunc {
+func GetStatics(datastoreService *services.DatastoreService) gin.HandlerFunc {
 	return func(c *gin.Context) {
-		// TODO: Implement actual statistics retrieval from Firestore
-		// For now, return a placeholder response
+		summary, err := datastoreService.GetSummary()
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+			return
+		}
+		
 		c.JSON(http.StatusOK, gin.H{
-			"count":         0,
-			"lastUpdatedAt": "2024-01-01T00:00:00Z",
-			"message":       "Statistics endpoint migrated to Firestore (placeholder)",
+			"count":        summary.Count,
+			"lastUpdatedAt": summary.LastDate,
 		})
 	}
 }
