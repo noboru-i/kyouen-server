@@ -15,9 +15,15 @@
 ### 前提条件
 
 - Go 1.23以上
-- Docker (Cloud Runデプロイ用)
-- Google Cloud SDK
-- プロジェクトID: `my-android-server`
+- **GitHub CLI** (`gh`) - デプロイスクリプト用
+- **Google Cloud Projects:**
+  - **DEV環境**: `api-project-732262258565`
+  - **本番環境**: `my-android-server`
+
+**デプロイに必要なツール:**
+- GitHub CLI: `brew install gh` (macOS) / `sudo apt install gh` (Ubuntu)
+- Docker: GitHub Actionsで自動実行（ローカル不要）
+- Google Cloud SDK: GitHub Actionsで自動設定（ローカル不要）
 
 ### ローカル開発
 
@@ -87,22 +93,36 @@ POST /v2/users/login        # ログイン
 
 #### 自動デプロイ（推奨）
 ```bash
-./scripts/deploy.sh
+# 前提: GitHub CLIのインストールと認証が必要
+# brew install gh && gh auth login
+
+# DEV環境にデプロイ（デフォルト）
+./scripts/deploy.sh dev
+
+# 本番環境にデプロイ（確認付き）
+./scripts/deploy.sh prod
 ```
+
+**scripts/deploy.sh の仕組み:**
+- GitHub CLI (`gh`) を使用してGitHub Actionsワークフローを実行
+- ローカルでのDocker build/pushは不要
+- 統一されたCI/CDパイプラインを活用
+- デプロイ進捗をリアルタイムで監視可能
 
 #### Cloud Build使用
 ```bash
 gcloud builds submit --config cloudbuild.yaml
 ```
 
-#### 手動デプロイ
+#### 手動デプロイ例（DEV環境）
 ```bash
-docker build -t gcr.io/my-android-server/kyouen-server:latest .
-docker push gcr.io/my-android-server/kyouen-server:latest
-gcloud run deploy kyouen-server \
-  --image gcr.io/my-android-server/kyouen-server:latest \
+docker build -t gcr.io/api-project-732262258565/kyouen-server:latest .
+docker push gcr.io/api-project-732262258565/kyouen-server:latest
+gcloud run deploy kyouen-server-dev \
+  --image gcr.io/api-project-732262258565/kyouen-server:latest \
   --region asia-northeast1 \
-  --allow-unauthenticated
+  --allow-unauthenticated \
+  --set-env-vars GOOGLE_CLOUD_PROJECT=api-project-732262258565,ENVIRONMENT=dev
 ```
 
 
@@ -139,9 +159,11 @@ go tool cover -html=coverage.out
   - 全エントリーポイントのビルド確認
   - Dockerイメージビルドテスト
 
-- **自動デプロイ** (`.github/workflows/deploy.yml`)
-  - mainブランチプッシュ時の自動Cloud Runデプロイ
-  - Workload Identity認証
+- **自動デプロイ**
+  - **DEV環境** (`.github/workflows/deploy-dev.yml`): mainブランチ自動デプロイ
+  - **本番環境** (`.github/workflows/deploy-prod.yml`): 手動実行 + 確認入力必須
+  - **共通処理** (`.github/workflows/deploy-common.yml`): 再利用可能ワークフロー
+  - Workload Identity認証（環境別）
   - デプロイ後のヘルスチェック
 
 ## 📚 OpenAPI (Swagger)
@@ -198,7 +220,15 @@ kyouen-server/
 
 ### 必須設定
 ```bash
+# 本番環境
 GOOGLE_CLOUD_PROJECT=my-android-server
+ENVIRONMENT=prod
+
+# DEV環境
+GOOGLE_CLOUD_PROJECT=api-project-732262258565
+ENVIRONMENT=dev
+
+# 共通
 PORT=8080
 ```
 

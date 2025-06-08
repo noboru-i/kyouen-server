@@ -3,7 +3,7 @@ name: Kyouen Server CI
 
 on:
   push:
-    branches: [ "main", "convert" ]
+    branches: [ "main" ]
   pull_request:
     branches: [ "main" ]
 

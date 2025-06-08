@@ -1,46 +1,66 @@
 #!/bin/bash
 
-# Cloud Run デプロイスクリプト
+# Cloud Run デプロイスクリプト - GitHub Actions ラッパー
 set -e
 
-PROJECT_ID="my-android-server"
-SERVICE_NAME="kyouen-server"
-REGION="asia-northeast1"
+ENVIRONMENT=${1:-dev}
 
-echo "🚀 Starting Cloud Run deployment for $SERVICE_NAME"
-
-# プロジェクトIDが設定されているか確認
-if [ -z "$PROJECT_ID" ]; then
-    echo "❌ Error: PROJECT_ID is not set"
+# GitHub CLIがインストールされているかチェック
+if ! command -v gh &> /dev/null; then
+    echo "❌ GitHub CLI (gh) が必要です。以下でインストールしてください："
+    echo "  macOS: brew install gh"
+    echo "  Ubuntu: sudo apt install gh"
+    echo "  詳細: https://cli.github.com/"
     exit 1
 fi
 
-# gcloudプロジェクトを設定
-echo "📋 Setting gcloud project to $PROJECT_ID"
-gcloud config set project $PROJECT_ID
+# GitHub認証チェック
+if ! gh auth status &> /dev/null; then
+    echo "❌ GitHub認証が必要です。以下のコマンドを実行してください："
+    echo "  gh auth login"
+    exit 1
+fi
 
-# Dockerイメージをビルド
-echo "🔨 Building Docker image"
-docker build -t gcr.io/$PROJECT_ID/$SERVICE_NAME:latest .
+echo "🚀 Starting deployment via GitHub Actions"
+echo "📋 Environment: $ENVIRONMENT"
 
-# Container Registryにプッシュ
-echo "📤 Pushing image to Container Registry"
-docker push gcr.io/$PROJECT_ID/$SERVICE_NAME:latest
+if [ "$ENVIRONMENT" = "dev" ]; then
+    echo "🧪 Triggering DEV environment deployment..."
+    gh workflow run deploy-dev.yml
+    echo "✅ DEV deployment workflow triggered!"
+    echo "📊 進捗確認: gh run watch"
+    echo "🔗 GitHub Actions: https://github.com/$(gh repo view --json owner,name -q '.owner.login + "/" + .name')/actions"
+    
+elif [ "$ENVIRONMENT" = "prod" ]; then
+    echo "🚨 本番環境へのデプロイを開始します"
+    echo "⚠️  この操作は本番環境に影響します"
+    echo ""
+    read -p "本当に本番環境にデプロイしますか？ 'deploy' と入力してください: " confirm
+    
+    if [ "$confirm" = "deploy" ]; then
+        echo "🚀 Triggering PRODUCTION deployment..."
+        gh workflow run deploy-prod.yml -f confirm=deploy
+        echo "✅ Production deployment workflow triggered!"
+        echo "📊 進捗確認: gh run watch"
+        echo "🔗 GitHub Actions: https://github.com/$(gh repo view --json owner,name -q '.owner.login + "/" + .name')/actions"
+    else
+        echo "❌ デプロイをキャンセルしました"
+        echo "   ('deploy' と正確に入力する必要があります)"
+        exit 1
+    fi
+    
+else
+    echo "❌ Error: Invalid environment '$ENVIRONMENT'"
+    echo "Usage: $0 [dev|prod]"
+    echo ""
+    echo "Examples:"
+    echo "  $0 dev   # DEV環境にデプロイ"
+    echo "  $0 prod  # 本番環境にデプロイ（確認付き）"
+    exit 1
+fi
 
-# Cloud Runにデプロイ
-echo "🌐 Deploying to Cloud Run"
-gcloud run deploy $SERVICE_NAME \
-  --image gcr.io/$PROJECT_ID/$SERVICE_NAME:latest \
-  --region $REGION \
-  --platform managed \
-  --allow-unauthenticated \
-  --port 8080 \
-  --set-env-vars GOOGLE_CLOUD_PROJECT=$PROJECT_ID \
-  --memory 512Mi \
-  --cpu 1 \
-  --max-instances 10
-
-echo "✅ Deployment completed successfully!"
 echo ""
-echo "🔗 Service URL:"
-gcloud run services describe $SERVICE_NAME --region=$REGION --format="value(status.url)"
+echo "💡 Tips:"
+echo "  - ワークフロー一覧: gh run list"
+echo "  - ログ確認: gh run view --log"
+echo "  - リアルタイム監視: gh run watch"

@@ -24,9 +24,15 @@ type FirebaseConfig struct {
 }
 
 func Load() *Config {
+	// Determine default project ID based on environment
+	defaultProjectID := "my-android-server" // Production default
+	if env := getEnv("ENVIRONMENT", ""); env == "dev" {
+		defaultProjectID = "api-project-732262258565"
+	}
+	
 	config := &Config{
 		Port:        getEnv("PORT", "8080"),
-		ProjectID:   getEnv("GOOGLE_CLOUD_PROJECT", "my-android-server"),
+		ProjectID:   getEnv("GOOGLE_CLOUD_PROJECT", defaultProjectID),
 		Environment: getEnv("GIN_MODE", "debug"),
 		TwitterConfig: TwitterConfig{
 			ConsumerKey:    getEnv("CONSUMER_KEY", ""),

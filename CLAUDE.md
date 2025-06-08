@@ -53,15 +53,14 @@ rm -rf tmp
 
 ### デプロイ
 ```bash
-# Cloud Run環境へのデプロイ
-./scripts/deploy.sh  # 自動デプロイスクリプト
+# GitHub Actions経由でのデプロイ（推奨）
+./scripts/deploy.sh dev   # DEV環境（デフォルト）
+./scripts/deploy.sh prod  # 本番環境（確認付き）
 
-# 手動デプロイ
-docker build -t gcr.io/my-android-server/kyouen-server:latest .
-docker push gcr.io/my-android-server/kyouen-server:latest
-gcloud run deploy kyouen-server --image gcr.io/my-android-server/kyouen-server:latest --region asia-northeast1
+# 前提条件: GitHub CLI
+brew install gh && gh auth login
 
-# Cloud Build使用（推奨）
+# Cloud Build使用（レガシー）
 gcloud builds submit --config cloudbuild.yaml
 ```
 
@@ -93,7 +92,9 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 
 ### データベース
 - **DatastoreモードのFirestore**: 既存Datastoreデータと互換性を保持
-- **プロジェクトID**: `my-android-server`（services/datastore.goで設定）
+- **プロジェクトID**: 
+  - **DEV環境**: `api-project-732262258565`
+  - **本番環境**: `my-android-server`
 - **ローカル開発**: ファイルベースストレージのデータストアエミュレーターを使用
 
 ### 主要ハンドラー
@@ -112,6 +113,8 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `cloudbuild.yaml`: Cloud Build自動デプロイ設定
 - `scripts/deploy.sh`: Cloud Run手動デプロイスクリプト
 - `.github/workflows/pr_validation.yml`: GitHub Actions CI設定
-- `.github/workflows/deploy.yml`: GitHub Actions CD設定
+- `.github/workflows/deploy-dev.yml`: DEV環境自動デプロイ設定
+- `.github/workflows/deploy-prod.yml`: 本番環境手動デプロイ設定
+- `.github/workflows/deploy-common.yml`: 共通デプロイロジック
 - `tasks/datastore-mode-migration.md`: 移行戦略ドキュメント
 - `tasks/migration-plan.md`: 完了した移行計画ドキュメント

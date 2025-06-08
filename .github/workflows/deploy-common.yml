@@ -1,0 +1,83 @@
+name: Deploy Common Workflow
+
+on:
+  workflow_call:
+    inputs:
+      environment:
+        required: true
+        type: string
+        description: 'Environment to deploy to (dev or prod)'
+      project_id:
+        required: true
+        type: string
+        description: 'Google Cloud Project ID'
+    secrets:
+      wif_provider:
+        required: true
+        description: 'Workload Identity Provider'
+      wif_service_account:
+        required: true
+        description: 'Workload Identity Service Account'
+
+env:
+  SERVICE_NAME: kyouen-server
+  REGION: asia-northeast1
+
+jobs:
+  deploy:
+    name: Deploy to Cloud Run (${{ inputs.environment }})
+    runs-on: ubuntu-latest
+    
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Authenticate to Google Cloud
+      uses: google-github-actions/auth@v2
+      with:
+        workload_identity_provider: ${{ secrets.wif_provider }}
+        service_account: ${{ secrets.wif_service_account }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
+      with:
+        project_id: ${{ inputs.project_id }}
+
+    - name: Configure Docker for GCR
+      run: gcloud auth configure-docker
+
+    - name: Build and push Docker image
+      run: |
+        docker build -t gcr.io/${{ inputs.project_id }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
+        docker push gcr.io/${{ inputs.project_id }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+
+    - name: Deploy to Cloud Run
+      run: |
+        SERVICE_NAME_WITH_ENV="${{ env.SERVICE_NAME }}-${{ inputs.environment }}"
+        
+        gcloud run deploy $SERVICE_NAME_WITH_ENV \
+          --image gcr.io/${{ inputs.project_id }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+          --region ${{ env.REGION }} \
+          --platform managed \
+          --allow-unauthenticated \
+          --port 8080 \
+          --set-env-vars GOOGLE_CLOUD_PROJECT=${{ inputs.project_id }},ENVIRONMENT=${{ inputs.environment }} \
+          --memory 512Mi \
+          --cpu 1 \
+          --max-instances 10
+
+    - name: Get service URL and test deployment
+      run: |
+        SERVICE_NAME_WITH_ENV="${{ env.SERVICE_NAME }}-${{ inputs.environment }}"
+        
+        SERVICE_URL=$(gcloud run services describe $SERVICE_NAME_WITH_ENV --region=${{ env.REGION }} --format="value(status.url)")
+        echo "Service URL: $SERVICE_URL"
+        
+        # Health check
+        curl -f $SERVICE_URL/health || exit 1
+        echo "✅ Deployment to ${{ inputs.environment }} environment successful and health check passed"
+        echo "🔗 Service URL: $SERVICE_URL"
