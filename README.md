@@ -212,8 +212,7 @@ kyouen-server/
 ├── middleware/          # ミドルウェア
 ├── openapi/            # OpenAPI生成ファイル
 ├── docs/               # ドキュメント
-├── scripts/            # デプロイスクリプト
-└── tasks/              # 移行記録
+└── scripts/            # デプロイスクリプト
 ```
 
 ## ⚙️ 環境変数
@@ -264,16 +263,14 @@ PORT=8080
 GIN_MODE=release                    # 本番環境用
 ```
 
-## 🔄 移行履歴
+## 💡 技術スタック
 
 このプロジェクトは以下の技術で構築されています：
 - **プラットフォーム**: Cloud Run (コンテナベース)
 - **フレームワーク**: Gin (Go製高速Webフレームワーク)  
 - **データベース**: DatastoreモードFirestore
-
-詳細は以下のドキュメントを参照：
-- `tasks/migration-plan.md` - 完了した移行計画
-- `tasks/datastore-mode-migration.md` - 移行戦略の変更記録
+- **認証**: Firebase Authentication + Twitter OAuth
+- **デプロイ**: GitHub Actions + Google Cloud Build
 
 ## 🤝 開発について
 

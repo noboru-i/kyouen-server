@@ -116,5 +116,3 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `.github/workflows/deploy-dev.yml`: DEV環境自動デプロイ設定
 - `.github/workflows/deploy-prod.yml`: 本番環境手動デプロイ設定
 - `.github/workflows/deploy-common.yml`: 共通デプロイロジック
-- `tasks/datastore-mode-migration.md`: 移行戦略ドキュメント
-- `tasks/migration-plan.md`: 完了した移行計画ドキュメント
