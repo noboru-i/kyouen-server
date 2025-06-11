@@ -196,6 +196,44 @@ func (s *DatastoreService) UpsertUser(user db.User, userID string) (*db.User, er
 	return &user, nil
 }
 
+// CreateOrUpdateUserFromFirebase creates or updates a user from Firebase authentication data
+func (s *DatastoreService) CreateOrUpdateUserFromFirebase(firebaseUID, screenName, image, twitterUID string) (*db.User, error) {
+	// Try to get existing user
+	existingUser, _, err := s.GetUserByID(firebaseUID)
+	if err != nil {
+		// User doesn't exist, create new one
+		newUser := db.User{
+			UserID:          firebaseUID,
+			ScreenName:      screenName,
+			Image:           image,
+			TwitterUID:      twitterUID,
+			ClearStageCount: 0,
+		}
+		return s.UpsertUser(newUser, firebaseUID)
+	}
+	
+	// User exists, update information if needed
+	updated := false
+	if existingUser.ScreenName != screenName {
+		existingUser.ScreenName = screenName
+		updated = true
+	}
+	if existingUser.Image != image {
+		existingUser.Image = image
+		updated = true
+	}
+	if existingUser.TwitterUID != twitterUID && twitterUID != "" {
+		existingUser.TwitterUID = twitterUID
+		updated = true
+	}
+	
+	if updated {
+		return s.UpsertUser(*existingUser, firebaseUID)
+	}
+	
+	return existingUser, nil
+}
+
 // StageUser operations
 func (s *DatastoreService) CreateStageUser(stageKey *datastore.Key, userKey *datastore.Key) error {
 	// Check if already exists
@@ -232,6 +270,37 @@ func (s *DatastoreService) CreateStageUser(stageKey *datastore.Key, userKey *dat
 	}
 	
 	return nil
+}
+
+// HasStageUser checks if a stage user relation exists
+func (s *DatastoreService) HasStageUser(stageKey *datastore.Key, userKey *datastore.Key) (bool, error) {
+	query := datastore.NewQuery("StageUser").
+		Filter("stage =", stageKey).
+		Filter("user =", userKey).
+		Limit(1)
+	
+	var stageUsers []db.StageUser
+	_, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	if err != nil {
+		return false, fmt.Errorf("failed to check StageUser existence: %w", err)
+	}
+	
+	return len(stageUsers) > 0, nil
+}
+
+// GetClearedStagesByUser gets all cleared stages for a user
+func (s *DatastoreService) GetClearedStagesByUser(userKey *datastore.Key) ([]db.StageUser, error) {
+	query := datastore.NewQuery("StageUser").
+		Filter("user =", userKey).
+		Order("clearDate")
+	
+	var stageUsers []db.StageUser
+	_, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get cleared stages: %w", err)
+	}
+	
+	return stageUsers, nil
 }
 
 func (s *DatastoreService) IncrementUserClearCount(userKey *datastore.Key) error {

@@ -14,8 +14,13 @@ func TestGetStatics(t *testing.T) {
 	// Set Gin to test mode
 	gin.SetMode(gin.TestMode)
 	
-	// Create a mock Datastore service (for now, we'll use nil since it's a placeholder)
-	var datastoreService *services.DatastoreService = nil
+	// Create a test Datastore service
+	datastoreService, err := services.NewDatastoreService("test-project-id")
+	if err != nil {
+		t.Skipf("Skipping test - Datastore not available: %v", err)
+		return
+	}
+	defer datastoreService.Close()
 	
 	// Create a Gin router
 	router := gin.New()
@@ -31,5 +36,4 @@ func TestGetStatics(t *testing.T) {
 	// Assert the response
 	assert.Equal(t, http.StatusOK, resp.Code)
 	assert.Contains(t, resp.Body.String(), "count")
-	assert.Contains(t, resp.Body.String(), "placeholder")
 }

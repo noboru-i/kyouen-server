@@ -20,12 +20,13 @@ type KyouenPuzzle struct {
 }
 
 type User struct {
-	UserID          string `datastore:"userId"`
-	ScreenName      string `datastore:"screenName"`
-	Image           string `datastore:"image"`
-	ClearStageCount int64  `datastore:"clearStageCount"`
+	UserID          string `datastore:"userId"`          // Firebase UID
+	ScreenName      string `datastore:"screenName"`      // Twitter screen name
+	Image           string `datastore:"image"`           // Twitter profile image
+	ClearStageCount int64  `datastore:"clearStageCount"` // Number of cleared stages
+	TwitterUID      string `datastore:"twitterUid"`      // Twitter User ID (for reference)
 
-	// TODO remove later (Don't use it now.)
+	// TODO remove later (Legacy fields - not used in Firebase auth)
 	AccessToken  string `datastore:"accessToken"`
 	AccessSecret string `datastore:"accessSecret"`
 	APIToken     string `datastore:"apiToken"`

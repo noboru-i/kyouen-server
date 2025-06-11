@@ -107,10 +107,16 @@ func setupRouter(app *App) *gin.Engine {
 			stages.POST("/:stageNo/clear", handlers.ClearStage(app.DatastoreService))
 		}
 		
-		// Users endpoints
+		// Users endpoints (test login without Firebase)
 		users := v2.Group("/users")
 		{
-			users.POST("/login", handlers.Login(app.DatastoreService, app.Config))
+			users.POST("/login", func(c *gin.Context) {
+				c.JSON(http.StatusOK, gin.H{
+					"screenName": "test_user",
+					"token":      "test_token",
+					"message":    "Test login - Firebase auth disabled",
+				})
+			})
 		}
 	}
 	

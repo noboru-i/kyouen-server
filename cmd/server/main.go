@@ -16,6 +16,7 @@ import (
 type App struct {
 	Config           *config.Config
 	DatastoreService *services.DatastoreService
+	FirebaseService  *services.FirebaseService
 }
 
 func main() {
@@ -28,11 +29,18 @@ func main() {
 		log.Fatalf("Failed to initialize Datastore service: %v", err)
 	}
 	defer datastoreService.Close()
+
+	// Initialize Firebase service
+	firebaseService, err := services.NewFirebaseService(cfg)
+	if err != nil {
+		log.Fatalf("Failed to initialize Firebase service: %v", err)
+	}
 	
 	// Create application instance
 	app := &App{
 		Config:           cfg,
 		DatastoreService: datastoreService,
+		FirebaseService:  firebaseService,
 	}
 	
 	// Set Gin mode
@@ -90,14 +98,16 @@ func setupRouter(app *App) *gin.Engine {
 		stages := v2.Group("/stages")
 		{
 			stages.GET("", handlers.GetStages(app.DatastoreService))
-			stages.POST("", handlers.CreateStage(app.DatastoreService))
-			stages.POST("/:stageNo/clear", handlers.ClearStage(app.DatastoreService))
+			// Protected endpoints requiring authentication
+			stages.POST("", middleware.FirebaseAuth(app.FirebaseService), handlers.CreateStage(app.DatastoreService))
+			stages.POST("/:stageNo/clear", middleware.FirebaseAuth(app.FirebaseService), handlers.ClearStage(app.DatastoreService))
+			stages.POST("/sync", middleware.FirebaseAuth(app.FirebaseService), handlers.SyncStages(app.DatastoreService))
 		}
 		
 		// Users endpoints
 		users := v2.Group("/users")
 		{
-			users.POST("/login", handlers.Login(app.DatastoreService, app.Config))
+			users.POST("/login", handlers.Login(app.DatastoreService, app.FirebaseService))
 		}
 	}
 	

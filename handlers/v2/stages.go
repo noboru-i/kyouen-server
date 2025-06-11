@@ -7,8 +7,8 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"kyouen-server/config"
 	"kyouen-server/db"
+	"kyouen-server/middleware"
 	"kyouen-server/models"
 	"kyouen-server/openapi"
 	"kyouen-server/services"
@@ -53,6 +53,13 @@ func GetStages(datastoreService *services.DatastoreService) gin.HandlerFunc {
 
 func CreateStage(datastoreService *services.DatastoreService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Get authenticated user from context
+		authUser, exists := middleware.GetAuthenticatedUser(c)
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+			return
+		}
+		
 		var param openapi.NewStage
 		if err := c.ShouldBindJSON(&param); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -86,11 +93,11 @@ func CreateStage(datastoreService *services.DatastoreService) gin.HandlerFunc {
 			return
 		}
 		
-		// Create stage
+		// Create stage with authenticated user as creator
 		newStage := db.KyouenPuzzle{
 			Size:    param.Size,
 			Stage:   param.Stage,
-			Creator: param.Creator,
+			Creator: authUser.Name, // Use authenticated user's name as creator
 		}
 		
 		savedStage, err := datastoreService.CreateStage(newStage)
@@ -112,6 +119,13 @@ func CreateStage(datastoreService *services.DatastoreService) gin.HandlerFunc {
 
 func ClearStage(datastoreService *services.DatastoreService) gin.HandlerFunc {
 	return func(c *gin.Context) {
+		// Get authenticated user from context
+		authUID, exists := middleware.GetAuthenticatedUID(c)
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+			return
+		}
+		
 		stageNo, err := strconv.Atoi(c.Param("stageNo"))
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "invalid stage number"})
@@ -134,7 +148,7 @@ func ClearStage(datastoreService *services.DatastoreService) gin.HandlerFunc {
 		}
 		
 		// Get stage from database
-		stage, _, err := datastoreService.GetStageByNo(stageNo)
+		stage, stageKeys, err := datastoreService.GetStageByNo(stageNo)
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{"error": "stage not found"})
 			return
@@ -146,16 +160,30 @@ func ClearStage(datastoreService *services.DatastoreService) gin.HandlerFunc {
 			return
 		}
 		
-		// For now, return success - TODO: implement user authentication and stage user creation
+		// Get user from database
+		user, userKey, err := datastoreService.GetUserByID(authUID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
+			return
+		}
+		
+		// Create stage user relation to record the clear
+		err = datastoreService.CreateStageUser(stageKeys[0], userKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to record stage clear"})
+			return
+		}
+		
 		c.JSON(http.StatusOK, gin.H{
 			"stageNo": stageNo,
 			"status":  "cleared",
 			"message": "Stage cleared successfully",
+			"user":    user.ScreenName,
 		})
 	}
 }
 
-func Login(datastoreService *services.DatastoreService, cfg *config.Config) gin.HandlerFunc {
+func Login(datastoreService *services.DatastoreService, firebaseService *services.FirebaseService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		var param openapi.LoginParam
 		if err := c.ShouldBindJSON(&param); err != nil {
@@ -163,13 +191,144 @@ func Login(datastoreService *services.DatastoreService, cfg *config.Config) gin.
 			return
 		}
 		
-		// TODO: Implement Twitter OAuth and Firebase token generation
-		// For now, return a placeholder response
-		c.JSON(http.StatusOK, gin.H{
-			"screenName": "placeholder_user",
-			"token":      "placeholder_token",
-			"message":    "Login endpoint implementation pending",
-		})
+		// Verify Firebase ID token
+		ctx := c.Request.Context()
+		token, err := firebaseService.VerifyIDToken(ctx, param.Token)
+		if err != nil {
+			c.JSON(http.StatusUnauthorized, gin.H{
+				"error": "Invalid Firebase ID token",
+			})
+			return
+		}
+		
+		// Get user information from Firebase Auth
+		userRecord, err := firebaseService.GetUserByUID(ctx, token.UID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to get user information",
+			})
+			return
+		}
+		
+		// Extract Twitter information
+		screenName := userRecord.DisplayName
+		image := userRecord.PhotoURL
+		twitterUID := ""
+		
+		// Extract Twitter UID from custom claims
+		if claims, ok := token.Claims["firebase"].(map[string]interface{}); ok {
+			if identities, ok := claims["identities"].(map[string]interface{}); ok {
+				if twitterIds, ok := identities["twitter.com"].([]interface{}); ok && len(twitterIds) > 0 {
+					if twitterID, ok := twitterIds[0].(string); ok {
+						twitterUID = twitterID
+					}
+				}
+			}
+		}
+		
+		// Fallback: try to get screen name from Twitter provider data
+		if screenName == "" {
+			for _, provider := range userRecord.ProviderUserInfo {
+				if provider.ProviderID == "twitter.com" {
+					screenName = provider.DisplayName
+					if image == "" {
+						image = provider.PhotoURL
+					}
+					if twitterUID == "" {
+						twitterUID = provider.UID
+					}
+					break
+				}
+			}
+		}
+		
+		// Create or update user in Datastore
+		user, err := datastoreService.CreateOrUpdateUserFromFirebase(
+			token.UID,
+			screenName,
+			image,
+			twitterUID,
+		)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error": "Failed to create or update user",
+			})
+			return
+		}
+		
+		// Return successful login response
+		response := openapi.LoginResult{
+			ScreenName: user.ScreenName,
+			Token:      param.Token, // Return the same Firebase ID token
+		}
+		
+		c.JSON(http.StatusOK, response)
+	}
+}
+
+func SyncStages(datastoreService *services.DatastoreService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Get authenticated user from context
+		authUID, exists := middleware.GetAuthenticatedUID(c)
+		if !exists {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+			return
+		}
+		
+		var clientClearedStages []openapi.ClearedStage
+		if err := c.ShouldBindJSON(&clientClearedStages); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+			return
+		}
+		
+		// Get user from database
+		_, userKey, err := datastoreService.GetUserByID(authUID)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "user not found"})
+			return
+		}
+		
+		// For each client cleared stage, create stage user relation if not exists
+		for _, clearedStage := range clientClearedStages {
+			// Get stage by stage number
+			_, stageKeys, err := datastoreService.GetStageByNo(int(clearedStage.StageNo))
+			if err != nil {
+				// Skip stages that don't exist
+				continue
+			}
+			
+			// Check if stage user relation already exists
+			exists, err := datastoreService.HasStageUser(stageKeys[0], userKey)
+			if err != nil {
+				continue
+			}
+			
+			if !exists {
+				// Create stage user relation
+				err = datastoreService.CreateStageUser(stageKeys[0], userKey)
+				if err != nil {
+					continue
+				}
+			}
+		}
+		
+		// Get all cleared stages for this user from server
+		serverClearedStages, err := datastoreService.GetClearedStagesByUser(userKey)
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to get cleared stages"})
+			return
+		}
+		
+		// Convert to response format
+		var response []openapi.ClearedStage
+		for _, stageUser := range serverClearedStages {
+			response = append(response, openapi.ClearedStage{
+				StageNo:   stageUser.StageKey.ID,
+				ClearDate: stageUser.ClearDate,
+			})
+		}
+		
+		c.JSON(http.StatusOK, response)
 	}
 }
 
