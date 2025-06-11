@@ -218,7 +218,38 @@ kyouen-server/
 
 ## ⚙️ 環境変数
 
-### 必須設定
+### ローカル開発用設定
+
+`.env.example`を`.env`にコピーしてローカル環境用の設定を行ってください：
+
+```bash
+cp .env.example .env
+```
+
+`.env`ファイルの設定項目：
+
+```bash
+# サーバー設定
+PORT=8080                          # サーバーポート
+GIN_MODE=debug                     # 開発時はdebug、本番ではrelease
+
+# Google Cloud設定
+GOOGLE_CLOUD_PROJECT=my-android-server  # プロジェクトID
+FIRESTORE_EMULATOR_HOST=localhost:8080  # エミュレータ使用時
+
+# Twitter OAuth設定
+CONSUMER_KEY=your_twitter_consumer_key
+CONSUMER_SECRET=your_twitter_consumer_secret
+
+# Firebase設定
+FIREBASE_CREDENTIALS_FILE=path/to/service-account.json
+```
+
+**注意**: `.env`ファイルは`.gitignore`に含まれているため、機密情報を安全に管理できます。
+
+### Cloud Run用環境変数
+
+#### 必須設定
 ```bash
 # 本番環境
 GOOGLE_CLOUD_PROJECT=my-android-server
@@ -232,7 +263,7 @@ ENVIRONMENT=dev
 PORT=8080
 ```
 
-### オプション設定
+#### オプション設定
 ```bash
 GIN_MODE=release                    # 本番環境用
 CONSUMER_KEY=your_twitter_key       # Twitter OAuth
