@@ -1,4 +1,4 @@
-package services
+package datastore
 
 import (
 	"context"
@@ -6,7 +6,6 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
-	"kyouen-server/db"
 )
 
 type DatastoreService struct {
@@ -37,14 +36,14 @@ func (s *DatastoreService) GetClient() *datastore.Client {
 }
 
 // Statistics operations
-func (s *DatastoreService) GetSummary() (*db.KyouenPuzzleSummary, error) {
+func (s *DatastoreService) GetSummary() (*KyouenPuzzleSummary, error) {
 	key := datastore.IDKey("KyouenPuzzleSummary", 1, nil)
-	var summary db.KyouenPuzzleSummary
+	var summary KyouenPuzzleSummary
 	
 	err := s.client.Get(s.ctx, key, &summary)
 	if err == datastore.ErrNoSuchEntity {
 		// Create initial summary if it doesn't exist
-		summary = db.KyouenPuzzleSummary{
+		summary = KyouenPuzzleSummary{
 			Count:    0,
 			LastDate: time.Now(),
 		}
@@ -60,8 +59,8 @@ func (s *DatastoreService) GetSummary() (*db.KyouenPuzzleSummary, error) {
 }
 
 // Stages operations
-func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]db.KyouenPuzzle, error) {
-	var stages []db.KyouenPuzzle
+func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]KyouenPuzzle, error) {
+	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").
 		Filter("stageNo >=", startStageNo).
 		Order("stageNo").
@@ -75,8 +74,8 @@ func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]db.KyouenPu
 	return stages, nil
 }
 
-func (s *DatastoreService) GetStageByNo(stageNo int) (*db.KyouenPuzzle, []*datastore.Key, error) {
-	var stages []db.KyouenPuzzle
+func (s *DatastoreService) GetStageByNo(stageNo int) (*KyouenPuzzle, []*datastore.Key, error) {
+	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").Filter("stageNo =", stageNo).Limit(1)
 	
 	keys, err := s.client.GetAll(s.ctx, query, &stages)
@@ -91,7 +90,7 @@ func (s *DatastoreService) GetStageByNo(stageNo int) (*db.KyouenPuzzle, []*datas
 	return &stages[0], keys, nil
 }
 
-func (s *DatastoreService) CreateStage(stage db.KyouenPuzzle) (*db.KyouenPuzzle, error) {
+func (s *DatastoreService) CreateStage(stage KyouenPuzzle) (*KyouenPuzzle, error) {
 	// Get next stage number
 	nextStageNo, err := s.getNextStageNo()
 	if err != nil {
@@ -117,7 +116,7 @@ func (s *DatastoreService) CreateStage(stage db.KyouenPuzzle) (*db.KyouenPuzzle,
 }
 
 func (s *DatastoreService) getNextStageNo() (int64, error) {
-	var stages []db.KyouenPuzzle
+	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").Order("-stageNo").Limit(1)
 	
 	_, err := s.client.GetAll(s.ctx, query, &stages)
@@ -145,7 +144,7 @@ func (s *DatastoreService) updateSummary() error {
 	key := datastore.IDKey("KyouenPuzzleSummary", 1, nil)
 	
 	_, err := s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
-		var summary db.KyouenPuzzleSummary
+		var summary KyouenPuzzleSummary
 		err := tx.Get(key, &summary)
 		if err == datastore.ErrNoSuchEntity {
 			// Count all stages
@@ -154,7 +153,7 @@ func (s *DatastoreService) updateSummary() error {
 			if err != nil {
 				return fmt.Errorf("failed to count stages: %w", err)
 			}
-			summary = db.KyouenPuzzleSummary{
+			summary = KyouenPuzzleSummary{
 				Count:    int64(count),
 				LastDate: time.Now(),
 			}
@@ -173,9 +172,9 @@ func (s *DatastoreService) updateSummary() error {
 }
 
 // Users operations
-func (s *DatastoreService) GetUserByID(userID string) (*db.User, *datastore.Key, error) {
+func (s *DatastoreService) GetUserByID(userID string) (*User, *datastore.Key, error) {
 	key := datastore.NameKey("User", "KEY"+userID, nil)
-	var user db.User
+	var user User
 	
 	err := s.client.Get(s.ctx, key, &user)
 	if err == datastore.ErrNoSuchEntity {
@@ -187,7 +186,7 @@ func (s *DatastoreService) GetUserByID(userID string) (*db.User, *datastore.Key,
 	return &user, key, nil
 }
 
-func (s *DatastoreService) UpsertUser(user db.User, userID string) (*db.User, error) {
+func (s *DatastoreService) UpsertUser(user User, userID string) (*User, error) {
 	key := datastore.NameKey("User", "KEY"+userID, nil)
 	_, err := s.client.Put(s.ctx, key, &user)
 	if err != nil {
@@ -197,12 +196,12 @@ func (s *DatastoreService) UpsertUser(user db.User, userID string) (*db.User, er
 }
 
 // CreateOrUpdateUserFromFirebase creates or updates a user from Firebase authentication data
-func (s *DatastoreService) CreateOrUpdateUserFromFirebase(firebaseUID, screenName, image, twitterUID string) (*db.User, error) {
+func (s *DatastoreService) CreateOrUpdateUserFromFirebase(firebaseUID, screenName, image, twitterUID string) (*User, error) {
 	// Try to get existing user
 	existingUser, _, err := s.GetUserByID(firebaseUID)
 	if err != nil {
 		// User doesn't exist, create new one
-		newUser := db.User{
+		newUser := User{
 			UserID:          firebaseUID,
 			ScreenName:      screenName,
 			Image:           image,
@@ -237,7 +236,7 @@ func (s *DatastoreService) CreateOrUpdateUserFromFirebase(firebaseUID, screenNam
 // StageUser operations
 func (s *DatastoreService) CreateStageUser(stageKey *datastore.Key, userKey *datastore.Key) error {
 	// Check if already exists
-	var stageUsers []db.StageUser
+	var stageUsers []StageUser
 	query := datastore.NewQuery("StageUser").
 		Filter("stage =", stageKey).
 		Filter("user =", userKey).
@@ -250,7 +249,7 @@ func (s *DatastoreService) CreateStageUser(stageKey *datastore.Key, userKey *dat
 	
 	if len(stageUsers) == 0 {
 		// Create new StageUser
-		stageUser := db.StageUser{
+		stageUser := StageUser{
 			StageKey:  stageKey,
 			UserKey:   userKey,
 			ClearDate: time.Now(),
@@ -279,7 +278,7 @@ func (s *DatastoreService) HasStageUser(stageKey *datastore.Key, userKey *datast
 		Filter("user =", userKey).
 		Limit(1)
 	
-	var stageUsers []db.StageUser
+	var stageUsers []StageUser
 	_, err := s.client.GetAll(s.ctx, query, &stageUsers)
 	if err != nil {
 		return false, fmt.Errorf("failed to check StageUser existence: %w", err)
@@ -289,12 +288,12 @@ func (s *DatastoreService) HasStageUser(stageKey *datastore.Key, userKey *datast
 }
 
 // GetClearedStagesByUser gets all cleared stages for a user
-func (s *DatastoreService) GetClearedStagesByUser(userKey *datastore.Key) ([]db.StageUser, error) {
+func (s *DatastoreService) GetClearedStagesByUser(userKey *datastore.Key) ([]StageUser, error) {
 	query := datastore.NewQuery("StageUser").
 		Filter("user =", userKey).
 		Order("clearDate")
 	
-	var stageUsers []db.StageUser
+	var stageUsers []StageUser
 	_, err := s.client.GetAll(s.ctx, query, &stageUsers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cleared stages: %w", err)
@@ -305,7 +304,7 @@ func (s *DatastoreService) GetClearedStagesByUser(userKey *datastore.Key) ([]db.
 
 func (s *DatastoreService) IncrementUserClearCount(userKey *datastore.Key) error {
 	_, err := s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
-		var user db.User
+		var user User
 		err := tx.Get(userKey, &user)
 		if err != nil {
 			return fmt.Errorf("failed to get user: %w", err)

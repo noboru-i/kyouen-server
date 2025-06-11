@@ -7,16 +7,18 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	
-	"kyouen-server/config"
-	handlers "kyouen-server/handlers/v2"
-	"kyouen-server/middleware"
-	"kyouen-server/services"
+	"kyouen-server/internal/config"
+	"kyouen-server/internal/auth"
+	"kyouen-server/internal/datastore"
+	"kyouen-server/internal/middleware"
+	"kyouen-server/internal/stage"
+	"kyouen-server/internal/statics"
 )
 
 type App struct {
 	Config           *config.Config
-	DatastoreService *services.DatastoreService
-	FirebaseService  *services.FirebaseService
+	DatastoreService *datastore.DatastoreService
+	FirebaseService  *datastore.FirebaseService
 }
 
 func main() {
@@ -24,14 +26,14 @@ func main() {
 	cfg := config.Load()
 	
 	// Initialize Datastore service
-	datastoreService, err := services.NewDatastoreService(cfg.ProjectID)
+	datastoreService, err := datastore.NewDatastoreService(cfg.ProjectID)
 	if err != nil {
 		log.Fatalf("Failed to initialize Datastore service: %v", err)
 	}
 	defer datastoreService.Close()
 
 	// Initialize Firebase service
-	firebaseService, err := services.NewFirebaseService(cfg)
+	firebaseService, err := datastore.NewFirebaseService(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize Firebase service: %v", err)
 	}
@@ -88,26 +90,30 @@ func setupRouter(app *App) *gin.Engine {
 		})
 	})
 	
+	// Initialize handlers
+	stageHandler := stage.NewHandler(app.DatastoreService, app.FirebaseService)
+	staticsHandler := statics.NewHandler(app.DatastoreService)
+	
 	// API v2 routes
 	v2 := router.Group("/v2")
 	{
 		// Statistics endpoint
-		v2.GET("/statics", handlers.GetStatics(app.DatastoreService))
+		v2.GET("/statics", staticsHandler.GetStatics)
 		
 		// Stages endpoints
 		stages := v2.Group("/stages")
 		{
-			stages.GET("", handlers.GetStages(app.DatastoreService))
+			stages.GET("", stageHandler.GetStages)
 			// Protected endpoints requiring authentication
-			stages.POST("", middleware.FirebaseAuth(app.FirebaseService), handlers.CreateStage(app.DatastoreService))
-			stages.POST("/:stageNo/clear", middleware.FirebaseAuth(app.FirebaseService), handlers.ClearStage(app.DatastoreService))
-			stages.POST("/sync", middleware.FirebaseAuth(app.FirebaseService), handlers.SyncStages(app.DatastoreService))
+			stages.POST("", auth.FirebaseAuth(app.FirebaseService), stageHandler.CreateStage)
+			stages.POST("/:stageNo/clear", auth.FirebaseAuth(app.FirebaseService), stageHandler.ClearStage)
+			stages.POST("/sync", auth.FirebaseAuth(app.FirebaseService), stageHandler.SyncStages)
 		}
 		
 		// Users endpoints
 		users := v2.Group("/users")
 		{
-			users.POST("/login", handlers.Login(app.DatastoreService, app.FirebaseService))
+			users.POST("/login", stageHandler.Login)
 		}
 	}
 	

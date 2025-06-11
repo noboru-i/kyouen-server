@@ -1,4 +1,4 @@
-package services
+package datastore
 
 import (
 	"context"
@@ -7,7 +7,7 @@ import (
 	firebase "firebase.google.com/go/v4"
 	"firebase.google.com/go/v4/auth"
 	"google.golang.org/api/option"
-	"kyouen-server/config"
+	"kyouen-server/internal/config"
 )
 
 // FirebaseService handles Firebase Authentication operations

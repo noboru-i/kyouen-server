@@ -1,4 +1,4 @@
-package middleware
+package auth
 
 import (
 	"context"
@@ -6,7 +6,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
-	"kyouen-server/services"
+	"kyouen-server/internal/datastore"
 )
 
 const (
@@ -26,7 +26,7 @@ type AuthenticatedUser struct {
 }
 
 // FirebaseAuth creates a middleware that validates Firebase ID tokens
-func FirebaseAuth(firebaseService *services.FirebaseService) gin.HandlerFunc {
+func FirebaseAuth(firebaseService *datastore.FirebaseService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Extract Bearer token from Authorization header
 		authHeader := c.GetHeader("Authorization")

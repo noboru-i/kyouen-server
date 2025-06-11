@@ -9,9 +9,9 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	
-	"kyouen-server/config"
-	"kyouen-server/middleware"
-	"kyouen-server/openapi"
+	"kyouen-server/internal/config"
+	"kyouen-server/internal/middleware"
+	"kyouen-server/internal/generated/openapi"
 )
 
 func main() {

@@ -8,15 +8,15 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 	
-	"kyouen-server/config"
-	handlers "kyouen-server/handlers/v2"
-	"kyouen-server/middleware"
-	"kyouen-server/services"
+	"kyouen-server/internal/config"
+	"kyouen-server/internal/datastore"
+	"kyouen-server/internal/middleware"
+	"kyouen-server/internal/statics"
 )
 
 type App struct {
 	Config           *config.Config
-	DatastoreService *services.DatastoreService
+	DatastoreService *datastore.DatastoreService
 }
 
 func main() {
@@ -30,7 +30,7 @@ func main() {
 	cfg := config.Load()
 	
 	// Initialize Datastore service
-	datastoreService, err := services.NewDatastoreService(cfg.ProjectID)
+	datastoreService, err := datastore.NewDatastoreService(cfg.ProjectID)
 	if err != nil {
 		log.Fatalf("Failed to initialize Datastore service: %v", err)
 	}
@@ -93,19 +93,17 @@ func setupRouter(app *App) *gin.Engine {
 		})
 	})
 	
+	// Initialize handlers
+	staticsHandler := statics.NewHandler(app.DatastoreService)
+	
 	// API v2 routes
 	v2 := router.Group("/v2")
 	{
 		// Statistics endpoint
-		v2.GET("/statics", handlers.GetStatics(app.DatastoreService))
+		v2.GET("/statics", staticsHandler.GetStatics)
 		
-		// Stages endpoints
-		stages := v2.Group("/stages")
-		{
-			stages.GET("", handlers.GetStages(app.DatastoreService))
-			stages.POST("", handlers.CreateStage(app.DatastoreService))
-			stages.POST("/:stageNo/clear", handlers.ClearStage(app.DatastoreService))
-		}
+		// Note: Stages endpoints are disabled in test server for simplicity
+		// They would require Firebase authentication setup
 		
 		// Users endpoints (test login without Firebase)
 		users := v2.Group("/users")

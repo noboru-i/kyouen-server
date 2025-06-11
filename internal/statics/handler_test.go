@@ -1,4 +1,4 @@
-package handlers
+package statics
 
 import (
 	"net/http"
@@ -7,7 +7,7 @@ import (
 
 	"github.com/gin-gonic/gin"
 	"github.com/stretchr/testify/assert"
-	"kyouen-server/services"
+	"kyouen-server/internal/datastore"
 )
 
 func TestGetStatics(t *testing.T) {
@@ -15,16 +15,19 @@ func TestGetStatics(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	
 	// Create a test Datastore service
-	datastoreService, err := services.NewDatastoreService("test-project-id")
+	datastoreService, err := datastore.NewDatastoreService("test-project-id")
 	if err != nil {
 		t.Skipf("Skipping test - Datastore not available: %v", err)
 		return
 	}
 	defer datastoreService.Close()
 	
+	// Create handler
+	handler := NewHandler(datastoreService)
+	
 	// Create a Gin router
 	router := gin.New()
-	router.GET("/v2/statics", GetStatics(datastoreService))
+	router.GET("/v2/statics", handler.GetStatics)
 	
 	// Create a test request
 	req, _ := http.NewRequest("GET", "/v2/statics", nil)

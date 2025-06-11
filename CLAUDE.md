@@ -42,7 +42,7 @@ go build -v ./...
 ```bash
 # OpenAPI仕様からGoモデルを生成
 openapi-generator generate -i docs/specs/index.yaml -g go-server -o ./tmp
-cp tmp/go/model_*.go openapi
+cp tmp/go/model_*.go internal/generated/openapi
 rm -rf tmp
 
 # Androidクライアントモデルを生成
