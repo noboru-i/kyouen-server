@@ -10,13 +10,7 @@ type Config struct {
 	Port           string
 	ProjectID      string
 	Environment    string
-	TwitterConfig  TwitterConfig
 	FirebaseConfig FirebaseConfig
-}
-
-type TwitterConfig struct {
-	ConsumerKey    string
-	ConsumerSecret string
 }
 
 type FirebaseConfig struct {
@@ -34,10 +28,6 @@ func Load() *Config {
 		Port:        getEnv("PORT", "8080"),
 		ProjectID:   getEnv("GOOGLE_CLOUD_PROJECT", defaultProjectID),
 		Environment: getEnv("GIN_MODE", "debug"),
-		TwitterConfig: TwitterConfig{
-			ConsumerKey:    getEnv("CONSUMER_KEY", ""),
-			ConsumerSecret: getEnv("CONSUMER_SECRET", ""),
-		},
 		FirebaseConfig: FirebaseConfig{
 			CredentialsFile: getEnv("FIREBASE_CREDENTIALS_FILE", ""),
 		},
@@ -56,17 +46,6 @@ func validateConfig(config *Config) error {
 		log.Printf("Warning: GOOGLE_CLOUD_PROJECT is not set, using default: my-android-server")
 	}
 
-	// オプション設定の確認（開発用）
-	optional := map[string]string{
-		"CONSUMER_KEY":         config.TwitterConfig.ConsumerKey,
-		"CONSUMER_SECRET":      config.TwitterConfig.ConsumerSecret,
-	}
-
-	for key, value := range optional {
-		if value == "" {
-			log.Printf("Info: Optional environment variable %s is not set (authentication features will be limited)", key)
-		}
-	}
 
 	return nil
 }

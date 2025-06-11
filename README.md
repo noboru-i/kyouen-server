@@ -237,10 +237,6 @@ GIN_MODE=debug                     # 開発時はdebug、本番ではrelease
 GOOGLE_CLOUD_PROJECT=my-android-server  # プロジェクトID
 FIRESTORE_EMULATOR_HOST=localhost:8080  # エミュレータ使用時
 
-# Twitter OAuth設定
-CONSUMER_KEY=your_twitter_consumer_key
-CONSUMER_SECRET=your_twitter_consumer_secret
-
 # Firebase設定
 FIREBASE_CREDENTIALS_FILE=path/to/service-account.json
 ```
@@ -266,8 +262,6 @@ PORT=8080
 #### オプション設定
 ```bash
 GIN_MODE=release                    # 本番環境用
-CONSUMER_KEY=your_twitter_key       # Twitter OAuth
-CONSUMER_SECRET=your_twitter_secret # Twitter OAuth
 ```
 
 ## 🔄 移行履歴
