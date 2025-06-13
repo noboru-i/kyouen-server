@@ -9,14 +9,14 @@
 - **プラットフォーム**: Cloud Run (コンテナベース)
 - **フレームワーク**: Gin (Go製高速Webフレームワーク)
 - **データベース**: DatastoreモードFirestore (既存データと互換性を保持)
-- **言語**: Go 1.23+
+- **言語**: Go 1.24+
 - **認証**: Twitter OAuth + Firebase Authentication
 
 ## 🚀 クイックスタート
 
 ### 前提条件
 
-- Go 1.23以上
+- Go 1.24以上
 - GitHub CLI (`gh`) - デプロイスクリプト用
 
 ### ローカル開発
@@ -95,7 +95,7 @@ go build -v ./...
 ## 🚀 CI/CD
 
 GitHub Actionsによる自動CI/CDを設定済み：
-- **PR検証**: Go 1.23での自動テスト・ビルド
+- **PR検証**: Go 1.24での自動テスト・ビルド
 - **自動デプロイ**: DEV環境（mainブランチ）、本番環境（手動実行）
 
 
