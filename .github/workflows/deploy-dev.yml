@@ -1,0 +1,16 @@
+name: Deploy to DEV Environment
+
+on:
+  push:
+    branches: [ "main" ]
+
+jobs:
+  deploy-dev:
+    name: Deploy to DEV
+    uses: ./.github/workflows/deploy-common.yml
+    with:
+      environment: dev
+      project_id: api-project-732262258565
+    secrets:
+      wif_provider: ${{ secrets.DEV_WIF_PROVIDER }}
+      wif_service_account: ${{ secrets.DEV_WIF_SERVICE_ACCOUNT }}

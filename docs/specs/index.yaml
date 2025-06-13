@@ -1,21 +1,85 @@
 openapi: 3.0.0
 info:
-  title: Kyouen API
-  description: Kyouen server's API.
-  version: 0.0.1
+  title: 共円パズルゲーム API
+  description: |
+    共円パズルゲーム用REST APIサーバーです。
+    
+    共円は、グリッド上に石を配置して、ちょうど4つの石で円や直線を形成する
+    知的パズルゲームです。このAPIは、ステージ管理、ユーザー認証、
+    ゲーム進行の追跡機能を提供します。
+    
+    **アーキテクチャ:**
+    - プラットフォーム: Cloud Run + DatastoreモードFirestore
+    - フレームワーク: Gin (Go)
+    - 認証: Twitter OAuth + Firebase
+    
+    **ゲームルール:**
+    - グリッド上に石を配置
+    - ちょうど4つの石で共円（円または直線）を形成
+    - パズル設定を解いてステージをクリア
+  version: 2.0.0
+  contact:
+    name: 共円ゲーム API サポート
+    url: https://github.com/noboru-i/kyouen-server
+  license:
+    name: MIT
+    url: https://opensource.org/licenses/MIT
 servers:
   - url: http://localhost:8080/v2
-    description: Development server
-  - url: https://kyouen.app/v2
-    description: Production server
+    description: ローカル開発サーバー
+  - url: https://kyouen-server-dev-<hash>.a.run.app/v2
+    description: DEV環境 (Cloud Run)
+  - url: https://kyouen-server-prod-<hash>.a.run.app/v2
+    description: 本番環境 (Cloud Run)
+
+tags:
+  - name: system
+    description: システムヘルスとモニタリングエンドポイント
+  - name: authentication
+    description: ユーザー認証と認可
+  - name: stages
+    description: 共円パズルステージ管理とゲームプレイ
+  - name: statistics
+    description: グローバルゲーム統計とメタデータ
+
 paths:
+  /health:
+    get:
+      summary: ヘルスチェックエンドポイント
+      description: モニタリングとロードバランサー用のサーバーヘルス状態を返す
+      tags:
+        - system
+      responses:
+        '200':
+          description: サーバーが正常
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "ok"
+                  version:
+                    type: string
+                    example: "2.0.0-cloudrun"
+                  service:
+                    type: string
+                    example: "kyouen-server"
+                  platform:
+                    type: string
+                    example: "Cloud Run + Datastore mode Firestore"
+
   /users/login:
     post:
-      summary: Login with twitter account.
+      summary: Twitter OAuthによるユーザー認証
+      description: |
+        Twitter OAuthトークンを使用してユーザーを認証し、Firebase JWTトークンを返します。
+        現在はプレースホルダーデータを返します - 完全実装は保留中です。
       tags:
-        - user
+        - authentication
       requestBody:
-        description: Account data for login.
+        description: 認証用Twitter OAuthトークン
         required: true
         content:
           application/json:
@@ -23,81 +87,154 @@ paths:
               $ref: '#/components/schemas/LoginParam'
       responses:
         '200':
-          description: successful login.
+          description: 認証成功
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/LoginResult'
-
-  /stages:
-    get:
-      summary: Returns kyouen stages.
-      tags:
-        - stage
-      required: [start_stage_no, limit]
-      parameters:
-        - name: start_stage_no
-          in: query
-          description: Returns results with an stage number greater than or equals the specified number.
-          schema:
-            type: int64
-            example: 120
-        - name: limit
-          in: query
-          description: Specifies the number of stage to retrieve, up to a maximum of 100 per request.
-          schema:
-            type: int64
-            example: 120
-      responses:
-        '200':
-          description: successful get stages.
+        '400':
+          description: 無効なリクエストデータ
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/Stages'
-        '404':
-          description: cannot get stages.
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 認証失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /stages:
+    get:
+      summary: パズルステージ一覧取得
+      description: |
+        共円パズルステージのページネーション対応一覧を取得します。
+        ステージはステージ番号順に並び、開始位置でフィルタできます。
+      tags:
+        - stages
+      parameters:
+        - name: start_stage_no
+          in: query
+          description: この値以上のステージ番号のステージを返す（ページネーション）
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+            default: 0
+            example: 10
+        - name: limit
+          in: query
+          description: 取得する最大ステージ数（リクエストあたり最大100件）
+          required: false
+          schema:
+            type: integer
+            format: int64
+            minimum: 1
+            maximum: 100
+            default: 10
+            example: 20
+      responses:
+        '200':
+          description: ステージ取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stage'
+        '400':
+          description: 無効なクエリパラメータ
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 内部サーバーエラー
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
     post:
-      summary: Create new stage.
+      summary: 新しいパズルステージ作成
+      description: |
+        バリデーション付きで新しい共円パズルステージを作成します。
+        
+        **バリデーションルール:**
+        - ステージは最低5個の石を持つ必要があります（size² >= 5）
+        - ステージは少なくとも1つの有効な共円（ちょうど4つの石で形成される円または直線）を含む必要があります
+        - 重複ステージ（回転・反転を含む）は拒否されます
+        - ステージ文字列形式：「0」（空）、「1」（黒石）、「2」（白石）
       tags:
-        - stage
+        - stages
+      security:
+        - bearerAuth: []
       requestBody:
-        description: Clear data to save.
+        description: パズル設定を含む新しいステージデータ
         required: true
         content:
           application/json:
             schema:
               $ref: '#/components/schemas/NewStage'
       responses:
-        '200':
-          description: successful create stages.
+        '201':
+          description: ステージ作成成功
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/Stage'
+        '400':
+          description: 無効なステージデータまたはバリデーション失敗
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 認証が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '409':
-          description: sent stage is already exists.
+          description: ステージが既に存在します（重複検出）
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /stages/{stage_no}/clear:
     put:
-      summary: Save clear data.
+      summary: ステージクリア記録
+      description: |
+        ユーザーが特定のステージをクリアしたことを記録します。
+        
+        **クリアバリデーション:**
+        - 提出されたステージ設定は有効な共円（円/直線）を形成する必要があります
+        - ユーザーは認証されている必要があります
+        - ステージ番号はシステムに存在する必要があります
+        - クリアデータにはタイムスタンプが付き、ユーザーと関連付けられます
       tags:
-        - stage
+        - stages
       security:
         - bearerAuth: []
-      required: [stage_no]
       parameters:
         - name: stage_no
           in: path
-          description: Stage number of cleared.
+          description: クリア済みとしてマークするステージ番号
+          required: true
           schema:
-            type: int64
+            type: integer
+            format: int64
+            minimum: 1
             example: 120
       requestBody:
-        description: Clear data to save.
+        description: ユーザーの完成設定を示すステージ解答データ
         required: true
         content:
           application/json:
@@ -105,14 +242,61 @@ paths:
               $ref: '#/components/schemas/ClearStage'
       responses:
         '201':
-          description: successful saved cleared data.
+          description: ステージクリア記録成功
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  stage_no:
+                    type: integer
+                    format: int64
+                    example: 120
+                  clear_date:
+                    type: string
+                    format: date-time
+                    description: 'ステージがクリアされたタイムスタンプ (UTC)'
+        '400':
+          description: 無効なクリアデータまたはステージ解答
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 認証が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: ステージが見つかりません
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
   /stages/sync:
     post:
-      summary: Sync cleared stage data.
+      summary: ユーザークリア進行同期
+      description: |
+        クライアントとサーバー間でユーザーのステージクリアデータを同期します。
+        
+        **同期プロセス:**
+        - クライアントがローカルにクリアしたステージのリストをタイムスタンプ付きで送信
+        - サーバーがサーバー側のクリア済みステージで応答
+        - オフラインからオンラインへの同期を可能にします
+        - デバイス間でデータの一貫性を維持します
       tags:
-        - stage
+        - stages
+      security:
+        - bearerAuth: []
       requestBody:
-        description: Clear data to save.
+        description: ユーザーがクリアしたステージのリスト（クライアントから）
         required: true
         content:
           application/json:
@@ -120,24 +304,61 @@ paths:
               $ref: '#/components/schemas/SyncRequest'
       responses:
         '200':
-          description: successful syned cleared data.
+          description: 同期完了
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/SyncResponse'
+        '400':
+          description: 無効な同期データ形式
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: 認証が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 
   /statics:
     get:
-      summary: Returns statics of kyouen stages.
+      summary: グローバルゲーム統計取得
+      description: |
+        共円パズルゲームのグローバル統計を取得します。
+        
+        **統計に含まれる項目:**
+        - ゲームで利用可能なステージの総数
+        - ステージデータの最終更新タイムスタンプ
+        - クライアント側キャッシュや更新通知に使用
       tags:
-        - statics
+        - statistics
       responses:
         '200':
-          description: successful operation
+          description: 統計取得成功
           content:
             application/json:
               schema: 
                 $ref: '#/components/schemas/Statics'
+              examples:
+                sample_stats:
+                  summary: ゲーム統計の例
+                  value:
+                    count: 1234
+                    last_updated_at: "2024-01-15T10:30:00Z"
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
 components:
   securitySchemes:
     bearerAuth:
@@ -147,33 +368,52 @@ components:
 
   schemas:
     LoginParam:
+      type: object
+      description: Twitter OAuth認証パラメータ
       required:
         - token
         - token_secret
       properties:
         token:
           type: string
-          example: AAA
+          description: Twitter OAuthアクセストークン
+          example: "1234567890-abcdefghijklmnopqrstuvwxyz1234567890abcdef"
         token_secret:
           type: string
-          example: BBB
+          description: Twitter OAuthアクセストークンシークレット
+          example: "abcdefghijklmnopqrstuvwxyz1234567890abcdefghij"
+      example:
+        token: "1234567890-abcdefghijklmnopqrstuvwxyz1234567890abcdef"
+        token_secret: "abcdefghijklmnopqrstuvwxyz1234567890abcdefghij"
+        
     LoginResult:
+      type: object
+      description: ユーザー情報とFirebaseトークンを含む認証結果
       required:
         - screen_name
         - token
       properties:
         screen_name:
           type: string
-          example: Alice
+          description: 認証されたユーザーのTwitterスクリーン名（ユーザー名）
+          example: "kyouen_player"
         token:
           type: string
-          example: XXXXXX
+          description: 後続APIリクエスト用Firebase JWTトークン
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
+      example:
+        screen_name: "kyouen_player"
+        token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
 
     Stages:
       type: array
+      description: 共円パズルステージのリスト
       items:
         $ref: '#/components/schemas/Stage'
+        
     Stage:
+      type: object
+      description: メタデータ付き共円パズルステージ
       required:
         - stage_no
         - size
@@ -184,22 +424,45 @@ components:
         stage_no:
           type: integer
           format: int64
+          description: 一意のステージ番号識別子
+          minimum: 1
           example: 12
         size:
           type: integer
           format: int64
+          description: グリッドサイズ（ステージはsize x sizeの正方形）
+          minimum: 3
+          maximum: 20
           example: 6
         stage:
           type: string
-          example: '000000010000001100001100000000001000'
+          description: |
+            文字列表現でのステージ設定。
+            形式: size²文字で以下を表す:
+            - "0" = 空のセル
+            - "1" = 黒石（パズル要素）
+            - "2" = 白石（ユーザー配置）
+          pattern: "^[012]+$"
+          example: "000000010000001100001100000000001000"
         creator:
           type: string
-          example: 'noboru'
+          description: ステージ作成者のユーザー名
+          maxLength: 50
+          example: "noboru"
         regist_date:
           type: string
           format: date-time
-          description: 'date in UTC'
+          description: ステージ登録タイムスタンプ (UTC)
+          example: "2024-01-15T10:30:00Z"
+      example:
+        stage_no: 12
+        size: 6
+        stage: "000000010000001100001100000000001000"
+        creator: "noboru"
+        regist_date: "2024-01-15T10:30:00Z"
     NewStage:
+      type: object
+      description: 新しい共円パズルステージ作成用データ
       required:
         - size
         - stage
@@ -208,31 +471,71 @@ components:
         size:
           type: integer
           format: int64
+          description: 新しいステージのグリッドサイズ（size x sizeグリッドを作成）
+          minimum: 3
+          maximum: 20
           example: 6
         stage:
           type: string
-          example: '000000010000002200002200000000001000'
+          description: |
+            解答付きステージ設定文字列。
+            合計5個以上の石を含み、有効な共円を形成する必要があります。
+            形式: size²文字 ("0"=空, "1"=黒石, "2"=白石)
+          pattern: "^[012]+$"
+          example: "000000010000002200002200000000001000"
         creator:
           type: string
-          example: 'noboru'
+          description: ステージ作成者のユーザー名
+          maxLength: 50
+          example: "noboru"
+      example:
+        size: 6
+        stage: "000000010000002200002200000000001000"
+        creator: "noboru"
     ClearStage:
+      type: object
+      description: ユーザーの解答を示すステージクリアデータ
       required:
         - stage
       properties:
         stage:
           type: string
-          example: '000000010000002200002200000000001000'
-          description: '0: no stone<br>1: black stone<br>2: white stone (selected)'
+          description: |
+            ユーザーの完成ステージ設定。
+            有効な共円（ちょうど4つの石で形成される円/直線）を形成する必要があります。
+            形式: "0"=空, "1"=黒石(元から), "2"=白石(ユーザー配置)
+          pattern: "^[012]+$"
+          example: "000000010000002200002200000000001000"
+      example:
+        stage: "000000010000002200002200000000001000"
 
     SyncRequest:
       type: array
+      description: ユーザーがクリアしたステージのリスト（同期用クライアント側データ）
       items:
         $ref: '#/components/schemas/ClearedStage'
+      example:
+        - stage_no: 10
+          clear_date: "2024-01-14T15:30:00Z"
+        - stage_no: 11
+          clear_date: "2024-01-15T09:45:00Z"
+          
     SyncResponse:
       type: array
+      description: ユーザーがクリアしたステージのリスト（同期後サーバー側データ）
       items:
         $ref: '#/components/schemas/ClearedStage'
+      example:
+        - stage_no: 10
+          clear_date: "2024-01-14T15:30:00Z"
+        - stage_no: 11
+          clear_date: "2024-01-15T09:45:00Z"
+        - stage_no: 12
+          clear_date: "2024-01-15T16:20:00Z"
+          
     ClearedStage:
+      type: object
+      description: ユーザーによるステージクリアの記録
       required:
         - stage_no
         - clear_date
@@ -240,13 +543,21 @@ components:
         stage_no:
           type: integer
           format: int64
+          description: クリアされたステージ番号
+          minimum: 1
           example: 12
         clear_date:
           type: string
           format: date-time
-          description: 'date in UTC'
+          description: ステージがクリアされたタイムスタンプ (UTC)
+          example: "2024-01-15T16:20:00Z"
+      example:
+        stage_no: 12
+        clear_date: "2024-01-15T16:20:00Z"
 
     Statics:
+      type: object
+      description: グローバルゲーム統計とメタデータ
       required:
         - count
         - last_updated_at
@@ -254,13 +565,21 @@ components:
         count:
           type: integer
           format: int64
+          description: ゲームで利用可能なステージの総数
+          minimum: 0
           example: 1234
         last_updated_at:
           type: string
           format: date-time
-          description: 'date in UTC'
+          description: ステージデータの最終更新タイムスタンプ (UTC)
+          example: "2024-01-15T10:30:00Z"
+      example:
+        count: 1234
+        last_updated_at: "2024-01-15T10:30:00Z"
 
     Error:
+      type: object
+      description: 標準エラーレスポンス形式
       required:
         - code
         - message
@@ -268,6 +587,12 @@ components:
         code:
           type: integer
           format: int64
-          example: 123
+          description: HTTPステータスコードまたはアプリケーション固有のエラーコード
+          example: 400
         message:
           type: string
+          description: 人間が読めるエラーメッセージ
+          example: "無効なステージ設定: 最低5個の石を含む必要があります"
+      example:
+        code: 400
+        message: "Invalid stage configuration: must contain at least 5 stones"

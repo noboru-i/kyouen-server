@@ -1,5 +1,0 @@
-runtime: go111
-service: v2
-
-includes:
-- secret.yaml
