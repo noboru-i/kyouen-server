@@ -47,20 +47,20 @@ jobs:
       with:
         project_id: ${{ inputs.project_id }}
 
-    - name: Configure Docker for GCR
-      run: gcloud auth configure-docker
+    - name: Configure Docker for Artifact Registry
+      run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 
     - name: Build and push Docker image
       run: |
-        docker build -t gcr.io/${{ inputs.project_id }}/${{ env.SERVICE_NAME }}:${{ github.sha }} .
-        docker push gcr.io/${{ inputs.project_id }}/${{ env.SERVICE_NAME }}:${{ github.sha }}
+        docker build -t asia-northeast1-docker.pkg.dev/${{ inputs.project_id }}/kyouen-repo/${{ env.SERVICE_NAME }}:${{ github.sha }} .
+        docker push asia-northeast1-docker.pkg.dev/${{ inputs.project_id }}/kyouen-repo/${{ env.SERVICE_NAME }}:${{ github.sha }}
 
     - name: Deploy to Cloud Run
       run: |
         SERVICE_NAME_WITH_ENV="${{ env.SERVICE_NAME }}-${{ inputs.environment }}"
         
         gcloud run deploy $SERVICE_NAME_WITH_ENV \
-          --image gcr.io/${{ inputs.project_id }}/${{ env.SERVICE_NAME }}:${{ github.sha }} \
+          --image asia-northeast1-docker.pkg.dev/${{ inputs.project_id }}/kyouen-repo/${{ env.SERVICE_NAME }}:${{ github.sha }} \
           --region ${{ env.REGION }} \
           --platform managed \
           --allow-unauthenticated \
