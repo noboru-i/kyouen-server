@@ -3,7 +3,6 @@ package config
 import (
 	"log"
 	"os"
-	"strconv"
 )
 
 type Config struct {
@@ -23,7 +22,7 @@ func Load() *Config {
 	if env := getEnv("ENVIRONMENT", ""); env == "dev" {
 		defaultProjectID = "api-project-732262258565"
 	}
-	
+
 	config := &Config{
 		Port:        getEnv("PORT", "8080"),
 		ProjectID:   getEnv("GOOGLE_CLOUD_PROJECT", defaultProjectID),
@@ -46,31 +45,12 @@ func validateConfig(config *Config) error {
 		log.Printf("Warning: GOOGLE_CLOUD_PROJECT is not set, using default: my-android-server")
 	}
 
-
 	return nil
 }
 
 func getEnv(key, defaultValue string) string {
 	if value := os.Getenv(key); value != "" {
 		return value
-	}
-	return defaultValue
-}
-
-func getEnvBool(key string, defaultValue bool) bool {
-	if value := os.Getenv(key); value != "" {
-		if parsed, err := strconv.ParseBool(value); err == nil {
-			return parsed
-		}
-	}
-	return defaultValue
-}
-
-func getEnvInt(key string, defaultValue int) int {
-	if value := os.Getenv(key); value != "" {
-		if parsed, err := strconv.Atoi(value); err == nil {
-			return parsed
-		}
 	}
 	return defaultValue
 }
