@@ -40,6 +40,20 @@ go test -v ./models
 go build -v ./...
 ```
 
+### 開発データ初期化
+```bash
+# Datastoreエミュレーターの起動
+gcloud emulators firestore start --database-mode=datastore-mode --host-port=0.0.0.0:9098
+# Firebase Authエミュレーターの起動
+firebase emulators:start
+
+# 開発環境に初期ステージデータをDatastoreエミュレーターに登録
+DATASTORE_EMULATOR_HOST=localhost:9098 go run cmd/seed/main.go
+
+# Datastoreエミュレーター使用時
+DATASTORE_EMULATOR_HOST=localhost:9098 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 go run cmd/server/main.go
+```
+
 ### OpenAPI コード生成
 ```bash
 # OpenAPI仕様からGoモデルを生成

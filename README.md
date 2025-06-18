@@ -33,6 +33,21 @@ go run cmd/server/main.go
 ```
 実際のDatastoreに接続して動作します。
 
+#### エミュレーター環境での開発
+```bash
+# Datastoreエミュレーターの起動
+gcloud emulators firestore start --database-mode=datastore-mode --host-port=0.0.0.0:9098
+
+# Firebase Authエミュレーターの起動（別ターミナル）
+firebase emulators:start
+
+# 初期ステージデータの登録（別ターミナル）
+DATASTORE_EMULATOR_HOST=localhost:9098 go run cmd/seed/main.go
+
+# エミュレーター環境でのサーバー起動（別ターミナル）
+DATASTORE_EMULATOR_HOST=localhost:9098 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 go run cmd/server/main.go
+```
+
 **アクセス先:** http://localhost:8080/
 
 ## 🔄 API エンドポイント
