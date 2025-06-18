@@ -1,0 +1,27 @@
+# ビルドステージ
+FROM golang:1.24-alpine AS builder
+
+WORKDIR /app
+
+# Go modulesをコピーして依存関係をダウンロード
+COPY go.mod go.sum ./
+RUN go mod download
+
+# ソースコードをコピー
+COPY . .
+
+# バイナリをビルド（Seed用）
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o seed ./cmd/seed
+
+# 実行ステージ
+FROM alpine:latest
+
+# CA証明書を追加（HTTPS通信のため）
+RUN apk --no-cache add ca-certificates
+WORKDIR /root/
+
+# ビルドしたバイナリをコピー
+COPY --from=builder /app/seed .
+
+# アプリケーションを実行
+CMD ["./seed"]

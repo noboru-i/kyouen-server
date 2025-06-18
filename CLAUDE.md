@@ -70,14 +70,17 @@ rm -rf tmp
 ### デプロイ
 ```bash
 # GitHub Actions経由でのデプロイ（推奨）
-./scripts/deploy.sh dev   # DEV環境（デフォルト）
-./scripts/deploy.sh prod  # 本番環境（確認付き）
+./scripts/deploy.sh dev           # DEV環境にサーバーをデプロイ（デフォルト）
+./scripts/deploy.sh dev server    # DEV環境にサーバーをデプロイ
+./scripts/deploy.sh dev seed      # DEV環境にSeedジョブをデプロイ
+./scripts/deploy.sh prod          # 本番環境にサーバーをデプロイ（確認付き）
 
 # 前提条件: GitHub CLI
 brew install gh && gh auth login
 
 # Cloud Build使用（レガシー）
-gcloud builds submit --config cloudbuild.yaml
+gcloud builds submit --config cloudbuild.yaml        # サーバー
+gcloud builds submit --config cloudbuild.seed.yaml   # Seedジョブ
 ```
 
 ### Swagger UI

@@ -1,0 +1,37 @@
+steps:
+  # Dockerイメージのビルド
+  - name: 'gcr.io/cloud-builders/docker'
+    args: [
+      'build',
+      '-f', 'Dockerfile.seed',
+      '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/kyouen-server/seed:$SHORT_SHA',
+      '-t', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/kyouen-server/seed:latest',
+      '.'
+    ]
+
+  # Dockerイメージをプッシュ
+  - name: 'gcr.io/cloud-builders/docker'
+    args: ['push', '--all-tags', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/kyouen-server/seed']
+
+  # Cloud Runジョブとしてデプロイ
+  - name: 'gcr.io/google.com/cloudsdktool/cloud-sdk'
+    entrypoint: 'gcloud'
+    args: [
+      'run', 'jobs', 'replace',
+      '--image', 'asia-northeast1-docker.pkg.dev/$PROJECT_ID/kyouen-server/seed:$SHORT_SHA',
+      '--region', 'asia-northeast1',
+      '--job-timeout', '300',
+      '--max-retries', '3',
+      '--parallelism', '1',
+      '--cpu', '1',
+      '--memory', '512Mi',
+      '--set-env-vars', 'GOOGLE_CLOUD_PROJECT=$PROJECT_ID',
+      'kyouen-seed'
+    ]
+
+options:
+  logging: CLOUD_LOGGING_ONLY
+  machineType: 'E2_HIGHCPU_8'
+
+substitutions:
+  _SERVICE_NAME: kyouen-seed
