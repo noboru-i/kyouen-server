@@ -76,10 +76,6 @@ rm -rf tmp
 
 # 前提条件: GitHub CLI
 brew install gh && gh auth login
-
-# Cloud Build使用（レガシー）
-gcloud builds submit --config cloudbuild.yaml        # サーバー
-gcloud builds submit --config cloudbuild.seed.yaml   # Seedジョブ
 ```
 
 ### Swagger UI
@@ -127,7 +123,6 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `cmd/test_server/main.go`: Datastore接続テスト用サーバー
 - `docs/specs/index.yaml`: OpenAPI仕様
 - `Dockerfile`: Cloud Run用Dockerイメージ設定
-- `cloudbuild.yaml`: Cloud Build自動デプロイ設定
 - `scripts/deploy.sh`: Cloud Run手動デプロイスクリプト
 - `.github/workflows/pr_validation.yml`: GitHub Actions CI設定
 - `.github/workflows/deploy-dev.yml`: DEV環境自動デプロイ設定
