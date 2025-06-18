@@ -3,6 +3,11 @@ name: Deploy Seed to DEV
 on:
   workflow_dispatch:
 
+env:
+  GCP_PROJECT_ID: api-project-732262258565
+  SERVICE_NAME: kyouen-server
+  REGION: asia-northeast1
+
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -11,14 +16,14 @@ jobs:
     - name: Checkout code
       uses: actions/checkout@v4
 
-    - name: Set up Cloud SDK
-      uses: google-github-actions/setup-gcloud@v2
-
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
       with:
         workload_identity_provider: ${{ secrets.DEV_WIF_PROVIDER }}
         service_account: ${{ secrets.DEV_WIF_SERVICE_ACCOUNT }}
+
+    - name: Set up Cloud SDK
+      uses: google-github-actions/setup-gcloud@v2
 
     - name: Configure Docker for Artifact Registry
       run: |
@@ -28,11 +33,11 @@ jobs:
       run: |
         gcloud builds submit --config=cloudbuild.seed.yaml \
           --substitutions=_SERVICE_NAME=kyouen-seed \
-          --project=api-project-732262258565
+          --project=${{ env.GCP_PROJECT_ID }}
 
     - name: Execute Seed Job
       run: |
         gcloud run jobs execute kyouen-seed \
           --region=asia-northeast1 \
-          --project=api-project-732262258565 \
+          --project=${{ env.GCP_PROJECT_ID }} \
           --wait
