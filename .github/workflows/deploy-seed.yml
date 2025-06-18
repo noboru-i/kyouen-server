@@ -48,6 +48,7 @@ jobs:
         spec:
           template:
             spec:
+              parallelism: 1
               template:
                 spec:
                   containers:
@@ -61,8 +62,6 @@ jobs:
                       limits:
                         memory: 512Mi
                         cpu: 1000m
-              parallelism: 1
-              completions: 1
         EOF
         ) --region=${{ env.REGION }}
 
