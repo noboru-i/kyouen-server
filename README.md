@@ -21,12 +21,6 @@
 
 ### ローカル開発
 
-#### デモサーバー（認証不要）
-```bash
-go run cmd/demo_server/main.go
-```
-サンプルデータでAPI動作を確認できます。
-
 #### 本番接続サーバー
 ```bash
 go run cmd/server/main.go
