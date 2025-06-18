@@ -4,6 +4,7 @@
 set -e
 
 ENVIRONMENT=${1:-dev}
+SERVICE=${2:-server}
 
 # GitHub CLIがインストールされているかチェック
 if ! command -v gh &> /dev/null; then
@@ -23,11 +24,21 @@ fi
 
 echo "🚀 Starting deployment via GitHub Actions"
 echo "📋 Environment: $ENVIRONMENT"
+echo "🔧 Service: $SERVICE"
 
 if [ "$ENVIRONMENT" = "dev" ]; then
-    echo "🧪 Triggering DEV environment deployment..."
-    gh workflow run deploy-dev.yml
-    echo "✅ DEV deployment workflow triggered!"
+    if [ "$SERVICE" = "server" ]; then
+        echo "🧪 Triggering DEV environment deployment..."
+        gh workflow run deploy-dev.yml
+        echo "✅ DEV deployment workflow triggered!"
+    elif [ "$SERVICE" = "seed" ]; then
+        echo "🌱 Triggering SEED deployment..."
+        gh workflow run deploy-seed.yml
+        echo "✅ SEED deployment workflow triggered!"
+    else
+        echo "❌ Invalid service '$SERVICE'. Available services: server, seed"
+        exit 1
+    fi
     echo "📊 進捗確認: gh run watch"
     echo "🔗 GitHub Actions: https://github.com/$(gh repo view --json owner,name -q '.owner.login + "/" + .name')/actions"
     
@@ -51,11 +62,13 @@ elif [ "$ENVIRONMENT" = "prod" ]; then
     
 else
     echo "❌ Error: Invalid environment '$ENVIRONMENT'"
-    echo "Usage: $0 [dev|prod]"
+    echo "Usage: $0 [dev|prod] [server|seed]"
     echo ""
     echo "Examples:"
-    echo "  $0 dev   # DEV環境にデプロイ"
-    echo "  $0 prod  # 本番環境にデプロイ（確認付き）"
+    echo "  $0 dev           # DEV環境にサーバーをデプロイ"
+    echo "  $0 dev server    # DEV環境にサーバーをデプロイ"
+    echo "  $0 dev seed      # DEV環境にSeedジョブをデプロイ"
+    echo "  $0 prod          # 本番環境にサーバーをデプロイ（確認付き）"
     exit 1
 fi
 
