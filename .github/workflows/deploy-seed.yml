@@ -30,14 +30,41 @@ jobs:
       uses: google-github-actions/setup-gcloud@v2
 
     - name: Configure Docker for Artifact Registry
-      run: |
-        gcloud auth configure-docker asia-northeast1-docker.pkg.dev
+      run: gcloud auth configure-docker asia-northeast1-docker.pkg.dev
 
-    - name: Submit Cloud Build
+    - name: Build and push Docker image for seed
       run: |
-        gcloud builds submit --config=cloudbuild.seed.yaml \
-          --substitutions=_SERVICE_NAME=kyouen-seed \
-          --project=${{ env.GCP_PROJECT_ID }}
+        docker build -f Dockerfile.seed -t asia-northeast1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/kyouen-repo/kyouen-seed:${{ github.sha }} .
+        docker push asia-northeast1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/kyouen-repo/kyouen-seed:${{ github.sha }}
+
+    - name: Deploy Seed Job to Cloud Run
+      run: |
+        gcloud run jobs replace <(cat <<EOF
+        apiVersion: run.googleapis.com/v1
+        kind: Job
+        metadata:
+          name: kyouen-seed
+          namespace: '${{ env.GCP_PROJECT_ID }}'
+        spec:
+          template:
+            spec:
+              template:
+                spec:
+                  containers:
+                  - image: asia-northeast1-docker.pkg.dev/${{ env.GCP_PROJECT_ID }}/kyouen-repo/kyouen-seed:${{ github.sha }}
+                    env:
+                    - name: GOOGLE_CLOUD_PROJECT
+                      value: '${{ env.GCP_PROJECT_ID }}'
+                    - name: ENVIRONMENT
+                      value: 'dev'
+                    resources:
+                      limits:
+                        memory: 512Mi
+                        cpu: 1000m
+              parallelism: 1
+              completions: 1
+        EOF
+        ) --region=${{ env.REGION }}
 
     - name: Execute Seed Job
       run: |
