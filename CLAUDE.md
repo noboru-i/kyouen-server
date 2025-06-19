@@ -58,7 +58,7 @@ DATASTORE_EMULATOR_HOST=localhost:9098 FIREBASE_AUTH_EMULATOR_HOST=localhost:909
 # OpenAPI仕様からGoモデルを生成（Docker経由）
 docker run --rm -v $(pwd):/local openapitools/openapi-generator-cli generate -i /local/docs/specs/index.yaml -g go-server -o /local/tmp
 cp tmp/go/* internal/generated/openapi/
-rm internal/generated/openapi/api_*.go internal/generated/openapi/routers.go internal/generated/openapi/logger.go  # API実装ファイルは不要なので削除
+rm internal/generated/openapi/api_*.go internal/generated/openapi/routers.go internal/generated/openapi/logger.go
 rm -rf tmp
 
 # Androidクライアントモデルを生成（Docker経由）
