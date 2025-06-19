@@ -13,7 +13,6 @@ tmp/
 .env
 .env.local
 tasks/
-docs/
 cmd/test_server/
 secret.yaml
 coverage.out
