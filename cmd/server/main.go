@@ -90,6 +90,10 @@ func setupRouter(app *App) *gin.Engine {
 		})
 	})
 
+	// Swagger UI endpoints
+	router.StaticFile("/docs/specs/index.yaml", "./docs/specs/index.yaml")
+	router.StaticFile("/static/swagger-ui.html", "./static-files/swagger-ui.html")
+
 	// Initialize handlers
 	stageHandler := stage.NewHandler(app.DatastoreService, app.FirebaseService)
 	staticsHandler := statics.NewHandler(app.DatastoreService)
