@@ -13,40 +13,24 @@ package openapi
 
 import (
 	"time"
-	"errors"
 )
 
 
 
-// Statics - グローバルゲーム統計とメタデータ
-type Statics struct {
+type StagesStageNoClearPut201Response struct {
 
-	// ゲームで利用可能なステージの総数
-	Count int64 `json:"count"`
+	StageNo int64 `json:"stage_no,omitempty"`
 
-	// ステージデータの最終更新タイムスタンプ (UTC)
-	LastUpdatedAt time.Time `json:"last_updated_at"`
+	// ステージがクリアされたタイムスタンプ (UTC)
+	ClearDate time.Time `json:"clear_date,omitempty"`
 }
 
-// AssertStaticsRequired checks if the required fields are not zero-ed
-func AssertStaticsRequired(obj Statics) error {
-	elements := map[string]interface{}{
-		"count": obj.Count,
-		"last_updated_at": obj.LastUpdatedAt,
-	}
-	for name, el := range elements {
-		if isZero := IsZeroValue(el); isZero {
-			return &RequiredError{Field: name}
-		}
-	}
-
+// AssertStagesStageNoClearPut201ResponseRequired checks if the required fields are not zero-ed
+func AssertStagesStageNoClearPut201ResponseRequired(obj StagesStageNoClearPut201Response) error {
 	return nil
 }
 
-// AssertStaticsConstraints checks if the values respects the defined constraints
-func AssertStaticsConstraints(obj Statics) error {
-	if obj.Count < 0 {
-		return &ParsingError{Param: "Count", Err: errors.New(errMsgMinValueConstraint)}
-	}
+// AssertStagesStageNoClearPut201ResponseConstraints checks if the values respects the defined constraints
+func AssertStagesStageNoClearPut201ResponseConstraints(obj StagesStageNoClearPut201Response) error {
 	return nil
 }

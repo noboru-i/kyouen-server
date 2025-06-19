@@ -10,31 +10,8 @@
 
 package openapi
 
-
-
-
-// LoginResult - 認証されたユーザー情報を含む結果
-type LoginResult struct {
-
-	// 認証されたユーザーのTwitterスクリーン名（@なし）
-	ScreenName string `json:"screen_name"`
-}
-
-// AssertLoginResultRequired checks if the required fields are not zero-ed
-func AssertLoginResultRequired(obj LoginResult) error {
-	elements := map[string]interface{}{
-		"screen_name": obj.ScreenName,
-	}
-	for name, el := range elements {
-		if isZero := IsZeroValue(el); isZero {
-			return &RequiredError{Field: name}
-		}
-	}
-
-	return nil
-}
-
-// AssertLoginResultConstraints checks if the values respects the defined constraints
-func AssertLoginResultConstraints(obj LoginResult) error {
-	return nil
+// ImplResponse defines an implementation response with error code and the associated body
+type ImplResponse struct {
+	Code int
+	Body interface{}
 }

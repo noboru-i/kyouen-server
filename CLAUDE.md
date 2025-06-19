@@ -55,13 +55,14 @@ DATASTORE_EMULATOR_HOST=localhost:9098 FIREBASE_AUTH_EMULATOR_HOST=localhost:909
 
 ### OpenAPI コード生成
 ```bash
-# OpenAPI仕様からGoモデルを生成
-openapi-generator generate -i docs/specs/index.yaml -g go-server -o ./tmp
-cp tmp/go/model_*.go internal/generated/openapi
+# OpenAPI仕様からGoモデルを生成（Docker経由）
+docker run --rm -v $(pwd):/local openapitools/openapi-generator-cli generate -i /local/docs/specs/index.yaml -g go-server -o /local/tmp
+cp tmp/go/* internal/generated/openapi/
+rm internal/generated/openapi/api_*.go internal/generated/openapi/routers.go internal/generated/openapi/logger.go  # API実装ファイルは不要なので削除
 rm -rf tmp
 
-# Androidクライアントモデルを生成
-openapi-generator generate -i docs/specs/index.yaml -g kotlin -o ./tmp --additional-properties="packageName=hm.orz.chaos114.android.tumekyouen.network"
+# Androidクライアントモデルを生成（Docker経由）
+docker run --rm -v $(pwd):/local openapitools/openapi-generator-cli generate -i /local/docs/specs/index.yaml -g kotlin -o /local/tmp --additional-properties="packageName=hm.orz.chaos114.android.tumekyouen.network"
 cp -r tmp/src/main/kotlin/hm/orz/chaos114/android/tumekyouen/network/models ../kyouen-android/app/src/main/java/hm/orz/chaos114/android/tumekyouen/network
 rm -rf tmp
 ```
