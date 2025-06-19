@@ -72,14 +72,14 @@ paths:
 
   /users/login:
     post:
-      summary: Twitter OAuthによるユーザー認証
+      summary: Firebase IDトークンによるユーザー認証
       description: |
-        Twitter OAuthトークンを使用してユーザーを認証し、Firebase JWTトークンを返します。
-        現在はプレースホルダーデータを返します - 完全実装は保留中です。
+        Firebase IDトークンを検証してユーザーを認証し、Datastoreにユーザー情報を保存または更新します。
+        Firebase AuthでTwitter認証されたユーザーの情報（スクリーン名、プロフィール画像等）を抽出して処理します。
       tags:
         - authentication
       requestBody:
-        description: 認証用Twitter OAuthトークン
+        description: Firebase IDトークンによる認証パラメータ
         required: true
         content:
           application/json:
@@ -99,7 +99,7 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
         '401':
-          description: 認証失敗
+          description: Firebase IDトークンの検証失敗
           content:
             application/json:
               schema:
@@ -369,41 +369,29 @@ components:
   schemas:
     LoginParam:
       type: object
-      description: Twitter OAuth認証パラメータ
+      description: Firebase IDトークンによる認証パラメータ
       required:
         - token
-        - token_secret
       properties:
         token:
           type: string
-          description: Twitter OAuthアクセストークン
-          example: "1234567890-abcdefghijklmnopqrstuvwxyz1234567890abcdef"
-        token_secret:
-          type: string
-          description: Twitter OAuthアクセストークンシークレット
-          example: "abcdefghijklmnopqrstuvwxyz1234567890abcdefghij"
+          description: Firebase IDトークン（Twitter認証プロバイダー経由で取得）
+          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJodHRwczovL3NlY3VyZXRva2VuLmdvb2dsZS5jb20veW91ci1wcm9qZWN0LWlkIiwiYXVkIjoieW91ci1wcm9qZWN0LWlkIiwiYXV0aF90aW1lIjoxNjE2MjUwMzgzLCJ1c2VyX2lkIjoiSEtGTnN6YlNlZk9vME5SVVlNOFNUcVdhSk5oMiIsInN1YiI6IkhLRk5zemJTZWZPbzBOUlVZTThTVHFXYUpOaDIiLCJpYXQiOjE2MTYyNTAzODMsImV4cCI6MTYxNjI1Mzk4MywiZW1haWwiOiJ1c2VyQGV4YW1wbGUuY29tIiwiZW1haWxfdmVyaWZpZWQiOnRydWUsImZpcmViYXNlIjp7ImlkZW50aXRpZXMiOnsidHdpdHRlci5jb20iOlsiMTIzNDU2Nzg5MCJdfSwic2lnbl9pbl9wcm92aWRlciI6InR3aXR0ZXIuY29tIn19..."
       example:
-        token: "1234567890-abcdefghijklmnopqrstuvwxyz1234567890abcdef"
-        token_secret: "abcdefghijklmnopqrstuvwxyz1234567890abcdefghij"
+        token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
         
     LoginResult:
       type: object
-      description: ユーザー情報とFirebaseトークンを含む認証結果
+      description: 認証されたユーザー情報を含む結果
       required:
         - screen_name
-        - token
       properties:
         screen_name:
           type: string
-          description: 認証されたユーザーのTwitterスクリーン名（ユーザー名）
+          description: 認証されたユーザーのTwitterスクリーン名（@なし）
           example: "kyouen_player"
-        token:
-          type: string
-          description: 後続APIリクエスト用Firebase JWTトークン
-          example: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
       example:
         screen_name: "kyouen_player"
-        token: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9..."
 
     Stages:
       type: array

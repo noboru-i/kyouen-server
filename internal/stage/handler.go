@@ -218,7 +218,6 @@ func (h *Handler) Login(c *gin.Context) {
 	// Return successful login response
 	response := openapi.LoginResult{
 		ScreenName: user.ScreenName,
-		Token:      param.Token, // Return the same Firebase ID token
 	}
 
 	c.JSON(http.StatusOK, response)
