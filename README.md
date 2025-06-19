@@ -21,28 +21,12 @@
 
 ### ローカル開発
 
-#### 本番接続サーバー
 ```bash
+# 本番接続サーバー
 go run cmd/server/main.go
+
+# ローカルアクセス先: http://localhost:8080/
 ```
-実際のDatastoreに接続して動作します。
-
-#### エミュレーター環境での開発
-```bash
-# Datastoreエミュレーターの起動
-gcloud emulators firestore start --database-mode=datastore-mode --host-port=0.0.0.0:9098
-
-# Firebase Authエミュレーターの起動（別ターミナル）
-firebase emulators:start
-
-# 初期ステージデータの登録（別ターミナル）
-DATASTORE_EMULATOR_HOST=localhost:9098 go run cmd/seed/main.go
-
-# エミュレーター環境でのサーバー起動（別ターミナル）
-DATASTORE_EMULATOR_HOST=localhost:9098 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 go run cmd/server/main.go
-```
-
-**アクセス先:** http://localhost:8080/
 
 ## 🔄 API エンドポイント
 
@@ -68,29 +52,6 @@ POST /v2/stages/{id}/clear  # ステージクリア
 POST /v2/users/login        # ログイン
 ```
 
-## 🎮 ゲームロジック
-
-### 共円判定アルゴリズム
-`models/kyouen.go`に実装された核となるアルゴリズム：
-- 4つの石が同一直線上にあるかの判定
-- 4つの石が同一円周上にあるかの判定
-- 回転・反転を考慮した重複ステージの検出
-
-## 🚢 デプロイメント
-
-### Cloud Runへのデプロイ
-
-```bash
-# DEV環境にデプロイ（デフォルト）
-./scripts/deploy.sh dev
-
-# 本番環境にデプロイ（確認付き）
-./scripts/deploy.sh prod
-```
-
-> **詳細な開発・デプロイ手順**: [CLAUDE.md](./CLAUDE.md) を参照してください
-
-
 ## 🧪 テスト
 
 ```bash
@@ -107,13 +68,6 @@ GitHub Actionsによる自動CI/CDを設定済み：
 - **PR検証**: Go 1.24での自動テスト・ビルド
 - **自動デプロイ**: DEV環境（mainブランチ）、本番環境（手動実行）
 
-
-## ⚙️ 環境設定
-
-```bash
-# .env.example を .env にコピーしてローカル環境用設定
-cp .env.example .env
-```
 
 ## 🤝 開発について
 
