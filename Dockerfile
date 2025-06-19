@@ -23,6 +23,10 @@ WORKDIR /root/
 # ビルドしたバイナリをコピー
 COPY --from=builder /app/server .
 
+# 静的ファイルをコピー
+COPY --from=builder /app/static-files ./static-files
+COPY --from=builder /app/docs ./docs
+
 # ポート8080を開放
 EXPOSE 8080
 
