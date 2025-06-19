@@ -35,6 +35,12 @@ go run cmd/server/main.go
 GET /health
 ```
 
+### API ドキュメント
+```
+GET /static/swagger-ui.html   # Swagger UI
+GET /docs/specs/index.yaml    # OpenAPI仕様
+```
+
 ### 統計情報
 ```
 GET /v2/statics
