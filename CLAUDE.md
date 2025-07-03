@@ -111,6 +111,7 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
   - **DEV環境**: `api-project-732262258565`
   - **本番環境**: `my-android-server`
 - **ローカル開発**: ファイルベースストレージのデータストアエミュレーターを使用
+- **スキーマ定義**: `docs/datastore-schema.json`にJSON Schema形式で詳細定義
 
 ### 主要ハンドラー
 - `handlers/v2/stages.go`: 共円検証付きのステージCRUD（Gin対応）
@@ -123,6 +124,7 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `cmd/server/main.go`: Cloud Run本番用エントリーポイント
 - `cmd/test_server/main.go`: Datastore接続テスト用サーバー
 - `docs/specs/index.yaml`: OpenAPI仕様
+- `docs/datastore-schema.json`: Datastoreエンティティスキーマ定義（JSON Schema形式）
 - `Dockerfile`: Cloud Run用Dockerイメージ設定
 - `scripts/deploy.sh`: Cloud Run手動デプロイスクリプト
 - `.github/workflows/pr_validation.yml`: GitHub Actions CI設定
