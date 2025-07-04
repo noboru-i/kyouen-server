@@ -13,7 +13,10 @@
           "description": "Entity kind name"
         },
         "id": {
-          "type": ["integer", "string"],
+          "type": [
+            "integer",
+            "string"
+          ],
           "description": "Entity ID (integer for auto-generated, string for named keys)"
         },
         "name": {
@@ -47,16 +50,25 @@
           "datastoreTag": "lastDate"
         }
       },
-      "required": ["count", "lastDate"],
+      "required": [
+        "count",
+        "lastDate"
+      ],
       "indexes": [],
       "usage": {
         "description": "Singleton entity to track global game statistics",
-        "operations": ["read", "update"],
-        "updateTriggers": ["new stage creation", "periodic maintenance"]
+        "operations": [
+          "read",
+          "update"
+        ],
+        "updateTriggers": [
+          "new stage creation",
+          "periodic maintenance"
+        ]
       }
     },
     "KyouenPuzzle": {
-      "kind": "KyouenPuzzle", 
+      "kind": "KyouenPuzzle",
       "description": "Individual puzzle stages containing game configuration and metadata",
       "keyPattern": {
         "type": "incomplete",
@@ -72,7 +84,7 @@
           "minimum": 1
         },
         "size": {
-          "type": "integer", 
+          "type": "integer",
           "format": "int64",
           "description": "Grid size for the puzzle (e.g., 8 for 8x8 grid)",
           "datastoreTag": "size",
@@ -85,8 +97,13 @@
           "datastoreTag": "stage",
           "pattern": "^[012]+$",
           "minLength": 9,
-          "maxLength": 400,
-          "example": "000010000010000010000000000"
+          "maxLength": 81,
+          "example": "000010000010000010000000000",
+          "validation": {
+            "lengthCheck": "String length must equal size^2",
+            "minStones": "Must contain at least 5 stones (character '1')",
+            "kyouenRequired": "Must contain at least one valid kyouen solution"
+          }
         },
         "creator": {
           "type": "string",
@@ -96,12 +113,18 @@
         },
         "registDate": {
           "type": "string",
-          "format": "date-time", 
+          "format": "date-time",
           "description": "Timestamp when the stage was registered/created",
           "datastoreTag": "registDate"
         }
       },
-      "required": ["stageNo", "size", "stage", "creator", "registDate"],
+      "required": [
+        "stageNo",
+        "size",
+        "stage",
+        "creator",
+        "registDate"
+      ],
       "indexes": [
         {
           "property": "stageNo",
@@ -109,7 +132,7 @@
           "description": "Primary ordering index for stage retrieval"
         },
         {
-          "property": "stage", 
+          "property": "stage",
           "direction": "asc",
           "description": "Index for duplicate detection and stage lookup"
         }
@@ -122,10 +145,14 @@
       },
       "usage": {
         "description": "Core puzzle data with validation rules for game mechanics",
-        "operations": ["create", "read", "query"],
+        "operations": [
+          "create",
+          "read",
+          "query"
+        ],
         "queryPatterns": [
           "Filter by stageNo for specific stage lookup",
-          "Order by stageNo for sequential stage retrieval", 
+          "Order by stageNo for sequential stage retrieval",
           "Filter by stage string for duplicate detection"
         ]
       }
@@ -147,7 +174,7 @@
           "maxLength": 128
         },
         "screenName": {
-          "type": "string", 
+          "type": "string",
           "description": "Twitter screen name for display purposes",
           "datastoreTag": "screenName",
           "maxLength": 50
@@ -161,10 +188,11 @@
         },
         "clearStageCount": {
           "type": "integer",
-          "format": "int64", 
-          "description": "Number of stages cleared by this user",
+          "format": "int64",
+          "description": "Number of stages cleared by this user (automatically updated when StageUser records are created)",
           "datastoreTag": "clearStageCount",
-          "minimum": 0
+          "minimum": 0,
+          "updateTrigger": "Incremented when new StageUser record is created for this user"
         },
         "twitterUid": {
           "type": "string",
@@ -179,7 +207,7 @@
           "deprecated": true
         },
         "accessSecret": {
-          "type": "string", 
+          "type": "string",
           "description": "Legacy OAuth access secret (deprecated, TODO: remove)",
           "datastoreTag": "accessSecret",
           "deprecated": true
@@ -187,15 +215,23 @@
         "apiToken": {
           "type": "string",
           "description": "Legacy API token (deprecated, TODO: remove)",
-          "datastoreTag": "apiToken", 
+          "datastoreTag": "apiToken",
           "deprecated": true
         }
       },
-      "required": ["userId", "screenName", "clearStageCount"],
+      "required": [
+        "userId",
+        "screenName",
+        "clearStageCount"
+      ],
       "indexes": [],
       "usage": {
         "description": "User account management with Firebase authentication integration",
-        "operations": ["create", "read", "update"],
+        "operations": [
+          "create",
+          "read",
+          "update"
+        ],
         "lifecycle": "Created on first login, updated on profile changes and stage completion"
       }
     },
@@ -203,7 +239,7 @@
       "kind": "StageUser",
       "description": "Many-to-many relationship tracking which users have cleared which stages",
       "keyPattern": {
-        "type": "incomplete", 
+        "type": "incomplete",
         "description": "Auto-generated integer keys",
         "example": "datastore.IncompleteKey('StageUser', nil)"
       },
@@ -212,13 +248,15 @@
           "$ref": "#/definitions/datastoreKey",
           "description": "Reference to KyouenPuzzle entity key",
           "datastoreTag": "stage",
-          "datastoreType": "*datastore.Key"
+          "datastoreType": "*datastore.Key",
+          "goFieldName": "StageKey"
         },
         "user": {
-          "$ref": "#/definitions/datastoreKey", 
+          "$ref": "#/definitions/datastoreKey",
           "description": "Reference to User entity key",
           "datastoreTag": "user",
-          "datastoreType": "*datastore.Key"
+          "datastoreType": "*datastore.Key",
+          "goFieldName": "UserKey"
         },
         "clearDate": {
           "type": "string",
@@ -227,10 +265,17 @@
           "datastoreTag": "clearDate"
         }
       },
-      "required": ["stage", "user", "clearDate"],
+      "required": [
+        "stage",
+        "user",
+        "clearDate"
+      ],
       "indexes": [
         {
-          "properties": ["stage", "user"],
+          "properties": [
+            "stage",
+            "user"
+          ],
           "description": "Composite index for checking if specific user cleared specific stage"
         },
         {
@@ -244,7 +289,11 @@
       },
       "usage": {
         "description": "Progress tracking and achievement system",
-        "operations": ["create", "read", "query"],
+        "operations": [
+          "create",
+          "read",
+          "query"
+        ],
         "queryPatterns": [
           "Filter by stage + user to check if user cleared specific stage",
           "Filter by user to get all cleared stages for a user",
@@ -262,7 +311,7 @@
       "targetEntity": "KyouenPuzzle"
     },
     "StageUser_to_User": {
-      "type": "many-to-one", 
+      "type": "many-to-one",
       "description": "Each StageUser record references one User",
       "foreignKey": "user",
       "targetEntity": "User"
@@ -280,7 +329,7 @@
         "description": "DEV environment"
       },
       "production": {
-        "projectId": "my-android-server", 
+        "projectId": "my-android-server",
         "description": "Production environment"
       }
     },

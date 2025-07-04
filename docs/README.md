@@ -70,8 +70,51 @@ json-schema-to-markdown -s datastore-schema.json -o schema-docs.md
 
 データモデルに変更があった場合は、以下を更新してください：
 
+### 必須更新ファイル
 1. `internal/datastore/models.go` - Goの構造体定義
 2. `docs/datastore-schema.json` - このスキーマ定義
-3. 必要に応じてマイグレーション手順をドキュメント化
+
+### 更新チェックリスト
+- [ ] datastoreタグの一致確認
+- [ ] フィールド名とデータ型の一致確認
+- [ ] 必須フィールド（required）の整合性確認
+- [ ] インデックス設定の反映
+- [ ] JSON Schemaの妥当性検証（`ajv validate`）
+- [ ] 既存データとの互換性確認
+
+### マイグレーション手順例
+
+#### 新しいフィールドの追加
+```go
+// 1. models.goに新フィールドを追加
+type KyouenPuzzle struct {
+    // 既存フィールド...
+    NewField string `datastore:"newField"`
+}
+
+// 2. スキーマに対応する定義を追加
+// docs/datastore-schema.jsonを更新
+
+// 3. 必要に応じてデフォルト値を設定するマイグレーション
+```
+
+#### フィールドのリネーム
+```go
+// 1. 新しいフィールドを追加（旧フィールドは残す）
+// 2. アプリケーションコードで両方のフィールドを処理
+// 3. データ移行バッチジョブでデータをコピー
+// 4. 旧フィールドを削除
+```
+
+#### インデックスの追加
+```bash
+# 1. 新しいインデックスを作成
+gcloud datastore indexes create index.yaml
+
+# 2. インデックス作成完了を待機
+gcloud datastore indexes list
+
+# 3. アプリケーションコードで新しいクエリを有効化
+```
 
 スキーマ定義の一貫性を保つため、コードレビュー時は両方のファイルをチェックしてください。
