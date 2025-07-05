@@ -118,6 +118,7 @@ func setupRouter(app *App) *gin.Engine {
 		users := v2.Group("/users")
 		{
 			users.POST("/login", stageHandler.Login)
+			users.DELETE("/delete-account", auth.FirebaseAuth(app.FirebaseService), stageHandler.DeleteAccount)
 		}
 	}
 

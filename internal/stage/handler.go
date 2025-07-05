@@ -255,6 +255,25 @@ func (h *Handler) SyncStages(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+func (h *Handler) DeleteAccount(c *gin.Context) {
+	// Get authenticated user from context
+	authUID, exists := auth.GetAuthenticatedUID(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+		return
+	}
+
+	err := h.stageService.DeleteAccount(authUID)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	c.JSON(http.StatusOK, openapi.DeleteAccountResult{
+		Message: "Account deleted successfully",
+	})
+}
+
 // Helper function for validation
 func isKyouen(kyouenStage *models.KyouenStage) bool {
 	return kyouenStage.IsKyouenByWhite() != nil

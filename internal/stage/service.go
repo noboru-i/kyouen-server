@@ -158,3 +158,8 @@ func (s *Service) hasRegisteredStageAll(stage models.KyouenStage) (bool, error) 
 	return false, nil
 }
 
+// DeleteAccount deletes a user account and all associated data
+func (s *Service) DeleteAccount(userUID string) error {
+	return s.datastoreService.DeleteUser(userUID)
+}
+
