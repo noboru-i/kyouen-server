@@ -62,7 +62,7 @@ func (s *DatastoreService) GetSummary() (*KyouenPuzzleSummary, error) {
 func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]KyouenPuzzle, error) {
 	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").
-		// FilterField("stageNo", ">=", startStageNo).
+		FilterField("stageNo", ">=", startStageNo).
 		Order("stageNo").
 		Limit(limit)
 
