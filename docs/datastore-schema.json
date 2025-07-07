@@ -301,6 +301,60 @@
         ],
         "businessLogic": "Updates user.clearStageCount when new records are created"
       }
+    },
+    "RegistModel": {
+      "kind": "RegistModel",
+      "description": "Registration tracking for puzzle stages with automatic timestamp recording",
+      "keyPattern": {
+        "type": "incomplete",
+        "description": "Auto-generated integer keys",
+        "example": "datastore.IncompleteKey('RegistModel', nil)"
+      },
+      "properties": {
+        "stageInfo": {
+          "$ref": "#/definitions/datastoreKey",
+          "description": "Reference to KyouenPuzzle entity key",
+          "datastoreTag": "stageInfo",
+          "datastoreType": "*datastore.Key",
+          "goFieldName": "StageInfo"
+        },
+        "registDate": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the stage registration was recorded",
+          "datastoreTag": "registDate"
+        }
+      },
+      "required": [
+        "stageInfo",
+        "registDate"
+      ],
+      "indexes": [
+        {
+          "property": "stageInfo",
+          "description": "Index for retrieving registration records by stage"
+        },
+        {
+          "property": "registDate",
+          "description": "Index for chronological ordering of registrations"
+        }
+      ],
+      "constraints": {
+        "validStageReference": "stageInfo key must reference an existing KyouenPuzzle entity"
+      },
+      "usage": {
+        "description": "Audit trail and registration tracking for puzzle stages",
+        "operations": [
+          "create",
+          "read",
+          "query"
+        ],
+        "queryPatterns": [
+          "Filter by stageInfo to get registration record for specific stage",
+          "Order by registDate for chronological registration history"
+        ],
+        "businessLogic": "Automatically created when new KyouenPuzzle stages are registered"
+      }
     }
   },
   "relationships": {
@@ -320,6 +374,12 @@
       "type": "one-to-many",
       "description": "Each User can have multiple cleared stages",
       "relationship": "User clearStageCount is maintained as denormalized count"
+    },
+    "RegistModel_to_KyouenPuzzle": {
+      "type": "many-to-one",
+      "description": "Each RegistModel record references one KyouenPuzzle",
+      "foreignKey": "stageInfo",
+      "targetEntity": "KyouenPuzzle"
     }
   },
   "projectConfiguration": {
