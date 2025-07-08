@@ -104,6 +104,10 @@ func setupRouter(app *App) *gin.Engine {
 		// Statistics endpoint
 		v2.GET("/statics", staticsHandler.GetStatics)
 
+		// New endpoints for web application
+		v2.GET("/recent_stages", stageHandler.GetRecentStages)
+		v2.GET("/activities", stageHandler.GetActivities)
+
 		// Stages endpoints
 		stages := v2.Group("/stages")
 		{

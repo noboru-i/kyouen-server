@@ -74,6 +74,20 @@ func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]KyouenPuzzl
 	return stages, nil
 }
 
+func (s *DatastoreService) GetRecentStages(limit int) ([]KyouenPuzzle, error) {
+	var stages []KyouenPuzzle
+	query := datastore.NewQuery("KyouenPuzzle").
+		Order("-stageNo").
+		Limit(limit)
+
+	_, err := s.client.GetAll(s.ctx, query, &stages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recent stages: %w", err)
+	}
+
+	return stages, nil
+}
+
 func (s *DatastoreService) GetStageByNo(stageNo int) (*KyouenPuzzle, []*datastore.Key, error) {
 	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").FilterField("stageNo", "=", stageNo).Limit(1)
@@ -316,4 +330,39 @@ func (s *DatastoreService) IncrementUserClearCount(userKey *datastore.Key) error
 	})
 
 	return err
+}
+
+// GetRecentActivities gets recent user activities (stage completions)
+func (s *DatastoreService) GetRecentActivities(limit int) ([]StageUser, error) {
+	var stageUsers []StageUser
+	query := datastore.NewQuery("StageUser").
+		Order("-clearDate").
+		Limit(limit)
+
+	_, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recent activities: %w", err)
+	}
+
+	return stageUsers, nil
+}
+
+// GetUserByKey gets a user by datastore key
+func (s *DatastoreService) GetUserByKey(userKey *datastore.Key) (*User, error) {
+	var user User
+	err := s.client.Get(s.ctx, userKey, &user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by key: %w", err)
+	}
+	return &user, nil
+}
+
+// GetStageByKey gets a stage by datastore key
+func (s *DatastoreService) GetStageByKey(stageKey *datastore.Key) (*KyouenPuzzle, error) {
+	var stage KyouenPuzzle
+	err := s.client.Get(s.ctx, stageKey, &stage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stage by key: %w", err)
+	}
+	return &stage, nil
 }
