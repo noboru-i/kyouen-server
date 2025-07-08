@@ -115,9 +115,15 @@ func (s *DatastoreService) CreateStage(stage KyouenPuzzle) (*KyouenPuzzle, error
 	stage.RegistDate = time.Now()
 
 	key := datastore.IncompleteKey("KyouenPuzzle", nil)
-	_, err = s.client.Put(s.ctx, key, &stage)
+	stageKey, err := s.client.Put(s.ctx, key, &stage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save stage: %w", err)
+	}
+
+	// Create RegistModel record
+	if err := s.createRegistModel(stageKey); err != nil {
+		// Log error but don't fail the creation
+		fmt.Printf("Warning: failed to create RegistModel: %v\n", err)
 	}
 
 	// Update summary
@@ -365,4 +371,20 @@ func (s *DatastoreService) GetStageByKey(stageKey *datastore.Key) (*KyouenPuzzle
 		return nil, fmt.Errorf("failed to get stage by key: %w", err)
 	}
 	return &stage, nil
+}
+
+// createRegistModel creates a RegistModel record for a given stage
+func (s *DatastoreService) createRegistModel(stageKey *datastore.Key) error {
+	registModel := RegistModel{
+		StageInfo:  stageKey,
+		RegistDate: time.Now(),
+	}
+
+	key := datastore.IncompleteKey("RegistModel", nil)
+	_, err := s.client.Put(s.ctx, key, &registModel)
+	if err != nil {
+		return fmt.Errorf("failed to save RegistModel: %w", err)
+	}
+
+	return nil
 }
