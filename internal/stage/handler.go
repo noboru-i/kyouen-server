@@ -3,6 +3,7 @@ package stage
 import (
 	"net/http"
 	"strconv"
+	"time"
 
 	"kyouen-server/internal/auth"
 	"kyouen-server/internal/datastore"
@@ -253,6 +254,88 @@ func (h *Handler) SyncStages(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func (h *Handler) GetRecentStages(c *gin.Context) {
+	stages, err := h.datastoreService.GetRecentStages(10)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Convert to response format
+	stageList := []openapi.Stage{}
+	for _, stage := range stages {
+		stageList = append(stageList, openapi.Stage{
+			StageNo:    stage.StageNo,
+			Size:       stage.Size,
+			Stage:      stage.Stage,
+			Creator:    stage.Creator,
+			RegistDate: stage.RegistDate,
+		})
+	}
+
+	c.JSON(http.StatusOK, stageList)
+}
+
+type ActivityStage struct {
+	StageNo int64     `json:"stageNo"`
+	ClearDate time.Time `json:"clearDate"`
+}
+
+type ActivityUser struct {
+	ScreenName    string          `json:"screenName"`
+	Image         string          `json:"image"`
+	ClearedStages []ActivityStage `json:"clearedStages"`
+}
+
+func (h *Handler) GetActivities(c *gin.Context) {
+	stageUsers, err := h.datastoreService.GetRecentActivities(50)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	// Group activities by user
+	userActivities := make(map[string]*ActivityUser)
+	for _, stageUser := range stageUsers {
+		// Get user information
+		user, err := h.datastoreService.GetUserByKey(stageUser.UserKey)
+		if err != nil {
+			continue // Skip if user not found
+		}
+
+		// Get stage information
+		stage, err := h.datastoreService.GetStageByKey(stageUser.StageKey)
+		if err != nil {
+			continue // Skip if stage not found
+		}
+
+		// Create or update user activity
+		if _, exists := userActivities[user.UserID]; !exists {
+			userActivities[user.UserID] = &ActivityUser{
+				ScreenName:    user.ScreenName,
+				Image:         user.Image,
+				ClearedStages: []ActivityStage{},
+			}
+		}
+
+		userActivities[user.UserID].ClearedStages = append(
+			userActivities[user.UserID].ClearedStages,
+			ActivityStage{
+				StageNo:   stage.StageNo,
+				ClearDate: stageUser.ClearDate,
+			},
+		)
+	}
+
+	// Convert to response format
+	var activities []ActivityUser
+	for _, activity := range userActivities {
+		activities = append(activities, *activity)
+	}
+
+	c.JSON(http.StatusOK, activities)
 }
 
 // Helper function for validation
