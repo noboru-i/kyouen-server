@@ -15,6 +15,8 @@ const (
 	AuthUserKey = "auth_user"
 	// AuthUIDKey is the key used to store authenticated user's Firebase UID in gin context
 	AuthUIDKey = "auth_uid"
+	// GuestUID is the special UID used for guest account (matches existing production data)
+	GuestUID = "0"
 )
 
 // AuthenticatedUser represents the authenticated user information
@@ -120,4 +122,81 @@ func GetAuthenticatedUID(c *gin.Context) (string, bool) {
 		}
 	}
 	return "", false
+}
+
+// OptionalFirebaseAuth creates a middleware that validates Firebase ID tokens but allows guest access
+func OptionalFirebaseAuth(firebaseService *datastore.FirebaseService) gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// Extract Bearer token from Authorization header
+		authHeader := c.GetHeader("Authorization")
+		if authHeader == "" {
+			// No authentication provided, set guest user
+			c.Set(AuthUIDKey, GuestUID)
+			c.Next()
+			return
+		}
+
+		// Check Bearer token format
+		parts := strings.SplitN(authHeader, " ", 2)
+		if len(parts) != 2 || parts[0] != "Bearer" {
+			// Invalid format, set guest user
+			c.Set(AuthUIDKey, GuestUID)
+			c.Next()
+			return
+		}
+
+		idToken := parts[1]
+
+		// Verify Firebase ID token
+		ctx := context.Background()
+		token, err := firebaseService.VerifyIDToken(ctx, idToken)
+		if err != nil {
+			// Invalid token, set guest user
+			c.Set(AuthUIDKey, GuestUID)
+			c.Next()
+			return
+		}
+
+		// Get user information from Firebase Auth
+		userRecord, err := firebaseService.GetUserByUID(ctx, token.UID)
+		if err != nil {
+			// Failed to get user info, set guest user
+			c.Set(AuthUIDKey, GuestUID)
+			c.Next()
+			return
+		}
+
+		// Extract Twitter UID from custom claims (if available)
+		twitterUID := ""
+		if claims, ok := token.Claims["firebase"].(map[string]interface{}); ok {
+			if identities, ok := claims["identities"].(map[string]interface{}); ok {
+				if twitterIds, ok := identities["twitter.com"].([]interface{}); ok && len(twitterIds) > 0 {
+					if twitterID, ok := twitterIds[0].(string); ok {
+						twitterUID = twitterID
+					}
+				}
+			}
+		}
+
+		// Create authenticated user object
+		authUser := &AuthenticatedUser{
+			UID:        token.UID,
+			Email:      userRecord.Email,
+			Name:       userRecord.DisplayName,
+			Picture:    userRecord.PhotoURL,
+			TwitterUID: twitterUID,
+		}
+
+		// Store user information in context
+		c.Set(AuthUserKey, authUser)
+		c.Set(AuthUIDKey, token.UID)
+
+		// Continue to next handler
+		c.Next()
+	}
+}
+
+// IsGuestUser checks if the current user is a guest user
+func IsGuestUser(uid string) bool {
+	return uid == GuestUID
 }
