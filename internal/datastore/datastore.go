@@ -62,13 +62,27 @@ func (s *DatastoreService) GetSummary() (*KyouenPuzzleSummary, error) {
 func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]KyouenPuzzle, error) {
 	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").
-		// FilterField("stageNo", ">=", startStageNo).
+		FilterField("stageNo", ">=", startStageNo).
 		Order("stageNo").
 		Limit(limit)
 
 	_, err := s.client.GetAll(s.ctx, query, &stages)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stages: %w", err)
+	}
+
+	return stages, nil
+}
+
+func (s *DatastoreService) GetRecentStages(limit int) ([]KyouenPuzzle, error) {
+	var stages []KyouenPuzzle
+	query := datastore.NewQuery("KyouenPuzzle").
+		Order("-stageNo").
+		Limit(limit)
+
+	_, err := s.client.GetAll(s.ctx, query, &stages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recent stages: %w", err)
 	}
 
 	return stages, nil
@@ -101,9 +115,15 @@ func (s *DatastoreService) CreateStage(stage KyouenPuzzle) (*KyouenPuzzle, error
 	stage.RegistDate = time.Now()
 
 	key := datastore.IncompleteKey("KyouenPuzzle", nil)
-	_, err = s.client.Put(s.ctx, key, &stage)
+	stageKey, err := s.client.Put(s.ctx, key, &stage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save stage: %w", err)
+	}
+
+	// Create RegistModel record
+	if err := s.createRegistModel(stageKey); err != nil {
+		// Log error but don't fail the creation
+		fmt.Printf("Warning: failed to create RegistModel: %v\n", err)
 	}
 
 	// Update summary
@@ -377,4 +397,55 @@ func (s *DatastoreService) DeleteUser(userID string) error {
 	})
 
 	return err
+}
+
+// GetRecentActivities gets recent user activities (stage completions)
+func (s *DatastoreService) GetRecentActivities(limit int) ([]StageUser, error) {
+	var stageUsers []StageUser
+	query := datastore.NewQuery("StageUser").
+		Order("-clearDate").
+		Limit(limit)
+
+	_, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get recent activities: %w", err)
+	}
+
+	return stageUsers, nil
+}
+
+// GetUserByKey gets a user by datastore key
+func (s *DatastoreService) GetUserByKey(userKey *datastore.Key) (*User, error) {
+	var user User
+	err := s.client.Get(s.ctx, userKey, &user)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get user by key: %w", err)
+	}
+	return &user, nil
+}
+
+// GetStageByKey gets a stage by datastore key
+func (s *DatastoreService) GetStageByKey(stageKey *datastore.Key) (*KyouenPuzzle, error) {
+	var stage KyouenPuzzle
+	err := s.client.Get(s.ctx, stageKey, &stage)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stage by key: %w", err)
+	}
+	return &stage, nil
+}
+
+// createRegistModel creates a RegistModel record for a given stage
+func (s *DatastoreService) createRegistModel(stageKey *datastore.Key) error {
+	registModel := RegistModel{
+		StageInfo:  stageKey,
+		RegistDate: time.Now(),
+	}
+
+	key := datastore.IncompleteKey("RegistModel", nil)
+	_, err := s.client.Put(s.ctx, key, &registModel)
+	if err != nil {
+		return fmt.Errorf("failed to save RegistModel: %w", err)
+	}
+
+	return nil
 }

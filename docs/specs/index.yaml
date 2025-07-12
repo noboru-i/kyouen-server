@@ -368,6 +368,64 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /recent_stages:
+    get:
+      summary: 最新ステージ一覧取得
+      description: |
+        共円パズルゲームで最新の10ステージを取得します。
+        ステージは作成日時の逆順（最新から古い順）で返されます。
+        
+        **用途:**
+        - Webアプリケーションのトップページ表示
+        - 新しいステージの発見
+        - 最新コンテンツの確認
+      tags:
+        - stages
+      responses:
+        '200':
+          description: 最新ステージ取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Stage'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /activities:
+    get:
+      summary: ユーザー活動一覧取得
+      description: |
+        ユーザーのステージクリア活動を取得します。
+        直近50件の活動をユーザーごとにグループ化して返します。
+        
+        **用途:**
+        - Webアプリケーションのアクティビティフィード
+        - ユーザーの活発な活動の確認
+        - コミュニティ機能の表示
+      tags:
+        - stages
+      responses:
+        '200':
+          description: ユーザー活動取得成功
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ActivityUser'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /statics:
     get:
       summary: グローバルゲーム統計取得
@@ -617,6 +675,58 @@ components:
       example:
         count: 1234
         last_updated_at: "2024-01-15T10:30:00Z"
+
+    ActivityUser:
+      type: object
+      description: ユーザーのステージクリア活動情報
+      required:
+        - screen_name
+        - image
+        - cleared_stages
+      properties:
+        screen_name:
+          type: string
+          description: ユーザーのTwitterスクリーン名
+          example: "kyouen_player"
+        image:
+          type: string
+          description: ユーザーのプロフィール画像URL
+          example: "https://pbs.twimg.com/profile_images/123456789/profile_image.jpg"
+        cleared_stages:
+          type: array
+          description: ユーザーがクリアしたステージのリスト
+          items:
+            $ref: '#/components/schemas/ActivityStage'
+      example:
+        screen_name: "kyouen_player"
+        image: "https://pbs.twimg.com/profile_images/123456789/profile_image.jpg"
+        cleared_stages:
+          - stage_no: 125
+            clear_date: "2024-01-15T16:20:00Z"
+          - stage_no: 124
+            clear_date: "2024-01-15T15:10:00Z"
+
+    ActivityStage:
+      type: object
+      description: ユーザーがクリアしたステージ情報
+      required:
+        - stage_no
+        - clear_date
+      properties:
+        stage_no:
+          type: integer
+          format: int64
+          description: クリアされたステージ番号
+          minimum: 1
+          example: 125
+        clear_date:
+          type: string
+          format: date-time
+          description: ステージがクリアされたタイムスタンプ (UTC)
+          example: "2024-01-15T16:20:00Z"
+      example:
+        stage_no: 125
+        clear_date: "2024-01-15T16:20:00Z"
 
     Error:
       type: object

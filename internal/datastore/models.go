@@ -37,3 +37,8 @@ type StageUser struct {
 	UserKey   *datastore.Key `datastore:"user"`
 	ClearDate time.Time      `datastore:"clearDate"`
 }
+
+type RegistModel struct {
+	StageInfo  *datastore.Key `datastore:"stageInfo"`
+	RegistDate time.Time      `datastore:"registDate"`
+}
