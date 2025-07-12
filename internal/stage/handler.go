@@ -20,7 +20,7 @@ type Handler struct {
 
 func NewHandler(datastoreService *datastore.DatastoreService, firebaseService *datastore.FirebaseService) *Handler {
 	return &Handler{
-		stageService:     NewService(datastoreService),
+		stageService:     NewService(datastoreService, firebaseService),
 		datastoreService: datastoreService,
 		firebaseService:  firebaseService,
 	}

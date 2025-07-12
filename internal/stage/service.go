@@ -1,6 +1,7 @@
 package stage
 
 import (
+	"context"
 	"errors"
 	"math"
 	"strings"
@@ -22,11 +23,13 @@ var (
 
 type Service struct {
 	datastoreService *datastore.DatastoreService
+	firebaseService  *datastore.FirebaseService
 }
 
-func NewService(datastoreService *datastore.DatastoreService) *Service {
+func NewService(datastoreService *datastore.DatastoreService, firebaseService *datastore.FirebaseService) *Service {
 	return &Service{
 		datastoreService: datastoreService,
+		firebaseService:  firebaseService,
 	}
 }
 
@@ -160,6 +163,22 @@ func (s *Service) hasRegisteredStageAll(stage models.KyouenStage) (bool, error) 
 
 // DeleteAccount deletes a user account and all associated data
 func (s *Service) DeleteAccount(userUID string) error {
-	return s.datastoreService.DeleteUser(userUID)
+	// TODO: Add audit log for account deletion request (required for compliance)
+
+	// Delete from Datastore first
+	err := s.datastoreService.DeleteUser(userUID)
+	if err != nil {
+		return err
+	}
+
+	// Delete from Firebase Auth
+	ctx := context.Background()
+	err = s.firebaseService.DeleteUser(ctx, userUID)
+	if err != nil {
+		// Don't fail the entire operation since Datastore deletion succeeded
+		// TODO: Add error log for Firebase Auth deletion failure (for manual cleanup)
+	}
+
+	return nil
 }
 

@@ -318,7 +318,7 @@ func (s *DatastoreService) IncrementUserClearCount(userKey *datastore.Key) error
 	return err
 }
 
-// DeleteUser deletes a user and all associated data
+// DeleteUser deletes a user and all associated data from Datastore
 func (s *DatastoreService) DeleteUser(userID string) error {
 	// Get user key and entity
 	userKey := datastore.NameKey("User", "KEY"+userID, nil)
@@ -330,6 +330,8 @@ func (s *DatastoreService) DeleteUser(userID string) error {
 		}
 		return fmt.Errorf("failed to get user: %w", err)
 	}
+
+	// TODO: Add audit log for user account deletion (required for compliance)
 
 	// Run deletion in transaction
 	_, err = s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {

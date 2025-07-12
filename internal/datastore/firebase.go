@@ -62,3 +62,13 @@ func (fs *FirebaseService) GetUserByUID(ctx context.Context, uid string) (*auth.
 	
 	return user, nil
 }
+
+// DeleteUser deletes a user from Firebase Auth
+func (fs *FirebaseService) DeleteUser(ctx context.Context, uid string) error {
+	err := fs.auth.DeleteUser(ctx, uid)
+	if err != nil {
+		return fmt.Errorf("failed to delete user from Firebase Auth: %w", err)
+	}
+	
+	return nil
+}

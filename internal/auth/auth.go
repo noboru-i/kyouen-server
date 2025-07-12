@@ -5,8 +5,9 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/gin-gonic/gin"
 	"kyouen-server/internal/datastore"
+
+	"github.com/gin-gonic/gin"
 )
 
 const (
@@ -37,7 +38,7 @@ func FirebaseAuth(firebaseService *datastore.FirebaseService) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		// Check Bearer token format
 		parts := strings.SplitN(authHeader, " ", 2)
 		if len(parts) != 2 || parts[0] != "Bearer" {
@@ -47,9 +48,9 @@ func FirebaseAuth(firebaseService *datastore.FirebaseService) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		idToken := parts[1]
-		
+
 		// Verify Firebase ID token
 		ctx := context.Background()
 		token, err := firebaseService.VerifyIDToken(ctx, idToken)
@@ -60,7 +61,7 @@ func FirebaseAuth(firebaseService *datastore.FirebaseService) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		// Get user information from Firebase Auth
 		userRecord, err := firebaseService.GetUserByUID(ctx, token.UID)
 		if err != nil {
@@ -70,7 +71,7 @@ func FirebaseAuth(firebaseService *datastore.FirebaseService) gin.HandlerFunc {
 			c.Abort()
 			return
 		}
-		
+
 		// Extract Twitter UID from custom claims (if available)
 		twitterUID := ""
 		if claims, ok := token.Claims["firebase"].(map[string]interface{}); ok {
@@ -82,7 +83,7 @@ func FirebaseAuth(firebaseService *datastore.FirebaseService) gin.HandlerFunc {
 				}
 			}
 		}
-		
+
 		// Create authenticated user object
 		authUser := &AuthenticatedUser{
 			UID:        token.UID,
@@ -91,11 +92,11 @@ func FirebaseAuth(firebaseService *datastore.FirebaseService) gin.HandlerFunc {
 			Picture:    userRecord.PhotoURL,
 			TwitterUID: twitterUID,
 		}
-		
+
 		// Store user information in context
 		c.Set(AuthUserKey, authUser)
 		c.Set(AuthUIDKey, token.UID)
-		
+
 		// Continue to next handler
 		c.Next()
 	}
