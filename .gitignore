@@ -15,3 +15,6 @@ server
 
 # Environment files
 .env
+
+# Temporary files
+tmp/

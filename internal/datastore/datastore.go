@@ -338,6 +338,67 @@ func (s *DatastoreService) IncrementUserClearCount(userKey *datastore.Key) error
 	return err
 }
 
+// DeleteUser deletes a user and all associated data from Datastore
+func (s *DatastoreService) DeleteUser(userID string) error {
+	// Get user key and entity
+	userKey := datastore.NameKey("User", "KEY"+userID, nil)
+	var user User
+	err := s.client.Get(s.ctx, userKey, &user)
+	if err != nil {
+		if err == datastore.ErrNoSuchEntity {
+			return fmt.Errorf("user not found: %s", userID)
+		}
+		return fmt.Errorf("failed to get user: %w", err)
+	}
+
+	// TODO: Add audit log for user account deletion (required for compliance)
+
+	// Run deletion in transaction
+	_, err = s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
+		// Delete all StageUser records for this user
+		query := datastore.NewQuery("StageUser").FilterField("user", "=", userKey)
+		keys, err := s.client.GetAll(s.ctx, query, &[]StageUser{})
+		if err != nil {
+			return fmt.Errorf("failed to get StageUser records: %w", err)
+		}
+
+		// Delete StageUser records
+		if len(keys) > 0 {
+			err = tx.DeleteMulti(keys)
+			if err != nil {
+				return fmt.Errorf("failed to delete StageUser records: %w", err)
+			}
+		}
+
+		// Anonymize creator field in KyouenPuzzle entities created by this user
+		stageQuery := datastore.NewQuery("KyouenPuzzle").FilterField("creator", "=", user.ScreenName)
+		var stages []KyouenPuzzle
+		stageKeys, err := s.client.GetAll(s.ctx, stageQuery, &stages)
+		if err != nil {
+			return fmt.Errorf("failed to get user's stages: %w", err)
+		}
+
+		// Anonymize creator field
+		for i, stage := range stages {
+			stage.Creator = "[deleted user]"
+			_, err = tx.Put(stageKeys[i], &stage)
+			if err != nil {
+				return fmt.Errorf("failed to anonymize stage creator: %w", err)
+			}
+		}
+
+		// Delete the user entity
+		err = tx.Delete(userKey)
+		if err != nil {
+			return fmt.Errorf("failed to delete user: %w", err)
+		}
+
+		return nil
+	})
+
+	return err
+}
+
 // GetRecentActivities gets recent user activities (stage completions)
 func (s *DatastoreService) GetRecentActivities(limit int) ([]StageUser, error) {
 	var stageUsers []StageUser

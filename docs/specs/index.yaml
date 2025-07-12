@@ -105,6 +105,46 @@ paths:
               schema:
                 $ref: '#/components/schemas/Error'
 
+  /users/delete-account:
+    delete:
+      summary: ユーザーアカウント削除
+      description: |
+        認証されたユーザーのアカウントと関連データを完全に削除します。
+        Google PlayやApple Storeの要件に準拠するため、個人情報を含むすべてのデータを削除します。
+        
+        **削除されるデータ:**
+        - ユーザーアカウント情報（スクリーン名、プロフィール画像、OAuth情報）
+        - ユーザーのステージクリア履歴
+        - 作成したステージの作成者情報（匿名化）
+        
+        **削除後の影響:**
+        - 該当アカウントでのログインは不可能
+        - 作成したステージは匿名化されて残存（ゲームの整合性維持）
+        - 他のユーザーのプレイには影響なし
+      tags:
+        - authentication
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: アカウント削除成功
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DeleteAccountResult'
+        '401':
+          description: 認証が必要
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: 内部サーバーエラー
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
   /stages:
     get:
       summary: パズルステージ一覧取得
@@ -450,6 +490,19 @@ components:
           example: "kyouen_player"
       example:
         screen_name: "kyouen_player"
+
+    DeleteAccountResult:
+      type: object
+      description: アカウント削除の結果
+      required:
+        - message
+      properties:
+        message:
+          type: string
+          description: 削除成功メッセージ
+          example: "Account deleted successfully"
+      example:
+        message: "Account deleted successfully"
 
     Stages:
       type: array
