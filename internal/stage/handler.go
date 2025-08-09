@@ -225,11 +225,11 @@ func (h *Handler) Login(c *gin.Context) {
 }
 
 func (h *Handler) SyncStages(c *gin.Context) {
-	// Get authenticated user from context (or use guest if not authenticated)
+	// Get authenticated user from context
 	authUID, exists := auth.GetAuthenticatedUID(c)
 	if !exists {
-		// This should not happen with OptionalFirebaseAuth middleware, but just in case
-		authUID = auth.GuestUID
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
+		return
 	}
 
 	var clientClearedStages []openapi.ClearedStage

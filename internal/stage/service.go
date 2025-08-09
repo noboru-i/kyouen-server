@@ -117,22 +117,10 @@ func (s *Service) ClearStage(stageNo int, stageData string, userUID string) (*da
 }
 
 func (s *Service) SyncStages(userUID string, clientClearedStages []openapi.ClearedStage) ([]datastoreservice.StageUser, error) {
-	// Get user from database (handle guest users)
-	var userKey *datastore.Key
-	var err error
-	
-	if auth.IsGuestUser(userUID) {
-		// Get or create guest user
-		_, userKey, err = s.datastoreService.GetOrCreateGuestUser()
-		if err != nil {
-			return nil, ErrUserNotFound
-		}
-	} else {
-		// Get regular user
-		_, userKey, err = s.datastoreService.GetUserByID(userUID)
-		if err != nil {
-			return nil, ErrUserNotFound
-		}
+	// Get authenticated user from database
+	_, userKey, err := s.datastoreService.GetUserByID(userUID)
+	if err != nil {
+		return nil, ErrUserNotFound
 	}
 	
 	// For each client cleared stage, create stage user relation if not exists
