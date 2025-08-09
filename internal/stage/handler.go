@@ -102,11 +102,11 @@ func (h *Handler) CreateStage(c *gin.Context) {
 }
 
 func (h *Handler) ClearStage(c *gin.Context) {
-	// Get authenticated user from context
+	// Get authenticated user from context (or use guest if not authenticated)
 	authUID, exists := auth.GetAuthenticatedUID(c)
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
-		return
+		// This should not happen with OptionalFirebaseAuth middleware, but just in case
+		authUID = auth.GuestUID
 	}
 
 	stageNo, err := strconv.Atoi(c.Param("stageNo"))

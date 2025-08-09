@@ -6,7 +6,9 @@ import (
 	"math"
 	"strings"
 
-	"kyouen-server/internal/datastore"
+	"cloud.google.com/go/datastore"
+	"kyouen-server/internal/auth"
+	datastoreservice "kyouen-server/internal/datastore"
 	"kyouen-server/pkg/models"
 	"kyouen-server/internal/generated/openapi"
 )
@@ -22,18 +24,18 @@ var (
 )
 
 type Service struct {
-	datastoreService *datastore.DatastoreService
-	firebaseService  *datastore.FirebaseService
+	datastoreService *datastoreservice.DatastoreService
+	firebaseService  *datastoreservice.FirebaseService
 }
 
-func NewService(datastoreService *datastore.DatastoreService, firebaseService *datastore.FirebaseService) *Service {
+func NewService(datastoreService *datastoreservice.DatastoreService, firebaseService *datastoreservice.FirebaseService) *Service {
 	return &Service{
 		datastoreService: datastoreService,
 		firebaseService:  firebaseService,
 	}
 }
 
-func (s *Service) CreateStage(param openapi.NewStage, creatorName string) (*datastore.KyouenPuzzle, error) {
+func (s *Service) CreateStage(param openapi.NewStage, creatorName string) (*datastoreservice.KyouenPuzzle, error) {
 	// Validate stage using existing business logic
 	stage := *models.NewKyouenStage(int(param.Size), param.Stage)
 	
@@ -58,7 +60,7 @@ func (s *Service) CreateStage(param openapi.NewStage, creatorName string) (*data
 	}
 	
 	// Create stage with authenticated user as creator
-	newStage := datastore.KyouenPuzzle{
+	newStage := datastoreservice.KyouenPuzzle{
 		Size:    param.Size,
 		Stage:   param.Stage,
 		Creator: creatorName,
@@ -67,7 +69,7 @@ func (s *Service) CreateStage(param openapi.NewStage, creatorName string) (*data
 	return s.datastoreService.CreateStage(newStage)
 }
 
-func (s *Service) ClearStage(stageNo int, stageData string, userUID string) (*datastore.User, error) {
+func (s *Service) ClearStage(stageNo int, stageData string, userUID string) (*datastoreservice.User, error) {
 	// Validate clear stage using existing business logic
 	size := int(math.Sqrt(float64(len(stageData))))
 	paramKyouenStage := models.NewKyouenStage(size, stageData)
@@ -87,10 +89,22 @@ func (s *Service) ClearStage(stageNo int, stageData string, userUID string) (*da
 		return nil, ErrStageMismatch
 	}
 	
-	// Get user from database
-	user, userKey, err := s.datastoreService.GetUserByID(userUID)
-	if err != nil {
-		return nil, ErrUserNotFound
+	// Get user from database (handle guest users)
+	var user *datastoreservice.User
+	var userKey *datastore.Key
+	
+	if auth.IsGuestUser(userUID) {
+		// Get or create guest user
+		user, userKey, err = s.datastoreService.GetOrCreateGuestUser()
+		if err != nil {
+			return nil, ErrUserNotFound
+		}
+	} else {
+		// Get regular user
+		user, userKey, err = s.datastoreService.GetUserByID(userUID)
+		if err != nil {
+			return nil, ErrUserNotFound
+		}
 	}
 	
 	// Create stage user relation to record the clear
@@ -102,8 +116,8 @@ func (s *Service) ClearStage(stageNo int, stageData string, userUID string) (*da
 	return user, nil
 }
 
-func (s *Service) SyncStages(userUID string, clientClearedStages []openapi.ClearedStage) ([]datastore.StageUser, error) {
-	// Get user from database
+func (s *Service) SyncStages(userUID string, clientClearedStages []openapi.ClearedStage) ([]datastoreservice.StageUser, error) {
+	// Get authenticated user from database
 	_, userKey, err := s.datastoreService.GetUserByID(userUID)
 	if err != nil {
 		return nil, ErrUserNotFound
