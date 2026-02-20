@@ -7,6 +7,9 @@
 ### データベーススキーマ
 - **[datastore-schema.json](./datastore-schema.json)** - Datastoreエンティティのスキーマ定義（JSON Schema形式）
 
+### 認証情報
+- **[auth-data-relations.md](./auth-data-relations.md)** - Firebase Auth と Datastore User エンティティのデータ項目関連図
+
 ### API仕様
 - **[specs/index.yaml](./specs/index.yaml)** - OpenAPI 3.0仕様（REST API定義）
 
@@ -65,6 +68,7 @@ json-schema-to-markdown -s datastore-schema.json -o schema-docs.md
 - [CLAUDE.md](../CLAUDE.md) - 開発ガイダンス
 - [README.md](../README.md) - プロジェクト概要
 - [OpenAPI仕様](./specs/index.yaml) - REST API詳細
+- [認証情報の関連図](./auth-data-relations.md) - Firebase Auth と Datastore User のデータ項目マッピング
 
 ## 更新について
 
