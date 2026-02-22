@@ -256,7 +256,7 @@ func (s *DatastoreService) CreateOrUpdateUserFromFirebase(firebaseUID, screenNam
 // GetOrCreateGuestUser gets or creates the guest user account (matches existing production data)
 func (s *DatastoreService) GetOrCreateGuestUser() (*User, *datastore.Key, error) {
 	guestUID := "0"
-	
+
 	// Try to get existing guest user
 	existingUser, key, err := s.GetUserByID(guestUID)
 	if err != nil {
@@ -264,16 +264,16 @@ func (s *DatastoreService) GetOrCreateGuestUser() (*User, *datastore.Key, error)
 		guestUser := User{
 			UserID:          guestUID,
 			ScreenName:      "Guest",
-			Image:           "http://kyouen.app/image/icon.png",
+			Image:           "https://kyouen.app/image/icon.png",
 			TwitterUID:      "",
 			ClearStageCount: 0,
 		}
-		
+
 		user, err := s.UpsertUser(guestUser, guestUID)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create guest user: %w", err)
 		}
-		
+
 		// Return with the key
 		guestKey := datastore.NameKey("User", "KEY"+guestUID, nil)
 		return user, guestKey, nil
