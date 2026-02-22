@@ -9,7 +9,7 @@ func TestNewKyouenStage(t *testing.T) {
 	stage := "000000001000000000000000000000000000"
 	s := NewKyouenStage(6, stage)
 	if len(s.stonePointList) != 1 {
-		t.Errorf("%q must have 1 stone. len = %q", stage, len(s.stonePointList))
+		t.Errorf("%q must have 1 stone. len = %d", stage, len(s.stonePointList))
 	}
 	if s.stonePointList[0].x != 2 || s.stonePointList[0].y != 1 {
 		t.Errorf("%q stone point must be {x:2, y:1}. stone = %+v", stage, s.stonePointList[0])
@@ -40,7 +40,7 @@ func TestToString(t *testing.T) {
 	s := KyouenStage{size: 6, stonePointList: []Point{Point{x: 2, y: 1}}}
 	expect := "000000001000000000000000000000000000"
 	if s.ToString() != expect {
-		t.Errorf("{x:2, y:1} must be %q. string = %q", expect, s)
+		t.Errorf("{x:2, y:1} must be %q. string = %v", expect, s)
 	}
 }
 
