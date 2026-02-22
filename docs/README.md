@@ -10,6 +10,9 @@
 ### 認証情報
 - **[auth-data-relations.md](./auth-data-relations.md)** - Firebase Auth と Datastore User エンティティのデータ項目関連図
 
+### 環境設定
+- **[environments.md](./environments.md)** - DEV / PROD 環境設定差異（プロジェクトID、Cloud Run設定、デプロイトリガーなど）
+
 ### API仕様
 - **[specs/index.yaml](./specs/index.yaml)** - OpenAPI 3.0仕様（REST API定義）
 
@@ -69,6 +72,7 @@ json-schema-to-markdown -s datastore-schema.json -o schema-docs.md
 - [README.md](../README.md) - プロジェクト概要
 - [OpenAPI仕様](./specs/index.yaml) - REST API詳細
 - [認証情報の関連図](./auth-data-relations.md) - Firebase Auth と Datastore User のデータ項目マッピング
+- [環境設定差異](./environments.md) - DEV / PROD 環境設定の差異
 
 ## 更新について
 
