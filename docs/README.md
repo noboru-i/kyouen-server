@@ -12,9 +12,13 @@
 
 ### 環境設定
 - **[environments.md](./environments.md)** - DEV / PROD 環境設定差異（プロジェクトID、Cloud Run設定、デプロイトリガーなど）
+- **[firebase-config-comparison.md](./firebase-config-comparison.md)** - Firebase / GCP 実設定の DEV vs PROD 詳細比較（Auth IdP、Firestore、Cloud Run、Artifact Registry）
 
 ### API仕様
 - **[specs/index.yaml](./specs/index.yaml)** - OpenAPI 3.0仕様（REST API定義）
+
+### アーキテクチャ決定記録（ADR）
+- **[adr/001-terraform-iac.md](./adr/001-terraform-iac.md)** - Terraform による Infrastructure as Code 導入（プロバイダー設定・state管理・機密情報の扱い）
 
 ## Datastoreスキーマドキュメント
 
@@ -73,6 +77,9 @@ json-schema-to-markdown -s datastore-schema.json -o schema-docs.md
 - [OpenAPI仕様](./specs/index.yaml) - REST API詳細
 - [認証情報の関連図](./auth-data-relations.md) - Firebase Auth と Datastore User のデータ項目マッピング
 - [環境設定差異](./environments.md) - DEV / PROD 環境設定の差異
+- [Firebase設定比較](./firebase-config-comparison.md) - DEV / PROD の実設定詳細比較
+- [Terraform IaC](../terraform/README.md) - Infrastructure as Code 定義と運用手順
+- [ADR一覧](./adr/) - アーキテクチャ決定記録
 
 ## 更新について
 

@@ -79,6 +79,31 @@ rm -rf tmp
 brew install gh && gh auth login
 ```
 
+### Terraform（インフラ管理）
+```bash
+# 前提条件
+brew install terraform
+gcloud auth application-default login
+
+# DEV環境
+cd terraform/envs/dev
+
+# 機密情報ファイルを用意（gitignore対象）
+cp terraform.tfvars.example terraform.tfvars  # 存在する場合
+# terraform.tfvars に twitter_client_id/secret, apple_client_id/secret を記載
+
+# プラン確認
+terraform plan -var-file="terraform.tfvars"
+
+# 適用
+terraform apply -var-file="terraform.tfvars"
+```
+
+**注意事項:**
+- `container_image` は CI/CD が管理するため Terraform では変更しない（`ignore_changes` 設定済み）
+- Apple の `client_secret` は ES256 JWT で有効期限は約6ヶ月。期限前に再生成が必要
+- 初回セットアップ（既存リソースのインポート）は `terraform/README.md` 参照
+
 ### Swagger UI
 ```bash
 # API ドキュメントのローカル表示
@@ -125,8 +150,12 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `cmd/test_server/main.go`: Datastore接続テスト用サーバー
 - `docs/specs/index.yaml`: OpenAPI仕様
 - `docs/datastore-schema.json`: Datastoreエンティティスキーマ定義（JSON Schema形式）
+- `docs/adr/`: アーキテクチャ決定記録（ADR）
 - `Dockerfile`: Cloud Run用Dockerイメージ設定
 - `scripts/deploy.sh`: Cloud Run手動デプロイスクリプト
+- `terraform/envs/dev/`: DEV環境Terraform定義
+- `terraform/envs/prod/`: PROD環境Terraform定義
+- `terraform/modules/`: Terraformモジュール（firebase-auth, cloud-run, artifact-registry）
 - `.github/workflows/pr_validation.yml`: GitHub Actions CI設定
 - `.github/workflows/deploy-dev.yml`: DEV環境自動デプロイ設定
 - `.github/workflows/deploy-prod.yml`: 本番環境手動デプロイ設定
