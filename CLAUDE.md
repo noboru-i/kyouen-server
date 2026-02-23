@@ -155,7 +155,7 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `scripts/deploy.sh`: Cloud Run手動デプロイスクリプト
 - `terraform/envs/dev/`: DEV環境Terraform定義
 - `terraform/envs/prod/`: PROD環境Terraform定義
-- `terraform/modules/`: Terraformモジュール（firebase-auth, cloud-run, artifact-registry）
+- `terraform/modules/`: Terraformモジュール（kyouen-app, firebase-auth, cloud-run, artifact-registry）
 - `.github/workflows/pr_validation.yml`: GitHub Actions CI設定
 - `.github/workflows/deploy-dev.yml`: DEV環境自動デプロイ設定
 - `.github/workflows/deploy-prod.yml`: 本番環境手動デプロイ設定

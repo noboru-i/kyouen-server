@@ -8,6 +8,7 @@ Firebase / GCP リソースの Infrastructure as Code（Terraform）定義です
 terraform/
 ├── README.md
 ├── modules/
+│   ├── kyouen-app/          # 共通アプリケーションモジュール（各環境から呼び出す）
 │   ├── firebase-auth/       # Firebase Authentication モジュール
 │   ├── cloud-run/           # Cloud Run サービス モジュール
 │   └── artifact-registry/   # Artifact Registry モジュール
@@ -51,26 +52,26 @@ cd terraform/envs/dev
 terraform init
 
 # DEV Firebase Auth
-terraform import module.firebase_auth.google_identity_platform_config.auth projects/api-project-732262258565/config
+terraform import module.kyouen_app.module.firebase_auth.google_identity_platform_config.auth projects/api-project-732262258565/config
 
 # DEV Twitter IdP
-terraform import 'module.firebase_auth.google_identity_platform_default_supported_idp_config.twitter[0]' \
+terraform import 'module.kyouen_app.module.firebase_auth.google_identity_platform_default_supported_idp_config.twitter[0]' \
   projects/api-project-732262258565/defaultSupportedIdpConfigs/twitter.com
 
 # DEV Apple IdP
-terraform import 'module.firebase_auth.google_identity_platform_default_supported_idp_config.apple[0]' \
+terraform import 'module.kyouen_app.module.firebase_auth.google_identity_platform_default_supported_idp_config.apple[0]' \
   projects/api-project-732262258565/defaultSupportedIdpConfigs/apple.com
 
 # DEV Artifact Registry
-terraform import module.artifact_registry.google_artifact_registry_repository.kyouen_repo \
+terraform import module.kyouen_app.module.artifact_registry.google_artifact_registry_repository.kyouen_repo \
   projects/api-project-732262258565/locations/asia-northeast1/repositories/kyouen-repo
 
 # DEV Cloud Run
-terraform import module.cloud_run.google_cloud_run_v2_service.kyouen_server \
+terraform import module.kyouen_app.module.cloud_run.google_cloud_run_v2_service.kyouen_server \
   projects/api-project-732262258565/locations/asia-northeast1/services/kyouen-server-dev
 
 # DEV Cloud Run IAM
-terraform import module.cloud_run.google_cloud_run_v2_service_iam_member.public_access \
+terraform import module.kyouen_app.module.cloud_run.google_cloud_run_v2_service_iam_member.public_access \
   "projects/api-project-732262258565/locations/asia-northeast1/services/kyouen-server-dev roles/run.invoker allUsers"
 ```
 
@@ -80,18 +81,18 @@ cd terraform/envs/prod
 terraform init
 
 # PROD Firebase Auth
-terraform import module.firebase_auth.google_identity_platform_config.auth projects/my-android-server/config
+terraform import module.kyouen_app.module.firebase_auth.google_identity_platform_config.auth projects/my-android-server/config
 
 # PROD Artifact Registry
-terraform import module.artifact_registry.google_artifact_registry_repository.kyouen_repo \
+terraform import module.kyouen_app.module.artifact_registry.google_artifact_registry_repository.kyouen_repo \
   projects/my-android-server/locations/asia-northeast1/repositories/kyouen-repo
 
 # PROD Cloud Run
-terraform import module.cloud_run.google_cloud_run_v2_service.kyouen_server \
+terraform import module.kyouen_app.module.cloud_run.google_cloud_run_v2_service.kyouen_server \
   projects/my-android-server/locations/asia-northeast1/services/kyouen-server-prod
 
 # PROD Cloud Run IAM
-terraform import module.cloud_run.google_cloud_run_v2_service_iam_member.public_access \
+terraform import module.kyouen_app.module.cloud_run.google_cloud_run_v2_service_iam_member.public_access \
   "projects/my-android-server/locations/asia-northeast1/services/kyouen-server-prod roles/run.invoker allUsers"
 ```
 
