@@ -36,7 +36,10 @@ resource "google_identity_platform_config" "auth" {
   }
 
   lifecycle {
-    ignore_changes = []
+    ignore_changes = [
+      multi_tenant,
+      sign_in[0].phone_number,
+    ]
   }
 }
 
