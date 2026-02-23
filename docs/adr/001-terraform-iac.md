@@ -23,7 +23,7 @@ Firebase Auth・Cloud Run・Artifact Registry などの GCP/Firebase リソー�
 
 ### 2. プロバイダー設定
 
-`hashicorp/google` プロバイダー（`~> 6.0`）を使用し、**`user_project_override = true`** を必須とする。
+`hashicorp/google` プロバイダー（`~> 7.0`）を使用し、**`user_project_override = true`** を必須とする。
 
 ```hcl
 provider "google" {
@@ -60,7 +60,20 @@ lifecycle {
 }
 ```
 
-### 5. 機密情報の管理
+### 5. Firebase Auth の perpetual diff 回避
+
+v7 プロバイダーでは `google_identity_platform_config` の `multi_tenant` / `sign_in[0].phone_number` ブロックが毎回 API から読み込まれ、差分が出続ける。これらは Firebase プロジェクト側で管理される値のため `lifecycle.ignore_changes` で除外する。
+
+```hcl
+lifecycle {
+  ignore_changes = [
+    multi_tenant,
+    sign_in[0].phone_number,
+  ]
+}
+```
+
+### 6. 機密情報の管理
 
 Twitter / Apple の OAuth 認証情報は `terraform.tfvars`（`.gitignore` 対象）で管理する。
 
@@ -70,7 +83,7 @@ terraform/envs/dev/terraform.tfvars  # gitignore 対象
 
 Apple の `client_secret` は静的な文字列ではなく **ES256 JWT**（有効期限 〜6ヶ月）であり、期限切れ前に再生成・更新が必要。
 
-### 6. 初回セットアップ手順
+### 7. 初回セットアップ手順
 
 既存リソースは `terraform import` で取り込む（`terraform/README.md` 参照）。
 
