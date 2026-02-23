@@ -4,6 +4,12 @@ variable "project_id" {
   default     = "my-android-server"
 }
 
+variable "environment" {
+  description = "Environment name (dev or prod)"
+  type        = string
+  default     = "prod"
+}
+
 variable "region" {
   description = "GCP region"
   type        = string

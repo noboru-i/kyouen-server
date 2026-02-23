@@ -1,13 +1,16 @@
 variable "project_id" {
   description = "GCP Project ID"
   type        = string
-  default     = "api-project-732262258565"
 }
 
 variable "environment" {
   description = "Environment name (dev or prod)"
   type        = string
-  default     = "dev"
+
+  validation {
+    condition     = contains(["dev", "prod"], var.environment)
+    error_message = "Environment must be either 'dev' or 'prod'."
+  }
 }
 
 variable "region" {
@@ -19,16 +22,25 @@ variable "region" {
 variable "container_image" {
   description = "Full container image URL (set by CI/CD)"
   type        = string
-  default     = "asia-northeast1-docker.pkg.dev/api-project-732262258565/kyouen-repo/kyouen-server:latest"
 }
 
 variable "service_account_email" {
   description = "Service account email for Cloud Run"
   type        = string
-  default     = "732262258565-compute@developer.gserviceaccount.com"
 }
 
-# 機密情報（Secret Manager または CI/CD 経由で設定）
+variable "max_instances" {
+  description = "Maximum number of Cloud Run instances"
+  type        = number
+  default     = 10
+}
+
+variable "min_instances" {
+  description = "Minimum number of Cloud Run instances"
+  type        = number
+  default     = 0
+}
+
 variable "twitter_client_id" {
   description = "Twitter OAuth Client ID"
   type        = string
