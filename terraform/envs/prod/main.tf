@@ -2,8 +2,8 @@ terraform {
   required_version = ">= 1.9"
 
   required_providers {
-    google-beta = {
-      source  = "hashicorp/google-beta"
+    google = {
+      source  = "hashicorp/google"
       version = "~> 7.0"
     }
   }
@@ -16,7 +16,7 @@ terraform {
   }
 }
 
-provider "google-beta" {
+provider "google" {
   project               = var.project_id
   region                = var.region
   user_project_override = true
@@ -28,12 +28,16 @@ module "firebase_auth" {
   project_id         = var.project_id
   firebase_subdomain = var.project_id
 
-  # PROD環境: 匿名認証は有効、Twitter/Apple認証は現在未設定
-  # TODO: PRODへのIdP展開が必要か要確認（docs/firebase-config-comparison.md 参照）
-  anonymous_auth_enabled = true
+  # PROD環境: 匿名認証は無効、Twitter/Apple認証は有効
+  anonymous_auth_enabled = false
 
-  twitter_idp_enabled = false
-  apple_idp_enabled   = false
+  twitter_idp_enabled   = true
+  twitter_client_id     = var.twitter_client_id
+  twitter_client_secret = var.twitter_client_secret
+
+  apple_idp_enabled   = true
+  apple_client_id     = var.apple_client_id
+  apple_client_secret = var.apple_client_secret
 }
 
 module "artifact_registry" {
