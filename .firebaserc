@@ -1,5 +1,7 @@
 {
   "projects": {
-    "default": "api-project-732262258565"
+    "default": "api-project-732262258565",
+    "dev": "api-project-732262258565",
+    "prod": "my-android-server"
   }
 }

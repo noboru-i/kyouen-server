@@ -17,15 +17,26 @@
 ### 前提条件
 
 - Go 1.24以上
+- Firebase CLI (`firebase`) - ローカルエミュレーター用
 - GitHub CLI (`gh`) - デプロイスクリプト用
 
 ### ローカル開発
 
 ```bash
-# 本番接続サーバー
-go run cmd/server/main.go
+# エミュレーターを使ったローカル開発（推奨）
+gcloud emulators firestore start --database-mode=datastore-mode --host-port=0.0.0.0:9098
+firebase emulators:start
+
+DATASTORE_EMULATOR_HOST=localhost:9098 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 go run cmd/server/main.go
 
 # ローカルアクセス先: http://localhost:8080/
+```
+
+### Firebase プロジェクト切り替え
+
+```bash
+firebase use dev   # DEV環境 (api-project-732262258565)
+firebase use prod  # 本番環境 (my-android-server)
 ```
 
 ## 🔄 API エンドポイント
@@ -48,14 +59,18 @@ GET /v2/statics
 
 ### ステージ管理
 ```
-GET /v2/stages              # ステージ一覧取得
-POST /v2/stages             # 新規ステージ作成
-POST /v2/stages/{id}/clear  # ステージクリア
+GET  /v2/stages                    # ステージ一覧取得
+POST /v2/stages                    # 新規ステージ作成（要認証）
+POST /v2/stages/sync               # ステージ同期（要認証）
+PUT  /v2/stages/{stageNo}/clear    # ステージクリア（認証任意）
+GET  /v2/recent_stages             # 最近のステージ一覧
+GET  /v2/activities                # アクティビティ一覧
 ```
 
 ### ユーザー管理
 ```
-POST /v2/users/login        # ログイン
+POST   /v2/users/login          # ログイン
+DELETE /v2/users/delete-account # アカウント削除（要認証）
 ```
 
 ## 🧪 テスト
@@ -68,11 +83,24 @@ go test -v ./...
 go build -v ./...
 ```
 
+## 🏛️ インフラ管理
+
+GCP/Firebase リソースは Terraform で管理しています。
+
+```bash
+cd terraform/envs/dev
+terraform plan -var-file="terraform.tfvars"
+terraform apply -var-file="terraform.tfvars"
+```
+
+詳細は [terraform/README.md](./terraform/README.md) を参照してください。
+
 ## 🚀 CI/CD
 
 GitHub Actionsによる自動CI/CDを設定済み：
 - **PR検証**: Go 1.24での自動テスト・ビルド
 - **自動デプロイ**: DEV環境（mainブランチ）、本番環境（手動実行）
+- **インフラ**: Terraform で Firebase Auth・Cloud Run・Artifact Registry を管理
 
 
 ## 🤝 開発について
