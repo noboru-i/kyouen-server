@@ -1,5 +1,5 @@
 # ビルドステージ
-FROM golang:1.24-alpine AS builder
+FROM golang:1.26-alpine AS builder
 
 WORKDIR /app
 
@@ -14,7 +14,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o seed ./cmd/seed
 
 # 実行ステージ
-FROM alpine:latest
+FROM alpine:3.21
 
 # CA証明書を追加（HTTPS通信のため）
 RUN apk --no-cache add ca-certificates

@@ -14,7 +14,7 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
 
 # 実行ステージ
-FROM alpine:latest
+FROM alpine:3.21
 
 # CA証明書を追加（HTTPS通信のため）
 RUN apk --no-cache add ca-certificates
