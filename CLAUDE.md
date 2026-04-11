@@ -6,10 +6,10 @@
 
 ## プロジェクト概要
 
-これは「共円」パズルゲーム用のGo製REST APIサーバーです。プレイヤーはグリッド上に石を配置し、ちょうど4つの石で円や直線を形成します。サーバーはCloud Run上で動作し、DatastoreモードのFirestore（既存Datastoreデータと互換）を永続化に使用します。
+> プロジェクト概要・アーキテクチャ: [README.md](./README.md) を参照してください
 
 ### コアゲームロジック
-- **共円判定**: メインアルゴリズム（`models/kyouen.go`）が4つの石が有効な共円（円または直線）を形成するかを判定
+- **共円判定**: メインアルゴリズム（`pkg/models/kyouen.go`）が4つの石が有効な共円（円または直線）を形成するかを判定
 - **ステージ検証**: 新しいステージは5個以上の石を持ち、少なくとも1つの有効な共円を含む必要があります
 - **重複防止**: 回転と反転を含めたステージの重複チェック
 
@@ -80,29 +80,8 @@ brew install gh && gh auth login
 ```
 
 ### Terraform（インフラ管理）
-```bash
-# 前提条件
-brew install terraform
-gcloud auth application-default login
 
-# DEV環境
-cd terraform/envs/dev
-
-# 機密情報ファイルを用意（gitignore対象）
-cp terraform.tfvars.example terraform.tfvars  # 存在する場合
-# terraform.tfvars に twitter_client_id/secret, apple_client_id/secret を記載
-
-# プラン確認
-terraform plan -var-file="terraform.tfvars"
-
-# 適用
-terraform apply -var-file="terraform.tfvars"
-```
-
-**注意事項:**
-- `container_image` は CI/CD が管理するため Terraform では変更しない（`ignore_changes` 設定済み）
-- Apple の `client_secret` は ES256 JWT で有効期限は約6ヶ月。期限前に再生成が必要
-- 初回セットアップ（既存リソースのインポート）は `terraform/README.md` 参照
+詳細は [terraform/README.md](./terraform/README.md) を参照してください。
 
 ### Swagger UI
 ```bash
@@ -139,13 +118,13 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - **スキーマ定義**: `docs/datastore-schema.json`にJSON Schema形式で詳細定義
 
 ### 主要ハンドラー
-- `handlers/v2/stages.go`: 共円検証付きのステージCRUD（Gin対応）
-- `handlers/v2/statics.go`: グローバル統計（Gin対応）
-- `services/datastore.go`: Datastoreサービス層
+- `internal/stage/handler.go`: 共円検証付きのステージCRUD（Gin対応）
+- `internal/statics/handler.go`: グローバル統計（Gin対応）
+- `internal/datastore/datastore.go`: Datastoreサービス層
 - `cmd/server/main.go`: Cloud Run用メインエントリーポイント
 
 ## 重要ファイル
-- `models/kyouen.go`: 共円判定のコアゲームロジック
+- `pkg/models/kyouen.go`: 共円判定のコアゲームロジック
 - `cmd/server/main.go`: Cloud Run本番用エントリーポイント
 - `cmd/test_server/main.go`: Datastore接続テスト用サーバー
 - `docs/specs/index.yaml`: OpenAPI仕様
@@ -160,3 +139,4 @@ docker run -p 10000:8080 -v $(pwd)/docs:/usr/share/nginx/html/docs -e API_URL=ht
 - `.github/workflows/deploy-dev.yml`: DEV環境自動デプロイ設定
 - `.github/workflows/deploy-prod.yml`: 本番環境手動デプロイ設定
 - `.github/workflows/deploy-common.yml`: 共通デプロイロジック
+- `.github/workflows/deploy-seed.yml`: DEV環境Seedジョブデプロイ設定

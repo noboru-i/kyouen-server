@@ -16,7 +16,7 @@
 
 ### 前提条件
 
-- Go 1.24以上
+- Go 1.26以上
 - Firebase CLI (`firebase`) - ローカルエミュレーター用
 - GitHub CLI (`gh`) - デプロイスクリプト用
 
@@ -98,7 +98,7 @@ terraform apply -var-file="terraform.tfvars"
 ## 🚀 CI/CD
 
 GitHub Actionsによる自動CI/CDを設定済み：
-- **PR検証**: Go 1.24での自動テスト・ビルド
+- **PR検証**: go.mod 準拠の Go バージョンでの自動テスト・ビルド
 - **自動デプロイ**: DEV環境（mainブランチ）、本番環境（手動実行）
 - **インフラ**: Terraform で Firebase Auth・Cloud Run・Artifact Registry を管理
 

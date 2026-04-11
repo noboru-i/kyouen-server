@@ -108,8 +108,7 @@ terraform plan -var="twitter_client_id=..." -var="twitter_client_secret=..." \
 terraform apply
 
 # 機密変数はファイルで管理する場合（.gitignore に追加済み）
-cp terraform.tfvars.example terraform.tfvars
-# terraform.tfvars を編集して機密値を設定
+# terraform.tfvars を作成して機密値を設定
 terraform apply -var-file="terraform.tfvars"
 ```
 
