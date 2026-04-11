@@ -101,3 +101,47 @@ sequenceDiagram
     Datastore-->>Server: User エンティティ
     Server-->>Client: ユーザー情報レスポンス
 ```
+
+## kyouen-python からのマイグレーションフロー
+
+kyouen-python (旧Pythonアプリ) では、UserエンティティのキーとしてTwitter UIDを使用していた。
+Firebase Auth 移行後は Firebase UID をキーとして使用するため、初回ログイン時に自動マイグレーションが実行される。
+
+### キー構造の違い
+
+| システム | キー形式 | 例 |
+|---|---|---|
+| kyouen-python (旧) | `'KEY' + Twitter UID` | `KEY12345` |
+| kyouen-server (現) | `'KEY' + Firebase UID` | `KEYabc123def` |
+
+### マイグレーションフロー
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant Server
+    participant Datastore
+
+    Client->>Server: POST /login (初回ログイン)
+    Server->>Datastore: GetUserByID(firebaseUID) → 見つからない
+    Server->>Datastore: GetUserByID(twitterUID) → 旧エンティティ発見
+    Note over Server,Datastore: MigrateLegacyUser をトランザクション実行
+    Server->>Datastore: Put User("KEY" + firebaseUID)<br/>clearStageCount を引き継ぎ
+    Server->>Datastore: Put UserMigration<br/>(旧キー→新キーの対応を記録)
+    Server->>Datastore: Delete User("KEY" + twitterUID)
+    Server->>Datastore: StageUser レコードの UserKey を新キーに更新
+    Server-->>Client: ユーザー情報レスポンス
+```
+
+### UserMigration エンティティ
+
+マイグレーション実行時に `UserMigration` Kind のレコードが作成される。
+このレコードにより、どのユーザーがいつマイグレーションされたかを追跡できる。
+
+| フィールド | 内容 |
+|---|---|
+| `oldKey` | 旧キー名 (例: `KEY12345`) |
+| `newKey` | 新キー名 (例: `KEYabc123def`) |
+| `twitterUid` | Twitter UID |
+| `firebaseUid` | Firebase UID |
+| `migratedAt` | マイグレーション実行日時 |

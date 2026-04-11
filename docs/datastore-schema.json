@@ -302,6 +302,63 @@
         "businessLogic": "Updates user.clearStageCount when new records are created"
       }
     },
+    "UserMigration": {
+      "kind": "UserMigration",
+      "description": "Audit log for user record migrations from the legacy Python app (kyouen-python) to the Go server. Records the mapping from old Twitter UID-based keys to new Firebase UID-based keys.",
+      "keyPattern": {
+        "type": "incomplete",
+        "description": "Auto-generated integer keys",
+        "example": "datastore.IncompleteKey('UserMigration', nil)"
+      },
+      "properties": {
+        "oldKey": {
+          "type": "string",
+          "description": "Legacy Datastore key name used by the Python app: 'KEY' + Twitter UID (e.g., 'KEY12345')",
+          "datastoreTag": "oldKey",
+          "maxLength": 128
+        },
+        "newKey": {
+          "type": "string",
+          "description": "New Datastore key name used by the Go server: 'KEY' + Firebase UID (e.g., 'KEYabc123def')",
+          "datastoreTag": "newKey",
+          "maxLength": 256
+        },
+        "twitterUid": {
+          "type": "string",
+          "description": "Twitter User ID that was used as the key in the legacy system",
+          "datastoreTag": "twitterUid",
+          "maxLength": 50
+        },
+        "firebaseUid": {
+          "type": "string",
+          "description": "Firebase UID assigned by Firebase Auth for the same Twitter account",
+          "datastoreTag": "firebaseUid",
+          "maxLength": 128
+        },
+        "migratedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when the migration was executed (on first login after migration)",
+          "datastoreTag": "migratedAt"
+        }
+      },
+      "required": [
+        "oldKey",
+        "newKey",
+        "twitterUid",
+        "firebaseUid",
+        "migratedAt"
+      ],
+      "indexes": [],
+      "usage": {
+        "description": "Audit trail for the one-time migration of User records from kyouen-python (Twitter UID keys) to kyouen-server (Firebase UID keys). Created automatically during the user's first login after migration.",
+        "operations": [
+          "create",
+          "read"
+        ],
+        "lifecycle": "Created once per user when a legacy User entity is detected and migrated. Never updated or deleted."
+      }
+    },
     "RegistModel": {
       "kind": "RegistModel",
       "description": "Registration tracking for puzzle stages with automatic timestamp recording",
