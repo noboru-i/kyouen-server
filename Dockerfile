@@ -14,11 +14,9 @@ COPY . .
 RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o server ./cmd/server
 
 # 実行ステージ
-FROM alpine:3.21
+FROM gcr.io/distroless/static-debian12:nonroot
 
-# CA証明書を追加（HTTPS通信のため）
-RUN apk --no-cache add ca-certificates
-WORKDIR /root/
+WORKDIR /app
 
 # ビルドしたバイナリをコピー
 COPY --from=builder /app/server .
