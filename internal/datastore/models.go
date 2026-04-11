@@ -42,3 +42,11 @@ type RegistModel struct {
 	StageInfo  *datastore.Key `datastore:"stageInfo"`
 	RegistDate time.Time      `datastore:"registDate"`
 }
+
+type UserMigration struct {
+	OldKey      string    `datastore:"oldKey"`      // 旧キー名 (例: "KEY12345")
+	NewKey      string    `datastore:"newKey"`      // 新キー名 (例: "KEYabc123def")
+	TwitterUID  string    `datastore:"twitterUid"`  // Twitter UID
+	FirebaseUID string    `datastore:"firebaseUid"` // Firebase UID
+	MigratedAt  time.Time `datastore:"migratedAt"`  // マイグレーション実行日時
+}

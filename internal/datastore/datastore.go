@@ -215,12 +215,96 @@ func (s *DatastoreService) UpsertUser(user User, userID string) (*User, error) {
 	return &user, nil
 }
 
+// MigrateLegacyUser migrates a legacy Python-era user (keyed by Twitter UID) to a new Firebase UID-based key.
+// It preserves clearStageCount, records the migration in UserMigration, and re-points StageUser records.
+func (s *DatastoreService) MigrateLegacyUser(firebaseUID, screenName, image, twitterUID string) (*User, error) {
+	oldKey := datastore.NameKey("User", "KEY"+twitterUID, nil)
+	newKey := datastore.NameKey("User", "KEY"+firebaseUID, nil)
+
+	var migratedUser User
+
+	_, err := s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
+		// 1. 旧エンティティを読み取り
+		var oldUser User
+		if err := tx.Get(oldKey, &oldUser); err != nil {
+			return fmt.Errorf("failed to get legacy user: %w", err)
+		}
+
+		// 2. clearStageCount を引き継いで新エンティティを作成
+		migratedUser = User{
+			UserID:          firebaseUID,
+			ScreenName:      screenName,
+			Image:           image,
+			TwitterUID:      twitterUID,
+			ClearStageCount: oldUser.ClearStageCount,
+		}
+		if _, err := tx.Put(newKey, &migratedUser); err != nil {
+			return fmt.Errorf("failed to put migrated user: %w", err)
+		}
+
+		// 3. UserMigration レコードを作成
+		migration := UserMigration{
+			OldKey:      "KEY" + twitterUID,
+			NewKey:      "KEY" + firebaseUID,
+			TwitterUID:  twitterUID,
+			FirebaseUID: firebaseUID,
+			MigratedAt:  time.Now(),
+		}
+		migrationKey := datastore.IncompleteKey("UserMigration", nil)
+		if _, err := tx.Put(migrationKey, &migration); err != nil {
+			return fmt.Errorf("failed to save UserMigration record: %w", err)
+		}
+
+		// 4. 旧エンティティを削除
+		if err := tx.Delete(oldKey); err != nil {
+			return fmt.Errorf("failed to delete legacy user: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("failed to migrate legacy user: %w", err)
+	}
+
+	// 5. StageUser レコードのキーを更新（トランザクション外: 25エンティティグループ制限のため）
+	s.migrateStageUserRecords(oldKey, newKey)
+
+	return &migratedUser, nil
+}
+
+// migrateStageUserRecords updates StageUser records that reference the old user key to point to the new key.
+func (s *DatastoreService) migrateStageUserRecords(oldUserKey, newUserKey *datastore.Key) {
+	query := datastore.NewQuery("StageUser").FilterField("user", "=", oldUserKey)
+	var stageUsers []StageUser
+	keys, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	if err != nil {
+		fmt.Printf("Warning: failed to query StageUser records for migration: %v\n", err)
+		return
+	}
+
+	for i := range stageUsers {
+		stageUsers[i].UserKey = newUserKey
+		if _, err := s.client.Put(s.ctx, keys[i], &stageUsers[i]); err != nil {
+			fmt.Printf("Warning: failed to migrate StageUser record %v: %v\n", keys[i], err)
+		}
+	}
+}
+
 // CreateOrUpdateUserFromFirebase creates or updates a user from Firebase authentication data
 func (s *DatastoreService) CreateOrUpdateUserFromFirebase(firebaseUID, screenName, image, twitterUID string) (*User, error) {
 	// Try to get existing user
 	existingUser, _, err := s.GetUserByID(firebaseUID)
 	if err != nil {
-		// User doesn't exist, create new one
+		// Firebase UID でユーザーが見つからない場合、レガシーユーザー（Twitter UID キー）を検索
+		if twitterUID != "" {
+			legacyUser, _, legacyErr := s.GetUserByID(twitterUID)
+			if legacyErr == nil && legacyUser != nil {
+				// Python時代のユーザーが見つかった → マイグレーション実行
+				return s.MigrateLegacyUser(firebaseUID, screenName, image, twitterUID)
+			}
+		}
+
+		// レガシーユーザーも存在しない → 新規作成
 		newUser := User{
 			UserID:          firebaseUID,
 			ScreenName:      screenName,
