@@ -95,6 +95,18 @@ terraform apply -var-file="terraform.tfvars"
 
 詳細は [terraform/README.md](./terraform/README.md) を参照してください。
 
+### Datastore インデックス管理
+
+複合インデックスは `index.yaml` で定義し、以下のコマンドで反映します。
+
+```bash
+# DEV環境
+gcloud datastore indexes create index.yaml --project=api-project-732262258565
+
+# 本番環境
+gcloud datastore indexes create index.yaml --project=my-android-server
+```
+
 ## 🚀 CI/CD
 
 GitHub Actionsによる自動CI/CDを設定済み：
