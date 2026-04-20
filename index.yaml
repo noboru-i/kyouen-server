@@ -1,0 +1,5 @@
+indexes:
+- kind: StageUser
+  properties:
+  - name: user
+  - name: clearDate

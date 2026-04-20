@@ -53,6 +53,15 @@ DATASTORE_EMULATOR_HOST=localhost:9098 go run cmd/seed/main.go
 DATASTORE_EMULATOR_HOST=localhost:9098 FIREBASE_AUTH_EMULATOR_HOST=localhost:9099 go run cmd/server/main.go
 ```
 
+### Datastore インデックス管理
+```bash
+# DEV環境にインデックスを反映
+gcloud datastore indexes create index.yaml --project=api-project-732262258565
+
+# 本番環境にインデックスを反映
+gcloud datastore indexes create index.yaml --project=my-android-server
+```
+
 ### OpenAPI コード生成
 ```bash
 # OpenAPI仕様からGoモデルを生成（Docker経由）
