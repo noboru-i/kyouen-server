@@ -27,7 +27,7 @@ type Stage struct {
 	// グリッドサイズ（ステージはsize x sizeの正方形）
 	Size int64 `json:"size"`
 
-	// 文字列表現でのステージ設定。 形式: size²文字で以下を表す: - \"0\" = 空のセル - \"1\" = 黒石（パズル要素） - \"2\" = 白石（ユーザー配置） 
+	// 文字列表現でのステージ設定。 形式: size²文字で以下を表す: - \"0\" = 空のセル - \"1\" = 黒石（パズル要素） - \"2\" = 白石（ユーザー配置）
 	Stage string `json:"stage" validate:"regexp=^[012]+$"`
 
 	// ステージ作成者のユーザー名
@@ -35,6 +35,9 @@ type Stage struct {
 
 	// ステージ登録タイムスタンプ (UTC)
 	RegistDate time.Time `json:"regist_date"`
+
+	// ログインユーザーがクリア済みかどうか（ログイン時のみ返却）
+	Cleared *bool `json:"cleared,omitempty"`
 }
 
 // AssertStageRequired checks if the required fields are not zero-ed

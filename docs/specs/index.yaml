@@ -151,8 +151,12 @@ paths:
       description: |
         共円パズルステージのページネーション対応一覧を取得します。
         ステージはステージ番号順に並び、開始位置でフィルタできます。
+        認証済みユーザーの場合、各ステージのクリア状況も返却されます。
       tags:
         - stages
+      security:
+        - bearerAuth: []
+        - {}
       parameters:
         - name: start_stage_no
           in: query
@@ -553,12 +557,17 @@ components:
           format: date-time
           description: ステージ登録タイムスタンプ (UTC)
           example: "2024-01-15T10:30:00Z"
+        cleared:
+          type: boolean
+          description: ログインユーザーがこのステージをクリア済みかどうか（ログイン時のみ返却）
+          example: true
       example:
         stage_no: 12
         size: 6
         stage: "000000010000001100001100000000001000"
         creator: "noboru"
         regist_date: "2024-01-15T10:30:00Z"
+        cleared: true
     NewStage:
       type: object
       description: 新しい共円パズルステージ作成用データ

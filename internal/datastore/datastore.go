@@ -59,19 +59,32 @@ func (s *DatastoreService) GetSummary() (*KyouenPuzzleSummary, error) {
 }
 
 // Stages operations
-func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]KyouenPuzzle, error) {
+func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]KyouenPuzzle, []*datastore.Key, error) {
 	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").
 		FilterField("stageNo", ">=", startStageNo).
 		Order("stageNo").
 		Limit(limit)
 
-	_, err := s.client.GetAll(s.ctx, query, &stages)
+	keys, err := s.client.GetAll(s.ctx, query, &stages)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get stages: %w", err)
+		return nil, nil, fmt.Errorf("failed to get stages: %w", err)
 	}
 
-	return stages, nil
+	return stages, keys, nil
+}
+
+// GetClearedStageKeyIDs returns a set of Datastore key IDs for stages cleared by the given user.
+func (s *DatastoreService) GetClearedStageKeyIDs(userKey *datastore.Key) (map[int64]bool, error) {
+	stageUsers, err := s.GetClearedStagesByUser(userKey)
+	if err != nil {
+		return nil, err
+	}
+	result := make(map[int64]bool, len(stageUsers))
+	for _, su := range stageUsers {
+		result[su.StageKey.ID] = true
+	}
+	return result, nil
 }
 
 func (s *DatastoreService) GetRecentStages(limit int) ([]KyouenPuzzle, error) {
