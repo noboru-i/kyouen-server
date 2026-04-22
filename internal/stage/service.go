@@ -41,6 +41,23 @@ func NewService(datastoreService *datastoreservice.DatastoreService, firebaseSer
 	}
 }
 
+func (s *Service) GetStages(startStageNo, limit int, authUID string) ([]datastoreservice.KyouenPuzzle, []*datastore.Key, map[int64]bool, error) {
+	stages, stageKeys, err := s.datastoreService.GetStages(startStageNo, limit)
+	if err != nil {
+		return nil, nil, nil, err
+	}
+
+	var clearedKeyIDs map[int64]bool
+	if authUID != "" && !auth.IsGuestUser(authUID) {
+		_, userKey, userErr := s.datastoreService.GetUserByID(authUID)
+		if userErr == nil {
+			clearedKeyIDs, _ = s.datastoreService.GetClearedStageKeyIDs(userKey)
+		}
+	}
+
+	return stages, stageKeys, clearedKeyIDs, nil
+}
+
 func (s *Service) CreateStage(param openapi.NewStage, creatorName string) (*datastoreservice.KyouenPuzzle, error) {
 	// Validate stage using existing business logic
 	stage := *models.NewKyouenStage(int(param.Size), param.Stage)

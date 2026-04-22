@@ -41,7 +41,8 @@ func (h *Handler) GetStages(c *gin.Context) {
 		limit = 100
 	}
 
-	stages, err := h.datastoreService.GetStages(startStageNo, limit)
+	authUID, _ := auth.GetAuthenticatedUID(c)
+	stages, stageKeys, clearedKeyIDs, err := h.stageService.GetStages(startStageNo, limit, authUID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -49,14 +50,19 @@ func (h *Handler) GetStages(c *gin.Context) {
 
 	// Convert to response format
 	stageList := []openapi.Stage{}
-	for _, stage := range stages {
-		stageList = append(stageList, openapi.Stage{
+	for i, stage := range stages {
+		s := openapi.Stage{
 			StageNo:    stage.StageNo,
 			Size:       stage.Size,
 			Stage:      stage.Stage,
 			Creator:    stage.Creator,
 			RegistDate: stage.RegistDate,
-		})
+		}
+		if clearedKeyIDs != nil {
+			cleared := clearedKeyIDs[stageKeys[i].ID]
+			s.Cleared = &cleared
+		}
+		stageList = append(stageList, s)
 	}
 
 	c.JSON(http.StatusOK, stageList)
