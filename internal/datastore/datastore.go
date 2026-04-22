@@ -74,15 +74,15 @@ func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]KyouenPuzzl
 	return stages, keys, nil
 }
 
-// GetClearedStageKeyIDs returns a set of Datastore key IDs for stages cleared by the given user.
-func (s *DatastoreService) GetClearedStageKeyIDs(userKey *datastore.Key) (map[int64]bool, error) {
+// GetClearedStageKeyIDs returns a map of Datastore key ID to clear date for stages cleared by the given user.
+func (s *DatastoreService) GetClearedStageKeyIDs(userKey *datastore.Key) (map[int64]time.Time, error) {
 	stageUsers, err := s.GetClearedStagesByUser(userKey)
 	if err != nil {
 		return nil, err
 	}
-	result := make(map[int64]bool, len(stageUsers))
+	result := make(map[int64]time.Time, len(stageUsers))
 	for _, su := range stageUsers {
-		result[su.StageKey.ID] = true
+		result[su.StageKey.ID] = su.ClearDate
 	}
 	return result, nil
 }

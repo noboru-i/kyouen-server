@@ -36,8 +36,8 @@ type Stage struct {
 	// ステージ登録タイムスタンプ (UTC)
 	RegistDate time.Time `json:"regist_date"`
 
-	// ログインユーザーがクリア済みかどうか（ログイン時のみ返却）
-	Cleared *bool `json:"cleared,omitempty"`
+	// ログインユーザーがこのステージをクリアした日時（ログイン時のみ返却。非nullの場合クリア済み）
+	ClearDate *time.Time `json:"clear_date,omitempty"`
 }
 
 // AssertStageRequired checks if the required fields are not zero-ed
