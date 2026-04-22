@@ -246,10 +246,10 @@ func (h *Handler) SyncStages(c *gin.Context) {
 
 	// Convert to response format
 	var response []openapi.ClearedStage
-	for _, stageUser := range serverClearedStages {
+	for _, result := range serverClearedStages {
 		response = append(response, openapi.ClearedStage{
-			StageNo:   stageUser.StageKey.ID,
-			ClearDate: stageUser.ClearDate,
+			StageNo:   result.StageNo,
+			ClearDate: result.ClearDate,
 		})
 	}
 

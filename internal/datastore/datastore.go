@@ -547,6 +547,16 @@ func (s *DatastoreService) GetStageByKey(stageKey *datastore.Key) (*KyouenPuzzle
 	return &stage, nil
 }
 
+// GetStagesByKeys gets multiple stages by datastore keys
+func (s *DatastoreService) GetStagesByKeys(keys []*datastore.Key) ([]KyouenPuzzle, error) {
+	stages := make([]KyouenPuzzle, len(keys))
+	err := s.client.GetMulti(s.ctx, keys, stages)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get stages by keys: %w", err)
+	}
+	return stages, nil
+}
+
 // createRegistModel creates a RegistModel record for a given stage
 func (s *DatastoreService) createRegistModel(stageKey *datastore.Key) error {
 	registModel := RegistModel{
