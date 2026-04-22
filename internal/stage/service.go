@@ -5,6 +5,7 @@ import (
 	"errors"
 	"math"
 	"strings"
+	"time"
 
 	"cloud.google.com/go/datastore"
 	"kyouen-server/internal/auth"
@@ -22,6 +23,11 @@ var (
 	ErrStageMismatch     = errors.New("stage mismatch")
 	ErrUserNotFound      = errors.New("user not found")
 )
+
+type ClearedStageResult struct {
+	StageNo   int64
+	ClearDate time.Time
+}
 
 type Service struct {
 	datastoreService *datastoreservice.DatastoreService
@@ -116,13 +122,13 @@ func (s *Service) ClearStage(stageNo int, stageData string, userUID string) (*da
 	return user, nil
 }
 
-func (s *Service) SyncStages(userUID string, clientClearedStages []openapi.ClearedStage) ([]datastoreservice.StageUser, error) {
+func (s *Service) SyncStages(userUID string, clientClearedStages []openapi.ClearedStage) ([]ClearedStageResult, error) {
 	// Get authenticated user from database
 	_, userKey, err := s.datastoreService.GetUserByID(userUID)
 	if err != nil {
 		return nil, ErrUserNotFound
 	}
-	
+
 	// For each client cleared stage, create stage user relation if not exists
 	for _, clearedStage := range clientClearedStages {
 		// Get stage by stage number
@@ -131,13 +137,13 @@ func (s *Service) SyncStages(userUID string, clientClearedStages []openapi.Clear
 			// Skip stages that don't exist
 			continue
 		}
-		
+
 		// Check if stage user relation already exists
 		exists, err := s.datastoreService.HasStageUser(stageKeys[0], userKey)
 		if err != nil {
 			continue
 		}
-		
+
 		if !exists {
 			// Create stage user relation
 			err = s.datastoreService.CreateStageUser(stageKeys[0], userKey)
@@ -146,9 +152,31 @@ func (s *Service) SyncStages(userUID string, clientClearedStages []openapi.Clear
 			}
 		}
 	}
-	
+
 	// Get all cleared stages for this user from server
-	return s.datastoreService.GetClearedStagesByUser(userKey)
+	stageUsers, err := s.datastoreService.GetClearedStagesByUser(userKey)
+	if err != nil {
+		return nil, err
+	}
+
+	// Batch fetch KyouenPuzzle to get stageNo
+	stageKeys := make([]*datastore.Key, len(stageUsers))
+	for i, su := range stageUsers {
+		stageKeys[i] = su.StageKey
+	}
+	stages, err := s.datastoreService.GetStagesByKeys(stageKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	results := make([]ClearedStageResult, len(stageUsers))
+	for i, su := range stageUsers {
+		results[i] = ClearedStageResult{
+			StageNo:   stages[i].StageNo,
+			ClearDate: su.ClearDate,
+		}
+	}
+	return results, nil
 }
 
 // Helper function to check if stage exists in all rotations and reflections
