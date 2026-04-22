@@ -59,8 +59,9 @@ func (h *Handler) GetStages(c *gin.Context) {
 			RegistDate: stage.RegistDate,
 		}
 		if clearedKeyIDs != nil {
-			cleared := clearedKeyIDs[stageKeys[i].ID]
-			s.Cleared = &cleared
+			if clearDate, ok := clearedKeyIDs[stageKeys[i].ID]; ok {
+				s.ClearDate = &clearDate
+			}
 		}
 		stageList = append(stageList, s)
 	}

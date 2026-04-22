@@ -557,17 +557,19 @@ components:
           format: date-time
           description: ステージ登録タイムスタンプ (UTC)
           example: "2024-01-15T10:30:00Z"
-        cleared:
-          type: boolean
-          description: ログインユーザーがこのステージをクリア済みかどうか（ログイン時のみ返却）
-          example: true
+        clear_date:
+          type: string
+          format: date-time
+          nullable: true
+          description: ログインユーザーがこのステージをクリアした日時（ログイン時のみ返却。非nullの場合クリア済み）
+          example: "2024-01-15T10:30:00Z"
       example:
         stage_no: 12
         size: 6
         stage: "000000010000001100001100000000001000"
         creator: "noboru"
         regist_date: "2024-01-15T10:30:00Z"
-        cleared: true
+        clear_date: "2024-01-15T10:30:00Z"
     NewStage:
       type: object
       description: 新しい共円パズルステージ作成用データ

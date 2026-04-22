@@ -41,13 +41,13 @@ func NewService(datastoreService *datastoreservice.DatastoreService, firebaseSer
 	}
 }
 
-func (s *Service) GetStages(startStageNo, limit int, authUID string) ([]datastoreservice.KyouenPuzzle, []*datastore.Key, map[int64]bool, error) {
+func (s *Service) GetStages(startStageNo, limit int, authUID string) ([]datastoreservice.KyouenPuzzle, []*datastore.Key, map[int64]time.Time, error) {
 	stages, stageKeys, err := s.datastoreService.GetStages(startStageNo, limit)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
-	var clearedKeyIDs map[int64]bool
+	var clearedKeyIDs map[int64]time.Time
 	if authUID != "" && !auth.IsGuestUser(authUID) {
 		_, userKey, userErr := s.datastoreService.GetUserByID(authUID)
 		if userErr == nil {
