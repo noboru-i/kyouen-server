@@ -41,20 +41,11 @@ func (h *Handler) GetStages(c *gin.Context) {
 		limit = 100
 	}
 
-	stages, stageKeys, err := h.datastoreService.GetStages(startStageNo, limit)
+	authUID, _ := auth.GetAuthenticatedUID(c)
+	stages, stageKeys, clearedKeyIDs, err := h.stageService.GetStages(startStageNo, limit, authUID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
-	}
-
-	// If authenticated (non-guest), fetch cleared stage key IDs for this user.
-	var clearedKeyIDs map[int64]bool
-	authUID, uidExists := auth.GetAuthenticatedUID(c)
-	if uidExists && !auth.IsGuestUser(authUID) {
-		_, userKey, userErr := h.datastoreService.GetUserByID(authUID)
-		if userErr == nil {
-			clearedKeyIDs, _ = h.datastoreService.GetClearedStageKeyIDs(userKey)
-		}
 	}
 
 	// Convert to response format
