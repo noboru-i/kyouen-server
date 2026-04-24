@@ -304,64 +304,39 @@ func (h *Handler) GetRecentStages(c *gin.Context) {
 	c.JSON(http.StatusOK, stageList)
 }
 
-type ActivityStage struct {
-	StageNo int64     `json:"stageNo"`
-	ClearDate time.Time `json:"clearDate"`
+type ActivityStageResponse struct {
+	StageNo   int64     `json:"stage_no"`
+	ClearDate time.Time `json:"clear_date"`
 }
 
-type ActivityUser struct {
-	ScreenName    string          `json:"screenName"`
-	Image         string          `json:"image"`
-	ClearedStages []ActivityStage `json:"clearedStages"`
+type ActivityUserResponse struct {
+	ScreenName    string                `json:"screen_name"`
+	Image         string                `json:"image"`
+	ClearedStages []ActivityStageResponse `json:"cleared_stages"`
 }
 
 func (h *Handler) GetActivities(c *gin.Context) {
-	stageUsers, err := h.datastoreService.GetRecentActivities(50)
+	activities, err := h.stageService.GetActivities(50)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Group activities by user
-	userActivities := make(map[string]*ActivityUser)
-	for _, stageUser := range stageUsers {
-		// Get user information
-		user, err := h.datastoreService.GetUserByKey(stageUser.UserKey)
-		if err != nil {
-			continue // Skip if user not found
+	resp := make([]ActivityUserResponse, 0, len(activities))
+	for _, a := range activities {
+		cs := make([]ActivityStageResponse, len(a.ClearedStages))
+		for i, s := range a.ClearedStages {
+			cs[i] = ActivityStageResponse{StageNo: s.StageNo, ClearDate: s.ClearDate}
 		}
-
-		// Get stage information
-		stage, err := h.datastoreService.GetStageByKey(stageUser.StageKey)
-		if err != nil {
-			continue // Skip if stage not found
-		}
-
-		// Create or update user activity
-		if _, exists := userActivities[user.UserID]; !exists {
-			userActivities[user.UserID] = &ActivityUser{
-				ScreenName:    user.ScreenName,
-				Image:         user.Image,
-				ClearedStages: []ActivityStage{},
-			}
-		}
-
-		userActivities[user.UserID].ClearedStages = append(
-			userActivities[user.UserID].ClearedStages,
-			ActivityStage{
-				StageNo:   stage.StageNo,
-				ClearDate: stageUser.ClearDate,
-			},
-		)
+		resp = append(resp, ActivityUserResponse{
+			ScreenName:    a.ScreenName,
+			Image:         a.Image,
+			ClearedStages: cs,
+		})
 	}
 
-	// Convert to response format
-	var activities []ActivityUser
-	for _, activity := range userActivities {
-		activities = append(activities, *activity)
-	}
-
-	c.JSON(http.StatusOK, activities)
+	c.Header("Cache-Control", "public, max-age=60")
+	c.JSON(http.StatusOK, resp)
 }
 
 // Helper function for validation
