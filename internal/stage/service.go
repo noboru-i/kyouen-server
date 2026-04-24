@@ -220,6 +220,91 @@ func (s *Service) hasRegisteredStageAll(stage models.KyouenStage) (bool, error) 
 	return false, nil
 }
 
+type ActivityStage struct {
+	StageNo   int64
+	ClearDate time.Time
+}
+
+type ActivityUser struct {
+	UserID        string
+	ScreenName    string
+	Image         string
+	ClearedStages []ActivityStage
+}
+
+func (s *Service) GetActivities(limit int) ([]ActivityUser, error) {
+	stageUsers, err := s.datastoreService.GetRecentActivities(limit)
+	if err != nil {
+		return nil, err
+	}
+	if len(stageUsers) == 0 {
+		return []ActivityUser{}, nil
+	}
+
+	userKeys := make([]*datastore.Key, len(stageUsers))
+	stageKeys := make([]*datastore.Key, len(stageUsers))
+	for i, su := range stageUsers {
+		userKeys[i] = su.UserKey
+		stageKeys[i] = su.StageKey
+	}
+	uUserKeys, userIdx := uniqueKeys(userKeys)
+	uStageKeys, stageIdx := uniqueKeys(stageKeys)
+
+	users, err := s.datastoreService.GetUsersByKeys(uUserKeys)
+	if err != nil {
+		return nil, err
+	}
+	stages, err := s.datastoreService.GetStagesByKeys(uStageKeys)
+	if err != nil {
+		return nil, err
+	}
+
+	activityMap := make(map[string]*ActivityUser)
+	var order []string
+	for _, su := range stageUsers {
+		u := users[userIdx[su.UserKey.String()]]
+		if u.UserID == "" {
+			continue
+		}
+		st := stages[stageIdx[su.StageKey.String()]]
+		if st.StageNo == 0 {
+			continue
+		}
+		if _, ok := activityMap[u.UserID]; !ok {
+			activityMap[u.UserID] = &ActivityUser{
+				UserID:     u.UserID,
+				ScreenName: u.ScreenName,
+				Image:      u.Image,
+			}
+			order = append(order, u.UserID)
+		}
+		activityMap[u.UserID].ClearedStages = append(
+			activityMap[u.UserID].ClearedStages,
+			ActivityStage{StageNo: st.StageNo, ClearDate: su.ClearDate},
+		)
+	}
+
+	result := make([]ActivityUser, 0, len(order))
+	for _, id := range order {
+		result = append(result, *activityMap[id])
+	}
+	return result, nil
+}
+
+func uniqueKeys(keys []*datastore.Key) ([]*datastore.Key, map[string]int) {
+	idx := make(map[string]int, len(keys))
+	unique := make([]*datastore.Key, 0, len(keys))
+	for _, k := range keys {
+		s := k.String()
+		if _, ok := idx[s]; ok {
+			continue
+		}
+		idx[s] = len(unique)
+		unique = append(unique, k)
+	}
+	return unique, idx
+}
+
 // DeleteAccount deletes a user account and all associated data
 func (s *Service) DeleteAccount(userUID string) error {
 	// TODO: Add audit log for account deletion request (required for compliance)

@@ -6,6 +6,7 @@ import (
 	"net/http/httptest"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"kyouen-server/internal/auth"
@@ -14,12 +15,14 @@ import (
 // StageServiceInterface defines the interface for stage service
 type StageServiceInterface interface {
 	DeleteAccount(userUID string) error
+	GetActivities(limit int) ([]ActivityUser, error)
 }
 
 // MockStageService is a simple mock implementation of StageServiceInterface
 type MockStageService struct {
-	deleteAccountFunc func(userUID string) error
-	deleteAccountCalls []string
+	deleteAccountFunc    func(userUID string) error
+	deleteAccountCalls  []string
+	getActivitiesFunc   func(limit int) ([]ActivityUser, error)
 }
 
 func (m *MockStageService) DeleteAccount(userUID string) error {
@@ -43,6 +46,16 @@ func (m *MockStageService) WasDeleteAccountCalled(userUID string) bool {
 	return false
 }
 
+func (m *MockStageService) GetActivities(limit int) ([]ActivityUser, error) {
+	if m.getActivitiesFunc != nil {
+		return m.getActivitiesFunc(limit)
+	}
+	return []ActivityUser{}, nil
+}
+
+func (m *MockStageService) SetGetActivitiesFunc(f func(limit int) ([]ActivityUser, error)) {
+	m.getActivitiesFunc = f
+}
 
 // TestHandler is a test version of Handler that accepts interface
 type TestHandler struct {
@@ -66,6 +79,30 @@ func (h *TestHandler) DeleteAccount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Account deleted successfully",
 	})
+}
+
+func (h *TestHandler) GetActivities(c *gin.Context) {
+	activities, err := h.stageService.GetActivities(50)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
+	}
+
+	resp := make([]ActivityUserResponse, 0, len(activities))
+	for _, a := range activities {
+		cs := make([]ActivityStageResponse, len(a.ClearedStages))
+		for i, s := range a.ClearedStages {
+			cs[i] = ActivityStageResponse{StageNo: s.StageNo, ClearDate: s.ClearDate}
+		}
+		resp = append(resp, ActivityUserResponse{
+			ScreenName:    a.ScreenName,
+			Image:         a.Image,
+			ClearedStages: cs,
+		})
+	}
+
+	c.Header("Cache-Control", "public, max-age=60")
+	c.JSON(http.StatusOK, resp)
 }
 
 func TestDeleteAccount_Success(t *testing.T) {
@@ -107,6 +144,97 @@ func TestDeleteAccount_Success(t *testing.T) {
 	// Assert mock was called
 	if !mockService.WasDeleteAccountCalled("test-uid") {
 		t.Errorf("Expected DeleteAccount to be called with 'test-uid'")
+	}
+}
+
+func TestGetActivities_Success(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	clearDate := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	mockService := &MockStageService{}
+	mockService.SetGetActivitiesFunc(func(limit int) ([]ActivityUser, error) {
+		return []ActivityUser{
+			{
+				UserID:     "user1",
+				ScreenName: "alice",
+				Image:      "https://example.com/alice.jpg",
+				ClearedStages: []ActivityStage{
+					{StageNo: 42, ClearDate: clearDate},
+				},
+			},
+			{
+				UserID:     "user2",
+				ScreenName: "bob",
+				Image:      "https://example.com/bob.jpg",
+				ClearedStages: []ActivityStage{
+					{StageNo: 10, ClearDate: clearDate},
+				},
+			},
+		}, nil
+	})
+
+	handler := &TestHandler{stageService: mockService}
+	router := gin.New()
+	router.GET("/v2/activities", handler.GetActivities)
+
+	req, _ := http.NewRequest("GET", "/v2/activities", nil)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, resp.Code)
+	}
+	if resp.Header().Get("Cache-Control") != "public, max-age=60" {
+		t.Errorf("Expected Cache-Control header, got: %s", resp.Header().Get("Cache-Control"))
+	}
+
+	body := resp.Body.String()
+	for _, want := range []string{"screen_name", "cleared_stages", "stage_no", "clear_date", "alice", "bob"} {
+		if !strings.Contains(body, want) {
+			t.Errorf("Expected response to contain %q, got: %s", want, body)
+		}
+	}
+}
+
+func TestGetActivities_ServiceError(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockService := &MockStageService{}
+	mockService.SetGetActivitiesFunc(func(limit int) ([]ActivityUser, error) {
+		return nil, errors.New("datastore error")
+	})
+
+	handler := &TestHandler{stageService: mockService}
+	router := gin.New()
+	router.GET("/v2/activities", handler.GetActivities)
+
+	req, _ := http.NewRequest("GET", "/v2/activities", nil)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusInternalServerError {
+		t.Errorf("Expected status %d, got %d", http.StatusInternalServerError, resp.Code)
+	}
+}
+
+func TestGetActivities_Empty(t *testing.T) {
+	gin.SetMode(gin.TestMode)
+
+	mockService := &MockStageService{}
+
+	handler := &TestHandler{stageService: mockService}
+	router := gin.New()
+	router.GET("/v2/activities", handler.GetActivities)
+
+	req, _ := http.NewRequest("GET", "/v2/activities", nil)
+	resp := httptest.NewRecorder()
+	router.ServeHTTP(resp, req)
+
+	if resp.Code != http.StatusOK {
+		t.Errorf("Expected status %d, got %d", http.StatusOK, resp.Code)
+	}
+	if body := resp.Body.String(); body != "[]" {
+		t.Errorf("Expected empty array [], got: %s", body)
 	}
 }
 

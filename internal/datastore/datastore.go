@@ -560,14 +560,42 @@ func (s *DatastoreService) GetStageByKey(stageKey *datastore.Key) (*KyouenPuzzle
 	return &stage, nil
 }
 
-// GetStagesByKeys gets multiple stages by datastore keys
+// GetStagesByKeys gets multiple stages by datastore keys.
+// ErrNoSuchEntity entries are returned as zero-value KyouenPuzzle; other errors abort.
 func (s *DatastoreService) GetStagesByKeys(keys []*datastore.Key) ([]KyouenPuzzle, error) {
 	stages := make([]KyouenPuzzle, len(keys))
 	err := s.client.GetMulti(s.ctx, keys, stages)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get stages by keys: %w", err)
+	if err == nil {
+		return stages, nil
 	}
-	return stages, nil
+	if merr, ok := err.(datastore.MultiError); ok {
+		for _, e := range merr {
+			if e != nil && e != datastore.ErrNoSuchEntity {
+				return nil, fmt.Errorf("failed to get stages by keys: %w", err)
+			}
+		}
+		return stages, nil
+	}
+	return nil, fmt.Errorf("failed to get stages by keys: %w", err)
+}
+
+// GetUsersByKeys gets multiple users by datastore keys.
+// ErrNoSuchEntity entries are returned as zero-value User; other errors abort.
+func (s *DatastoreService) GetUsersByKeys(keys []*datastore.Key) ([]User, error) {
+	users := make([]User, len(keys))
+	err := s.client.GetMulti(s.ctx, keys, users)
+	if err == nil {
+		return users, nil
+	}
+	if merr, ok := err.(datastore.MultiError); ok {
+		for _, e := range merr {
+			if e != nil && e != datastore.ErrNoSuchEntity {
+				return nil, fmt.Errorf("failed to get users by keys: %w", err)
+			}
+		}
+		return users, nil
+	}
+	return nil, fmt.Errorf("failed to get users by keys: %w", err)
 }
 
 // createRegistModel creates a RegistModel record for a given stage
