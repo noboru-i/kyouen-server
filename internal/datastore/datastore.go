@@ -598,6 +598,71 @@ func (s *DatastoreService) GetUsersByKeys(keys []*datastore.Key) ([]User, error)
 	return nil, fmt.Errorf("failed to get users by keys: %w", err)
 }
 
+// MigrateFirebaseUID migrates a user from an old Firebase UID to a new one.
+// This handles the case where a Firebase Auth account was deleted and re-created,
+// resulting in a new UID. The new-UID User entity must already exist in Datastore.
+func (s *DatastoreService) MigrateFirebaseUID(oldUID, newUID string) (*User, error) {
+	oldKey := datastore.NameKey("User", "KEY"+oldUID, nil)
+	newKey := datastore.NameKey("User", "KEY"+newUID, nil)
+
+	var migratedUser User
+
+	_, err := s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
+		var oldUser User
+		if err := tx.Get(oldKey, &oldUser); err != nil {
+			return fmt.Errorf("旧ユーザーの取得に失敗: %w", err)
+		}
+
+		var newUser User
+		if err := tx.Get(newKey, &newUser); err != nil {
+			return fmt.Errorf("新ユーザーの取得に失敗: %w", err)
+		}
+
+		// clearStageCount を旧ユーザーから引き継ぐ（screenName/image/twitterUid は新側を維持）
+		newUser.ClearStageCount = oldUser.ClearStageCount
+		migratedUser = newUser
+		if _, err := tx.Put(newKey, &newUser); err != nil {
+			return fmt.Errorf("新ユーザーの更新に失敗: %w", err)
+		}
+
+		migration := UserMigration{
+			OldKey:      "KEY" + oldUID,
+			NewKey:      "KEY" + newUID,
+			TwitterUID:  oldUser.TwitterUID,
+			FirebaseUID: newUID,
+			MigratedAt:  time.Now(),
+		}
+		migrationKey := datastore.IncompleteKey("UserMigration", nil)
+		if _, err := tx.Put(migrationKey, &migration); err != nil {
+			return fmt.Errorf("UserMigration レコードの保存に失敗: %w", err)
+		}
+
+		if err := tx.Delete(oldKey); err != nil {
+			return fmt.Errorf("旧ユーザーの削除に失敗: %w", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return nil, fmt.Errorf("Firebase UID 補正に失敗: %w", err)
+	}
+
+	// StageUser の UserKey を新キーに差し替える（トランザクション外: 25エンティティグループ制限のため）
+	s.migrateStageUserRecords(oldKey, newKey)
+
+	return &migratedUser, nil
+}
+
+// CountStageUsersByUserKey counts StageUser records that reference the given user key.
+func (s *DatastoreService) CountStageUsersByUserKey(userKey *datastore.Key) (int, error) {
+	query := datastore.NewQuery("StageUser").FilterField("user", "=", userKey).KeysOnly()
+	keys, err := s.client.GetAll(s.ctx, query, &[]StageUser{})
+	if err != nil {
+		return 0, fmt.Errorf("StageUser 件数の取得に失敗: %w", err)
+	}
+	return len(keys), nil
+}
+
 // createRegistModel creates a RegistModel record for a given stage
 func (s *DatastoreService) createRegistModel(stageKey *datastore.Key) error {
 	registModel := RegistModel{
