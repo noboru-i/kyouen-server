@@ -112,8 +112,7 @@ func setupRouter(app *App) *gin.Engine {
 		stages := v2.Group("/stages")
 		{
 			stages.GET("", auth.OptionalFirebaseAuth(app.FirebaseService), stageHandler.GetStages)
-			// Protected endpoints requiring authentication
-			stages.POST("", auth.FirebaseAuth(app.FirebaseService), stageHandler.CreateStage)
+			stages.POST("", stageHandler.CreateStage)
 			stages.POST("/sync", auth.FirebaseAuth(app.FirebaseService), stageHandler.SyncStages)
 			// This endpoint accepts both authenticated and guest users
 			stages.PUT("/:stageNo/clear", auth.OptionalFirebaseAuth(app.FirebaseService), stageHandler.ClearStage)

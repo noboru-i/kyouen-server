@@ -70,20 +70,13 @@ func (h *Handler) GetStages(c *gin.Context) {
 }
 
 func (h *Handler) CreateStage(c *gin.Context) {
-	// Get authenticated user from context
-	authUser, exists := auth.GetAuthenticatedUser(c)
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
-		return
-	}
-
 	var param openapi.NewStage
 	if err := c.ShouldBindJSON(&param); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	savedStage, err := h.stageService.CreateStage(param, authUser.Name)
+	savedStage, err := h.stageService.CreateStage(param, param.Creator)
 	if err != nil {
 		switch err {
 		case ErrInsufficientStones:
