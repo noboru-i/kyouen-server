@@ -1,0 +1,25 @@
+# ビルドステージ
+FROM golang:1.26-alpine AS builder
+
+WORKDIR /app
+
+# Go modulesをコピーして依存関係をダウンロード
+COPY go.mod go.sum ./
+RUN go mod download
+
+# ソースコードをコピー
+COPY . .
+
+# バイナリをビルド（Notify用）
+RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o notify ./cmd/notify
+
+# 実行ステージ
+FROM gcr.io/distroless/static-debian12:nonroot
+
+WORKDIR /app
+
+# ビルドしたバイナリをコピー
+COPY --from=builder /app/notify .
+
+# アプリケーションを実行
+CMD ["./notify"]

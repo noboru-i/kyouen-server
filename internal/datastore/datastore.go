@@ -678,3 +678,31 @@ func (s *DatastoreService) createRegistModel(stageKey *datastore.Key) error {
 
 	return nil
 }
+
+// GetAndDeleteRegistModels fetches all pending RegistModel entries, deletes them,
+// and returns the associated KyouenPuzzle keys.
+// Returns nil if no entries exist (no new stages since last notification).
+func (s *DatastoreService) GetAndDeleteRegistModels() ([]*datastore.Key, error) {
+	var registModels []RegistModel
+	query := datastore.NewQuery("RegistModel")
+
+	keys, err := s.client.GetAll(s.ctx, query, &registModels)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get RegistModels: %w", err)
+	}
+
+	if len(keys) == 0 {
+		return nil, nil
+	}
+
+	if err := s.client.DeleteMulti(s.ctx, keys); err != nil {
+		return nil, fmt.Errorf("failed to delete RegistModels: %w", err)
+	}
+
+	stageKeys := make([]*datastore.Key, len(registModels))
+	for i, rm := range registModels {
+		stageKeys[i] = rm.StageInfo
+	}
+
+	return stageKeys, nil
+}

@@ -21,6 +21,7 @@ on:
 
 env:
   SERVICE_NAME: kyouen-server
+  NOTIFY_JOB_NAME: kyouen-notify
   REGION: asia-northeast1
 
 jobs:
@@ -71,11 +72,77 @@ jobs:
     - name: Get service URL and test deployment
       run: |
         SERVICE_NAME_WITH_ENV="${{ env.SERVICE_NAME }}-${{ inputs.environment }}"
-        
+
         SERVICE_URL=$(gcloud run services describe $SERVICE_NAME_WITH_ENV --region=${{ env.REGION }} --format="value(status.url)")
         echo "Service URL: $SERVICE_URL"
-        
+
         # Health check
         curl -f $SERVICE_URL/health || exit 1
         echo "✅ Deployment to ${{ inputs.environment }} environment successful and health check passed"
         echo "🔗 Service URL: $SERVICE_URL"
+
+    - name: Build and push Docker image for notify
+      run: |
+        docker build -f Dockerfile.notify \
+          -t asia-northeast1-docker.pkg.dev/${{ inputs.project_id }}/kyouen-repo/${{ env.NOTIFY_JOB_NAME }}:${{ github.sha }} .
+        docker push asia-northeast1-docker.pkg.dev/${{ inputs.project_id }}/kyouen-repo/${{ env.NOTIFY_JOB_NAME }}:${{ github.sha }}
+
+    - name: Deploy Notify Job to Cloud Run
+      run: |
+        NOTIFY_JOB_NAME_WITH_ENV="${{ env.NOTIFY_JOB_NAME }}-${{ inputs.environment }}"
+        gcloud run jobs replace <(cat <<EOF
+        apiVersion: run.googleapis.com/v1
+        kind: Job
+        metadata:
+          name: ${NOTIFY_JOB_NAME_WITH_ENV}
+          namespace: '${{ inputs.project_id }}'
+        spec:
+          template:
+            spec:
+              parallelism: 1
+              template:
+                spec:
+                  containers:
+                  - image: asia-northeast1-docker.pkg.dev/${{ inputs.project_id }}/kyouen-repo/${{ env.NOTIFY_JOB_NAME }}:${{ github.sha }}
+                    env:
+                    - name: GOOGLE_CLOUD_PROJECT
+                      value: '${{ inputs.project_id }}'
+                    - name: ENVIRONMENT
+                      value: '${{ inputs.environment }}'
+                    resources:
+                      limits:
+                        memory: 256Mi
+                        cpu: 1000m
+        EOF
+        ) --region=${{ env.REGION }}
+
+    - name: Create or update Cloud Scheduler job for notify
+      run: |
+        NOTIFY_JOB_NAME_WITH_ENV="${{ env.NOTIFY_JOB_NAME }}-${{ inputs.environment }}"
+        SCHEDULER_NAME="kyouen-notify-scheduler-${{ inputs.environment }}"
+        JOB_URI="https://run.googleapis.com/v2/projects/${{ inputs.project_id }}/locations/${{ env.REGION }}/jobs/${NOTIFY_JOB_NAME_WITH_ENV}:run"
+        SA_EMAIL=$(gcloud auth list --filter=status:ACTIVE --format="value(account)")
+
+        if gcloud scheduler jobs describe ${SCHEDULER_NAME} \
+          --location=${{ env.REGION }} \
+          --project=${{ inputs.project_id }} > /dev/null 2>&1; then
+          gcloud scheduler jobs update http ${SCHEDULER_NAME} \
+            --location=${{ env.REGION }} \
+            --schedule="0 23 * * *" \
+            --time-zone="UTC" \
+            --uri="${JOB_URI}" \
+            --message-body="{}" \
+            --oauth-service-account-email="${SA_EMAIL}" \
+            --headers="Content-Type=application/json" \
+            --project=${{ inputs.project_id }}
+        else
+          gcloud scheduler jobs create http ${SCHEDULER_NAME} \
+            --location=${{ env.REGION }} \
+            --schedule="0 23 * * *" \
+            --time-zone="UTC" \
+            --uri="${JOB_URI}" \
+            --message-body="{}" \
+            --oauth-service-account-email="${SA_EMAIL}" \
+            --headers="Content-Type=application/json" \
+            --project=${{ inputs.project_id }}
+        fi
