@@ -79,6 +79,8 @@ func (h *Handler) CreateStage(c *gin.Context) {
 	savedStage, err := h.stageService.CreateStage(param, param.Creator)
 	if err != nil {
 		switch err {
+		case ErrInvalidStageLength:
+			c.JSON(http.StatusBadRequest, gin.H{"error": "stage length must be size * size."})
 		case ErrInsufficientStones:
 			c.JSON(http.StatusBadRequest, gin.H{"error": "stage must have 5 stones."})
 		case ErrNoKyouen:

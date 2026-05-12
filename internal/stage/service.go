@@ -15,13 +15,14 @@ import (
 )
 
 var (
-	ErrInsufficientStones = errors.New("stage must have 5 stones")
-	ErrNoKyouen          = errors.New("sent stage don't have kyouen")
-	ErrStageExists       = errors.New("sent stage is already exists")
-	ErrInvalidKyouen     = errors.New("invalid kyouen")
-	ErrStageNotFound     = errors.New("stage not found")
-	ErrStageMismatch     = errors.New("stage mismatch")
-	ErrUserNotFound      = errors.New("user not found")
+	ErrInsufficientStones  = errors.New("stage must have 5 stones")
+	ErrNoKyouen            = errors.New("sent stage don't have kyouen")
+	ErrStageExists         = errors.New("sent stage is already exists")
+	ErrInvalidKyouen       = errors.New("invalid kyouen")
+	ErrStageNotFound       = errors.New("stage not found")
+	ErrStageMismatch       = errors.New("stage mismatch")
+	ErrUserNotFound        = errors.New("user not found")
+	ErrInvalidStageLength  = errors.New("stage length must be size * size")
 )
 
 type ClearedStageResult struct {
@@ -59,7 +60,10 @@ func (s *Service) GetStages(startStageNo, limit int, authUID string) ([]datastor
 }
 
 func (s *Service) CreateStage(param openapi.NewStage, creatorName string) (*datastoreservice.KyouenPuzzle, error) {
-	// Validate stage using existing business logic
+	if len(param.Stage) != int(param.Size)*int(param.Size) {
+		return nil, ErrInvalidStageLength
+	}
+
 	stage := *models.NewKyouenStage(int(param.Size), param.Stage)
 	
 	// Check stone count
