@@ -133,7 +133,7 @@ jobs:
             --uri="${JOB_URI}" \
             --message-body="{}" \
             --oauth-service-account-email="${SA_EMAIL}" \
-            --headers="Content-Type=application/json" \
+            --update-headers="Content-Type=application/json" \
             --project=${{ inputs.project_id }}
         else
           gcloud scheduler jobs create http ${SCHEDULER_NAME} \
