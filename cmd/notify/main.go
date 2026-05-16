@@ -23,7 +23,7 @@ func main() {
 		log.Fatalf("Failed to initialize Firebase service: %v", err)
 	}
 
-	stageKeys, err := datastoreService.GetAndDeleteRegistModels()
+	stageKeys, err := datastoreService.GetAndDeleteRegistModels(ctx)
 	if err != nil {
 		log.Fatalf("Failed to get RegistModels: %v", err)
 	}
@@ -33,7 +33,7 @@ func main() {
 		return
 	}
 
-	stages, err := datastoreService.GetStagesByKeys(stageKeys)
+	stages, err := datastoreService.GetStagesByKeys(ctx, stageKeys)
 	if err != nil {
 		log.Fatalf("Failed to get stages: %v", err)
 	}

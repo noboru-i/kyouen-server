@@ -18,14 +18,14 @@ func NewHandler(datastoreService *datastore.DatastoreService) *Handler {
 }
 
 func (h *Handler) GetStatics(c *gin.Context) {
-	summary, err := h.datastoreService.GetSummary()
+	summary, err := h.datastoreService.GetSummary(c.Request.Context())
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
-	
+
 	c.JSON(http.StatusOK, gin.H{
-		"count":        summary.Count,
+		"count":         summary.Count,
 		"lastUpdatedAt": summary.LastDate,
 	})
 }

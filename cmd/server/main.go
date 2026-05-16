@@ -1,11 +1,13 @@
 package main
 
 import (
+	"context"
 	"log"
 	"net/http"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gin-gonic/gin/otelgin"
 
 	"kyouen-server/internal/auth"
 	"kyouen-server/internal/config"
@@ -13,6 +15,7 @@ import (
 	"kyouen-server/internal/middleware"
 	"kyouen-server/internal/stage"
 	"kyouen-server/internal/statics"
+	"kyouen-server/internal/tracing"
 )
 
 type App struct {
@@ -22,36 +25,34 @@ type App struct {
 }
 
 func main() {
-	// Load configuration
+	ctx := context.Background()
+
 	cfg := config.Load()
 
-	// Initialize Datastore service
+	shutdown := tracing.Init(ctx, cfg.ProjectID)
+	defer shutdown()
+
 	datastoreService, err := datastore.NewDatastoreService(cfg.ProjectID)
 	if err != nil {
 		log.Fatalf("Failed to initialize Datastore service: %v", err)
 	}
 	defer datastoreService.Close()
 
-	// Initialize Firebase service
 	firebaseService, err := datastore.NewFirebaseService(cfg)
 	if err != nil {
 		log.Fatalf("Failed to initialize Firebase service: %v", err)
 	}
 
-	// Create application instance
 	app := &App{
 		Config:           cfg,
 		DatastoreService: datastoreService,
 		FirebaseService:  firebaseService,
 	}
 
-	// Set Gin mode
 	gin.SetMode(cfg.Environment)
 
-	// Initialize Gin router
 	router := setupRouter(app)
 
-	// Start server
 	log.Printf("Cloud Run Kyouen Server starting on port %s", cfg.Port)
 	log.Printf("Environment: %s", cfg.Environment)
 	log.Printf("Project ID: %s", cfg.ProjectID)
@@ -64,22 +65,18 @@ func main() {
 func setupRouter(app *App) *gin.Engine {
 	router := gin.Default()
 
-	// CORS middleware
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"}, // In production, specify allowed origins
+		AllowOrigins:     []string{"*"},
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 	}))
 
-	// Logging middleware
+	router.Use(otelgin.Middleware("kyouen-server"))
 	router.Use(middleware.Logger())
-
-	// Recovery middleware
 	router.Use(gin.Recovery())
 
-	// Health check endpoint
 	router.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
 			"status":      "ok",
@@ -90,35 +87,27 @@ func setupRouter(app *App) *gin.Engine {
 		})
 	})
 
-	// Swagger UI endpoints
 	router.StaticFile("/docs/specs/index.yaml", "./docs/specs/index.yaml")
 	router.StaticFile("/static/swagger-ui.html", "./static-files/swagger-ui.html")
 
-	// Initialize handlers
 	stageHandler := stage.NewHandler(app.DatastoreService, app.FirebaseService)
 	staticsHandler := statics.NewHandler(app.DatastoreService)
 
-	// API v2 routes
 	v2 := router.Group("/v2")
 	{
-		// Statistics endpoint
 		v2.GET("/statics", staticsHandler.GetStatics)
 
-		// New endpoints for web application
 		v2.GET("/recent_stages", stageHandler.GetRecentStages)
 		v2.GET("/activities", stageHandler.GetActivities)
 
-		// Stages endpoints
 		stages := v2.Group("/stages")
 		{
 			stages.GET("", auth.OptionalFirebaseAuth(app.FirebaseService), stageHandler.GetStages)
 			stages.POST("", stageHandler.CreateStage)
 			stages.POST("/sync", auth.FirebaseAuth(app.FirebaseService), stageHandler.SyncStages)
-			// This endpoint accepts both authenticated and guest users
 			stages.PUT("/:stageNo/clear", auth.OptionalFirebaseAuth(app.FirebaseService), stageHandler.ClearStage)
 		}
 
-		// Users endpoints
 		users := v2.Group("/users")
 		{
 			users.POST("/login", stageHandler.Login)
