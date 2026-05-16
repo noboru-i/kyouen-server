@@ -66,7 +66,7 @@ func setupRouter(app *App) *gin.Engine {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"*"},
+		AllowOrigins:     []string{"*"}, // In production, specify allowed origins
 		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
 		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
@@ -105,6 +105,7 @@ func setupRouter(app *App) *gin.Engine {
 			stages.GET("", auth.OptionalFirebaseAuth(app.FirebaseService), stageHandler.GetStages)
 			stages.POST("", stageHandler.CreateStage)
 			stages.POST("/sync", auth.FirebaseAuth(app.FirebaseService), stageHandler.SyncStages)
+			// This endpoint accepts both authenticated and guest users
 			stages.PUT("/:stageNo/clear", auth.OptionalFirebaseAuth(app.FirebaseService), stageHandler.ClearStage)
 		}
 

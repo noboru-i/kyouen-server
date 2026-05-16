@@ -126,10 +126,12 @@ func (s *DatastoreService) CreateStage(ctx context.Context, stage KyouenPuzzle) 
 		return nil, fmt.Errorf("failed to save stage: %w", err)
 	}
 
+	// Log error but don't fail the creation
 	if err := s.createRegistModel(ctx, stageKey); err != nil {
 		fmt.Printf("Warning: failed to create RegistModel: %v\n", err)
 	}
 
+	// Log error but don't fail the creation
 	if err := s.updateSummary(ctx); err != nil {
 		fmt.Printf("Warning: failed to update summary: %v\n", err)
 	}
@@ -291,9 +293,11 @@ func (s *DatastoreService) migrateStageUserRecords(ctx context.Context, oldUserK
 func (s *DatastoreService) CreateOrUpdateUserFromFirebase(ctx context.Context, firebaseUID, screenName, image, twitterUID string) (*User, error) {
 	existingUser, _, err := s.GetUserByID(ctx, firebaseUID)
 	if err != nil {
+		// Firebase UID でユーザーが見つからない場合、レガシーユーザー（Twitter UID キー）を検索
 		if twitterUID != "" {
 			legacyUser, _, legacyErr := s.GetUserByID(ctx, twitterUID)
 			if legacyErr == nil && legacyUser != nil {
+				// Python時代のユーザーが見つかった → マイグレーション実行
 				return s.MigrateLegacyUser(ctx, firebaseUID, screenName, image, twitterUID)
 			}
 		}
@@ -335,6 +339,7 @@ func (s *DatastoreService) GetOrCreateGuestUser(ctx context.Context) (*User, *da
 
 	existingUser, key, err := s.GetUserByID(ctx, guestUID)
 	if err != nil {
+		// Guest user doesn't exist, create new one with exact production data format
 		guestUser := User{
 			UserID:          guestUID,
 			ScreenName:      "Guest",
@@ -465,6 +470,7 @@ func (s *DatastoreService) DeleteUser(ctx context.Context, userID string) error 
 			}
 		}
 
+		// Anonymize creator field in KyouenPuzzle entities created by this user
 		stageQuery := datastore.NewQuery("KyouenPuzzle").FilterField("creator", "=", user.ScreenName)
 		var stages []KyouenPuzzle
 		stageKeys, err := s.client.GetAll(ctx, stageQuery, &stages)
@@ -584,6 +590,7 @@ func (s *DatastoreService) MigrateFirebaseUID(ctx context.Context, oldUID, newUI
 			return fmt.Errorf("新ユーザーの取得に失敗: %w", err)
 		}
 
+		// clearStageCount を旧ユーザーから引き継ぐ（screenName/image/twitterUid は新側を維持）
 		newUser.ClearStageCount = oldUser.ClearStageCount
 		migratedUser = newUser
 		if _, err := tx.Put(newKey, &newUser); err != nil {

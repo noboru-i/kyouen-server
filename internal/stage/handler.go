@@ -104,6 +104,7 @@ func (h *Handler) CreateStage(c *gin.Context) {
 func (h *Handler) ClearStage(c *gin.Context) {
 	authUID, exists := auth.GetAuthenticatedUID(c)
 	if !exists {
+		// This should not happen with OptionalFirebaseAuth middleware, but just in case
 		authUID = auth.GuestUID
 	}
 
@@ -180,6 +181,7 @@ func (h *Handler) Login(c *gin.Context) {
 		}
 	}
 
+	// Fallback: try to get screen name from Twitter provider data
 	if screenName == "" {
 		for _, provider := range userRecord.ProviderUserInfo {
 			if provider.ProviderID == "twitter.com" {
