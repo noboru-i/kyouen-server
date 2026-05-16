@@ -10,20 +10,15 @@ import (
 
 type DatastoreService struct {
 	client *datastore.Client
-	ctx    context.Context
 }
 
 func NewDatastoreService(projectID string) (*DatastoreService, error) {
-	ctx := context.Background()
-	client, err := datastore.NewClient(ctx, projectID)
+	client, err := datastore.NewClient(context.Background(), projectID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Datastore client: %w", err)
 	}
 
-	return &DatastoreService{
-		client: client,
-		ctx:    ctx,
-	}, nil
+	return &DatastoreService{client: client}, nil
 }
 
 func (s *DatastoreService) Close() error {
@@ -36,18 +31,17 @@ func (s *DatastoreService) GetClient() *datastore.Client {
 }
 
 // Statistics operations
-func (s *DatastoreService) GetSummary() (*KyouenPuzzleSummary, error) {
+func (s *DatastoreService) GetSummary(ctx context.Context) (*KyouenPuzzleSummary, error) {
 	key := datastore.IDKey("KyouenPuzzleSummary", 1, nil)
 	var summary KyouenPuzzleSummary
 
-	err := s.client.Get(s.ctx, key, &summary)
+	err := s.client.Get(ctx, key, &summary)
 	if err == datastore.ErrNoSuchEntity {
-		// Create initial summary if it doesn't exist
 		summary = KyouenPuzzleSummary{
 			Count:    0,
 			LastDate: time.Now(),
 		}
-		_, err = s.client.Put(s.ctx, key, &summary)
+		_, err = s.client.Put(ctx, key, &summary)
 		if err != nil {
 			return nil, fmt.Errorf("failed to create initial summary: %w", err)
 		}
@@ -59,14 +53,14 @@ func (s *DatastoreService) GetSummary() (*KyouenPuzzleSummary, error) {
 }
 
 // Stages operations
-func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]KyouenPuzzle, []*datastore.Key, error) {
+func (s *DatastoreService) GetStages(ctx context.Context, startStageNo int, limit int) ([]KyouenPuzzle, []*datastore.Key, error) {
 	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").
 		FilterField("stageNo", ">=", startStageNo).
 		Order("stageNo").
 		Limit(limit)
 
-	keys, err := s.client.GetAll(s.ctx, query, &stages)
+	keys, err := s.client.GetAll(ctx, query, &stages)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get stages: %w", err)
 	}
@@ -75,8 +69,8 @@ func (s *DatastoreService) GetStages(startStageNo int, limit int) ([]KyouenPuzzl
 }
 
 // GetClearedStageKeyIDs returns a map of Datastore key ID to clear date for stages cleared by the given user.
-func (s *DatastoreService) GetClearedStageKeyIDs(userKey *datastore.Key) (map[int64]time.Time, error) {
-	stageUsers, err := s.GetClearedStagesByUser(userKey)
+func (s *DatastoreService) GetClearedStageKeyIDs(ctx context.Context, userKey *datastore.Key) (map[int64]time.Time, error) {
+	stageUsers, err := s.GetClearedStagesByUser(ctx, userKey)
 	if err != nil {
 		return nil, err
 	}
@@ -87,13 +81,13 @@ func (s *DatastoreService) GetClearedStageKeyIDs(userKey *datastore.Key) (map[in
 	return result, nil
 }
 
-func (s *DatastoreService) GetRecentStages(limit int) ([]KyouenPuzzle, error) {
+func (s *DatastoreService) GetRecentStages(ctx context.Context, limit int) ([]KyouenPuzzle, error) {
 	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").
 		Order("-stageNo").
 		Limit(limit)
 
-	_, err := s.client.GetAll(s.ctx, query, &stages)
+	_, err := s.client.GetAll(ctx, query, &stages)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent stages: %w", err)
 	}
@@ -101,11 +95,11 @@ func (s *DatastoreService) GetRecentStages(limit int) ([]KyouenPuzzle, error) {
 	return stages, nil
 }
 
-func (s *DatastoreService) GetStageByNo(stageNo int) (*KyouenPuzzle, []*datastore.Key, error) {
+func (s *DatastoreService) GetStageByNo(ctx context.Context, stageNo int) (*KyouenPuzzle, []*datastore.Key, error) {
 	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").FilterField("stageNo", "=", stageNo).Limit(1)
 
-	keys, err := s.client.GetAll(s.ctx, query, &stages)
+	keys, err := s.client.GetAll(ctx, query, &stages)
 	if err != nil {
 		return nil, nil, fmt.Errorf("failed to get stage: %w", err)
 	}
@@ -117,9 +111,8 @@ func (s *DatastoreService) GetStageByNo(stageNo int) (*KyouenPuzzle, []*datastor
 	return &stages[0], keys, nil
 }
 
-func (s *DatastoreService) CreateStage(stage KyouenPuzzle) (*KyouenPuzzle, error) {
-	// Get next stage number
-	nextStageNo, err := s.getNextStageNo()
+func (s *DatastoreService) CreateStage(ctx context.Context, stage KyouenPuzzle) (*KyouenPuzzle, error) {
+	nextStageNo, err := s.getNextStageNo(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get next stage number: %w", err)
 	}
@@ -128,31 +121,29 @@ func (s *DatastoreService) CreateStage(stage KyouenPuzzle) (*KyouenPuzzle, error
 	stage.RegistDate = time.Now()
 
 	key := datastore.IncompleteKey("KyouenPuzzle", nil)
-	stageKey, err := s.client.Put(s.ctx, key, &stage)
+	stageKey, err := s.client.Put(ctx, key, &stage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save stage: %w", err)
 	}
 
-	// Create RegistModel record
-	if err := s.createRegistModel(stageKey); err != nil {
-		// Log error but don't fail the creation
+	// Log error but don't fail the creation
+	if err := s.createRegistModel(ctx, stageKey); err != nil {
 		fmt.Printf("Warning: failed to create RegistModel: %v\n", err)
 	}
 
-	// Update summary
-	if err := s.updateSummary(); err != nil {
-		// Log error but don't fail the creation
+	// Log error but don't fail the creation
+	if err := s.updateSummary(ctx); err != nil {
 		fmt.Printf("Warning: failed to update summary: %v\n", err)
 	}
 
 	return &stage, nil
 }
 
-func (s *DatastoreService) getNextStageNo() (int64, error) {
+func (s *DatastoreService) getNextStageNo(ctx context.Context) (int64, error) {
 	var stages []KyouenPuzzle
 	query := datastore.NewQuery("KyouenPuzzle").Order("-stageNo").Limit(1)
 
-	_, err := s.client.GetAll(s.ctx, query, &stages)
+	_, err := s.client.GetAll(ctx, query, &stages)
 	if err != nil {
 		return 0, fmt.Errorf("failed to query latest stage: %w", err)
 	}
@@ -164,25 +155,24 @@ func (s *DatastoreService) getNextStageNo() (int64, error) {
 	return stages[0].StageNo + 1, nil
 }
 
-func (s *DatastoreService) CheckStageExists(stageString string) (bool, error) {
+func (s *DatastoreService) CheckStageExists(ctx context.Context, stageString string) (bool, error) {
 	query := datastore.NewQuery("KyouenPuzzle").FilterField("stage", "=", stageString).Limit(1)
-	count, err := s.client.Count(s.ctx, query)
+	count, err := s.client.Count(ctx, query)
 	if err != nil {
 		return false, fmt.Errorf("failed to check stage existence: %w", err)
 	}
 	return count > 0, nil
 }
 
-func (s *DatastoreService) updateSummary() error {
+func (s *DatastoreService) updateSummary(ctx context.Context) error {
 	key := datastore.IDKey("KyouenPuzzleSummary", 1, nil)
 
-	_, err := s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
+	_, err := s.client.RunInTransaction(ctx, func(tx *datastore.Transaction) error {
 		var summary KyouenPuzzleSummary
 		err := tx.Get(key, &summary)
 		if err == datastore.ErrNoSuchEntity {
-			// Count all stages
 			query := datastore.NewQuery("KyouenPuzzle").KeysOnly()
-			count, err := s.client.Count(s.ctx, query)
+			count, err := s.client.Count(ctx, query)
 			if err != nil {
 				return fmt.Errorf("failed to count stages: %w", err)
 			}
@@ -205,11 +195,11 @@ func (s *DatastoreService) updateSummary() error {
 }
 
 // Users operations
-func (s *DatastoreService) GetUserByID(userID string) (*User, *datastore.Key, error) {
+func (s *DatastoreService) GetUserByID(ctx context.Context, userID string) (*User, *datastore.Key, error) {
 	key := datastore.NameKey("User", "KEY"+userID, nil)
 	var user User
 
-	err := s.client.Get(s.ctx, key, &user)
+	err := s.client.Get(ctx, key, &user)
 	if err == datastore.ErrNoSuchEntity {
 		return nil, nil, fmt.Errorf("user not found: %s", userID)
 	} else if err != nil {
@@ -219,9 +209,9 @@ func (s *DatastoreService) GetUserByID(userID string) (*User, *datastore.Key, er
 	return &user, key, nil
 }
 
-func (s *DatastoreService) UpsertUser(user User, userID string) (*User, error) {
+func (s *DatastoreService) UpsertUser(ctx context.Context, user User, userID string) (*User, error) {
 	key := datastore.NameKey("User", "KEY"+userID, nil)
-	_, err := s.client.Put(s.ctx, key, &user)
+	_, err := s.client.Put(ctx, key, &user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to save user: %w", err)
 	}
@@ -230,20 +220,18 @@ func (s *DatastoreService) UpsertUser(user User, userID string) (*User, error) {
 
 // MigrateLegacyUser migrates a legacy Python-era user (keyed by Twitter UID) to a new Firebase UID-based key.
 // It preserves clearStageCount, records the migration in UserMigration, and re-points StageUser records.
-func (s *DatastoreService) MigrateLegacyUser(firebaseUID, screenName, image, twitterUID string) (*User, error) {
+func (s *DatastoreService) MigrateLegacyUser(ctx context.Context, firebaseUID, screenName, image, twitterUID string) (*User, error) {
 	oldKey := datastore.NameKey("User", "KEY"+twitterUID, nil)
 	newKey := datastore.NameKey("User", "KEY"+firebaseUID, nil)
 
 	var migratedUser User
 
-	_, err := s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
-		// 1. 旧エンティティを読み取り
+	_, err := s.client.RunInTransaction(ctx, func(tx *datastore.Transaction) error {
 		var oldUser User
 		if err := tx.Get(oldKey, &oldUser); err != nil {
 			return fmt.Errorf("failed to get legacy user: %w", err)
 		}
 
-		// 2. clearStageCount を引き継いで新エンティティを作成
 		migratedUser = User{
 			UserID:          firebaseUID,
 			ScreenName:      screenName,
@@ -255,7 +243,6 @@ func (s *DatastoreService) MigrateLegacyUser(firebaseUID, screenName, image, twi
 			return fmt.Errorf("failed to put migrated user: %w", err)
 		}
 
-		// 3. UserMigration レコードを作成
 		migration := UserMigration{
 			OldKey:      "KEY" + twitterUID,
 			NewKey:      "KEY" + firebaseUID,
@@ -268,7 +255,6 @@ func (s *DatastoreService) MigrateLegacyUser(firebaseUID, screenName, image, twi
 			return fmt.Errorf("failed to save UserMigration record: %w", err)
 		}
 
-		// 4. 旧エンティティを削除
 		if err := tx.Delete(oldKey); err != nil {
 			return fmt.Errorf("failed to delete legacy user: %w", err)
 		}
@@ -279,17 +265,17 @@ func (s *DatastoreService) MigrateLegacyUser(firebaseUID, screenName, image, twi
 		return nil, fmt.Errorf("failed to migrate legacy user: %w", err)
 	}
 
-	// 5. StageUser レコードのキーを更新（トランザクション外: 25エンティティグループ制限のため）
-	s.migrateStageUserRecords(oldKey, newKey)
+	// StageUser レコードのキーを更新（トランザクション外: 25エンティティグループ制限のため）
+	s.migrateStageUserRecords(ctx, oldKey, newKey)
 
 	return &migratedUser, nil
 }
 
 // migrateStageUserRecords updates StageUser records that reference the old user key to point to the new key.
-func (s *DatastoreService) migrateStageUserRecords(oldUserKey, newUserKey *datastore.Key) {
+func (s *DatastoreService) migrateStageUserRecords(ctx context.Context, oldUserKey, newUserKey *datastore.Key) {
 	query := datastore.NewQuery("StageUser").FilterField("user", "=", oldUserKey)
 	var stageUsers []StageUser
-	keys, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	keys, err := s.client.GetAll(ctx, query, &stageUsers)
 	if err != nil {
 		fmt.Printf("Warning: failed to query StageUser records for migration: %v\n", err)
 		return
@@ -297,27 +283,25 @@ func (s *DatastoreService) migrateStageUserRecords(oldUserKey, newUserKey *datas
 
 	for i := range stageUsers {
 		stageUsers[i].UserKey = newUserKey
-		if _, err := s.client.Put(s.ctx, keys[i], &stageUsers[i]); err != nil {
+		if _, err := s.client.Put(ctx, keys[i], &stageUsers[i]); err != nil {
 			fmt.Printf("Warning: failed to migrate StageUser record %v: %v\n", keys[i], err)
 		}
 	}
 }
 
 // CreateOrUpdateUserFromFirebase creates or updates a user from Firebase authentication data
-func (s *DatastoreService) CreateOrUpdateUserFromFirebase(firebaseUID, screenName, image, twitterUID string) (*User, error) {
-	// Try to get existing user
-	existingUser, _, err := s.GetUserByID(firebaseUID)
+func (s *DatastoreService) CreateOrUpdateUserFromFirebase(ctx context.Context, firebaseUID, screenName, image, twitterUID string) (*User, error) {
+	existingUser, _, err := s.GetUserByID(ctx, firebaseUID)
 	if err != nil {
 		// Firebase UID でユーザーが見つからない場合、レガシーユーザー（Twitter UID キー）を検索
 		if twitterUID != "" {
-			legacyUser, _, legacyErr := s.GetUserByID(twitterUID)
+			legacyUser, _, legacyErr := s.GetUserByID(ctx, twitterUID)
 			if legacyErr == nil && legacyUser != nil {
 				// Python時代のユーザーが見つかった → マイグレーション実行
-				return s.MigrateLegacyUser(firebaseUID, screenName, image, twitterUID)
+				return s.MigrateLegacyUser(ctx, firebaseUID, screenName, image, twitterUID)
 			}
 		}
 
-		// レガシーユーザーも存在しない → 新規作成
 		newUser := User{
 			UserID:          firebaseUID,
 			ScreenName:      screenName,
@@ -325,10 +309,9 @@ func (s *DatastoreService) CreateOrUpdateUserFromFirebase(firebaseUID, screenNam
 			TwitterUID:      twitterUID,
 			ClearStageCount: 0,
 		}
-		return s.UpsertUser(newUser, firebaseUID)
+		return s.UpsertUser(ctx, newUser, firebaseUID)
 	}
 
-	// User exists, update information if needed
 	updated := false
 	if existingUser.ScreenName != screenName {
 		existingUser.ScreenName = screenName
@@ -344,18 +327,17 @@ func (s *DatastoreService) CreateOrUpdateUserFromFirebase(firebaseUID, screenNam
 	}
 
 	if updated {
-		return s.UpsertUser(*existingUser, firebaseUID)
+		return s.UpsertUser(ctx, *existingUser, firebaseUID)
 	}
 
 	return existingUser, nil
 }
 
 // GetOrCreateGuestUser gets or creates the guest user account (matches existing production data)
-func (s *DatastoreService) GetOrCreateGuestUser() (*User, *datastore.Key, error) {
+func (s *DatastoreService) GetOrCreateGuestUser(ctx context.Context) (*User, *datastore.Key, error) {
 	guestUID := "0"
 
-	// Try to get existing guest user
-	existingUser, key, err := s.GetUserByID(guestUID)
+	existingUser, key, err := s.GetUserByID(ctx, guestUID)
 	if err != nil {
 		// Guest user doesn't exist, create new one with exact production data format
 		guestUser := User{
@@ -366,12 +348,11 @@ func (s *DatastoreService) GetOrCreateGuestUser() (*User, *datastore.Key, error)
 			ClearStageCount: 0,
 		}
 
-		user, err := s.UpsertUser(guestUser, guestUID)
+		user, err := s.UpsertUser(ctx, guestUser, guestUID)
 		if err != nil {
 			return nil, nil, fmt.Errorf("failed to create guest user: %w", err)
 		}
 
-		// Return with the key
 		guestKey := datastore.NameKey("User", "KEY"+guestUID, nil)
 		return user, guestKey, nil
 	}
@@ -380,35 +361,32 @@ func (s *DatastoreService) GetOrCreateGuestUser() (*User, *datastore.Key, error)
 }
 
 // StageUser operations
-func (s *DatastoreService) CreateStageUser(stageKey *datastore.Key, userKey *datastore.Key) error {
-	// Check if already exists
+func (s *DatastoreService) CreateStageUser(ctx context.Context, stageKey *datastore.Key, userKey *datastore.Key) error {
 	var stageUsers []StageUser
 	query := datastore.NewQuery("StageUser").
 		FilterField("stage", "=", stageKey).
 		FilterField("user", "=", userKey).
 		Limit(1)
 
-	keys, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	keys, err := s.client.GetAll(ctx, query, &stageUsers)
 	if err != nil {
 		return fmt.Errorf("failed to check existing StageUser: %w", err)
 	}
 
 	if len(stageUsers) == 0 {
-		// Create new StageUser
 		stageUser := StageUser{
 			StageKey:  stageKey,
 			UserKey:   userKey,
 			ClearDate: time.Now(),
 		}
 		key := datastore.IncompleteKey("StageUser", nil)
-		_, err = s.client.Put(s.ctx, key, &stageUser)
+		_, err = s.client.Put(ctx, key, &stageUser)
 		if err != nil {
 			return fmt.Errorf("failed to create StageUser: %w", err)
 		}
 	} else {
-		// Update existing StageUser
 		stageUsers[0].ClearDate = time.Now()
-		_, err = s.client.Put(s.ctx, keys[0], &stageUsers[0])
+		_, err = s.client.Put(ctx, keys[0], &stageUsers[0])
 		if err != nil {
 			return fmt.Errorf("failed to update StageUser: %w", err)
 		}
@@ -418,14 +396,14 @@ func (s *DatastoreService) CreateStageUser(stageKey *datastore.Key, userKey *dat
 }
 
 // HasStageUser checks if a stage user relation exists
-func (s *DatastoreService) HasStageUser(stageKey *datastore.Key, userKey *datastore.Key) (bool, error) {
+func (s *DatastoreService) HasStageUser(ctx context.Context, stageKey *datastore.Key, userKey *datastore.Key) (bool, error) {
 	query := datastore.NewQuery("StageUser").
 		FilterField("stage", "=", stageKey).
 		FilterField("user", "=", userKey).
 		Limit(1)
 
 	var stageUsers []StageUser
-	_, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	_, err := s.client.GetAll(ctx, query, &stageUsers)
 	if err != nil {
 		return false, fmt.Errorf("failed to check StageUser existence: %w", err)
 	}
@@ -434,13 +412,13 @@ func (s *DatastoreService) HasStageUser(stageKey *datastore.Key, userKey *datast
 }
 
 // GetClearedStagesByUser gets all cleared stages for a user
-func (s *DatastoreService) GetClearedStagesByUser(userKey *datastore.Key) ([]StageUser, error) {
+func (s *DatastoreService) GetClearedStagesByUser(ctx context.Context, userKey *datastore.Key) ([]StageUser, error) {
 	query := datastore.NewQuery("StageUser").
 		FilterField("user", "=", userKey).
 		Order("clearDate")
 
 	var stageUsers []StageUser
-	_, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	_, err := s.client.GetAll(ctx, query, &stageUsers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get cleared stages: %w", err)
 	}
@@ -448,8 +426,8 @@ func (s *DatastoreService) GetClearedStagesByUser(userKey *datastore.Key) ([]Sta
 	return stageUsers, nil
 }
 
-func (s *DatastoreService) IncrementUserClearCount(userKey *datastore.Key) error {
-	_, err := s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
+func (s *DatastoreService) IncrementUserClearCount(ctx context.Context, userKey *datastore.Key) error {
+	_, err := s.client.RunInTransaction(ctx, func(tx *datastore.Transaction) error {
 		var user User
 		err := tx.Get(userKey, &user)
 		if err != nil {
@@ -465,11 +443,10 @@ func (s *DatastoreService) IncrementUserClearCount(userKey *datastore.Key) error
 }
 
 // DeleteUser deletes a user and all associated data from Datastore
-func (s *DatastoreService) DeleteUser(userID string) error {
-	// Get user key and entity
+func (s *DatastoreService) DeleteUser(ctx context.Context, userID string) error {
 	userKey := datastore.NameKey("User", "KEY"+userID, nil)
 	var user User
-	err := s.client.Get(s.ctx, userKey, &user)
+	err := s.client.Get(ctx, userKey, &user)
 	if err != nil {
 		if err == datastore.ErrNoSuchEntity {
 			return fmt.Errorf("user not found: %s", userID)
@@ -479,16 +456,13 @@ func (s *DatastoreService) DeleteUser(userID string) error {
 
 	// TODO: Add audit log for user account deletion (required for compliance)
 
-	// Run deletion in transaction
-	_, err = s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
-		// Delete all StageUser records for this user
+	_, err = s.client.RunInTransaction(ctx, func(tx *datastore.Transaction) error {
 		query := datastore.NewQuery("StageUser").FilterField("user", "=", userKey)
-		keys, err := s.client.GetAll(s.ctx, query, &[]StageUser{})
+		keys, err := s.client.GetAll(ctx, query, &[]StageUser{})
 		if err != nil {
 			return fmt.Errorf("failed to get StageUser records: %w", err)
 		}
 
-		// Delete StageUser records
 		if len(keys) > 0 {
 			err = tx.DeleteMulti(keys)
 			if err != nil {
@@ -499,12 +473,11 @@ func (s *DatastoreService) DeleteUser(userID string) error {
 		// Anonymize creator field in KyouenPuzzle entities created by this user
 		stageQuery := datastore.NewQuery("KyouenPuzzle").FilterField("creator", "=", user.ScreenName)
 		var stages []KyouenPuzzle
-		stageKeys, err := s.client.GetAll(s.ctx, stageQuery, &stages)
+		stageKeys, err := s.client.GetAll(ctx, stageQuery, &stages)
 		if err != nil {
 			return fmt.Errorf("failed to get user's stages: %w", err)
 		}
 
-		// Anonymize creator field
 		for i, stage := range stages {
 			stage.Creator = "[deleted user]"
 			_, err = tx.Put(stageKeys[i], &stage)
@@ -513,7 +486,6 @@ func (s *DatastoreService) DeleteUser(userID string) error {
 			}
 		}
 
-		// Delete the user entity
 		err = tx.Delete(userKey)
 		if err != nil {
 			return fmt.Errorf("failed to delete user: %w", err)
@@ -526,13 +498,13 @@ func (s *DatastoreService) DeleteUser(userID string) error {
 }
 
 // GetRecentActivities gets recent user activities (stage completions)
-func (s *DatastoreService) GetRecentActivities(limit int) ([]StageUser, error) {
+func (s *DatastoreService) GetRecentActivities(ctx context.Context, limit int) ([]StageUser, error) {
 	var stageUsers []StageUser
 	query := datastore.NewQuery("StageUser").
 		Order("-clearDate").
 		Limit(limit)
 
-	_, err := s.client.GetAll(s.ctx, query, &stageUsers)
+	_, err := s.client.GetAll(ctx, query, &stageUsers)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get recent activities: %w", err)
 	}
@@ -541,9 +513,9 @@ func (s *DatastoreService) GetRecentActivities(limit int) ([]StageUser, error) {
 }
 
 // GetUserByKey gets a user by datastore key
-func (s *DatastoreService) GetUserByKey(userKey *datastore.Key) (*User, error) {
+func (s *DatastoreService) GetUserByKey(ctx context.Context, userKey *datastore.Key) (*User, error) {
 	var user User
-	err := s.client.Get(s.ctx, userKey, &user)
+	err := s.client.Get(ctx, userKey, &user)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user by key: %w", err)
 	}
@@ -551,9 +523,9 @@ func (s *DatastoreService) GetUserByKey(userKey *datastore.Key) (*User, error) {
 }
 
 // GetStageByKey gets a stage by datastore key
-func (s *DatastoreService) GetStageByKey(stageKey *datastore.Key) (*KyouenPuzzle, error) {
+func (s *DatastoreService) GetStageByKey(ctx context.Context, stageKey *datastore.Key) (*KyouenPuzzle, error) {
 	var stage KyouenPuzzle
-	err := s.client.Get(s.ctx, stageKey, &stage)
+	err := s.client.Get(ctx, stageKey, &stage)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get stage by key: %w", err)
 	}
@@ -562,9 +534,9 @@ func (s *DatastoreService) GetStageByKey(stageKey *datastore.Key) (*KyouenPuzzle
 
 // GetStagesByKeys gets multiple stages by datastore keys.
 // ErrNoSuchEntity entries are returned as zero-value KyouenPuzzle; other errors abort.
-func (s *DatastoreService) GetStagesByKeys(keys []*datastore.Key) ([]KyouenPuzzle, error) {
+func (s *DatastoreService) GetStagesByKeys(ctx context.Context, keys []*datastore.Key) ([]KyouenPuzzle, error) {
 	stages := make([]KyouenPuzzle, len(keys))
-	err := s.client.GetMulti(s.ctx, keys, stages)
+	err := s.client.GetMulti(ctx, keys, stages)
 	if err == nil {
 		return stages, nil
 	}
@@ -581,9 +553,9 @@ func (s *DatastoreService) GetStagesByKeys(keys []*datastore.Key) ([]KyouenPuzzl
 
 // GetUsersByKeys gets multiple users by datastore keys.
 // ErrNoSuchEntity entries are returned as zero-value User; other errors abort.
-func (s *DatastoreService) GetUsersByKeys(keys []*datastore.Key) ([]User, error) {
+func (s *DatastoreService) GetUsersByKeys(ctx context.Context, keys []*datastore.Key) ([]User, error) {
 	users := make([]User, len(keys))
-	err := s.client.GetMulti(s.ctx, keys, users)
+	err := s.client.GetMulti(ctx, keys, users)
 	if err == nil {
 		return users, nil
 	}
@@ -601,13 +573,13 @@ func (s *DatastoreService) GetUsersByKeys(keys []*datastore.Key) ([]User, error)
 // MigrateFirebaseUID migrates a user from an old Firebase UID to a new one.
 // This handles the case where a Firebase Auth account was deleted and re-created,
 // resulting in a new UID. The new-UID User entity must already exist in Datastore.
-func (s *DatastoreService) MigrateFirebaseUID(oldUID, newUID string) (*User, error) {
+func (s *DatastoreService) MigrateFirebaseUID(ctx context.Context, oldUID, newUID string) (*User, error) {
 	oldKey := datastore.NameKey("User", "KEY"+oldUID, nil)
 	newKey := datastore.NameKey("User", "KEY"+newUID, nil)
 
 	var migratedUser User
 
-	_, err := s.client.RunInTransaction(s.ctx, func(tx *datastore.Transaction) error {
+	_, err := s.client.RunInTransaction(ctx, func(tx *datastore.Transaction) error {
 		var oldUser User
 		if err := tx.Get(oldKey, &oldUser); err != nil {
 			return fmt.Errorf("旧ユーザーの取得に失敗: %w", err)
@@ -648,15 +620,15 @@ func (s *DatastoreService) MigrateFirebaseUID(oldUID, newUID string) (*User, err
 	}
 
 	// StageUser の UserKey を新キーに差し替える（トランザクション外: 25エンティティグループ制限のため）
-	s.migrateStageUserRecords(oldKey, newKey)
+	s.migrateStageUserRecords(ctx, oldKey, newKey)
 
 	return &migratedUser, nil
 }
 
 // CountStageUsersByUserKey counts StageUser records that reference the given user key.
-func (s *DatastoreService) CountStageUsersByUserKey(userKey *datastore.Key) (int, error) {
+func (s *DatastoreService) CountStageUsersByUserKey(ctx context.Context, userKey *datastore.Key) (int, error) {
 	query := datastore.NewQuery("StageUser").FilterField("user", "=", userKey).KeysOnly()
-	keys, err := s.client.GetAll(s.ctx, query, &[]StageUser{})
+	keys, err := s.client.GetAll(ctx, query, &[]StageUser{})
 	if err != nil {
 		return 0, fmt.Errorf("StageUser 件数の取得に失敗: %w", err)
 	}
@@ -664,14 +636,14 @@ func (s *DatastoreService) CountStageUsersByUserKey(userKey *datastore.Key) (int
 }
 
 // createRegistModel creates a RegistModel record for a given stage
-func (s *DatastoreService) createRegistModel(stageKey *datastore.Key) error {
+func (s *DatastoreService) createRegistModel(ctx context.Context, stageKey *datastore.Key) error {
 	registModel := RegistModel{
 		StageInfo:  stageKey,
 		RegistDate: time.Now(),
 	}
 
 	key := datastore.IncompleteKey("RegistModel", nil)
-	_, err := s.client.Put(s.ctx, key, &registModel)
+	_, err := s.client.Put(ctx, key, &registModel)
 	if err != nil {
 		return fmt.Errorf("failed to save RegistModel: %w", err)
 	}
@@ -682,11 +654,11 @@ func (s *DatastoreService) createRegistModel(stageKey *datastore.Key) error {
 // GetAndDeleteRegistModels fetches all pending RegistModel entries, deletes them,
 // and returns the associated KyouenPuzzle keys.
 // Returns nil if no entries exist (no new stages since last notification).
-func (s *DatastoreService) GetAndDeleteRegistModels() ([]*datastore.Key, error) {
+func (s *DatastoreService) GetAndDeleteRegistModels(ctx context.Context) ([]*datastore.Key, error) {
 	var registModels []RegistModel
 	query := datastore.NewQuery("RegistModel")
 
-	keys, err := s.client.GetAll(s.ctx, query, &registModels)
+	keys, err := s.client.GetAll(ctx, query, &registModels)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get RegistModels: %w", err)
 	}
@@ -695,7 +667,7 @@ func (s *DatastoreService) GetAndDeleteRegistModels() ([]*datastore.Key, error) 
 		return nil, nil
 	}
 
-	if err := s.client.DeleteMulti(s.ctx, keys); err != nil {
+	if err := s.client.DeleteMulti(ctx, keys); err != nil {
 		return nil, fmt.Errorf("failed to delete RegistModels: %w", err)
 	}
 

@@ -1,6 +1,7 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
 	"log"
@@ -35,6 +36,8 @@ func main() {
 	}
 	defer svc.Close()
 
+	ctx := context.Background()
+
 	fmt.Printf("接続先プロジェクト: %s\n", projectID)
 	fmt.Printf("旧 UID: %s\n", *oldUID)
 	fmt.Printf("新 UID: %s\n", *newUID)
@@ -46,7 +49,7 @@ func main() {
 	fmt.Println("---")
 
 	// 旧 User を取得
-	oldUser, _, err := svc.GetUserByID(*oldUID)
+	oldUser, _, err := svc.GetUserByID(ctx, *oldUID)
 	if err != nil {
 		log.Fatalf("旧ユーザーが見つかりません（%s）: %v", *oldUID, err)
 	}
@@ -54,7 +57,7 @@ func main() {
 		oldUser.ScreenName, oldUser.TwitterUID, oldUser.ClearStageCount)
 
 	// 新 User を取得
-	newUser, _, err := svc.GetUserByID(*newUID)
+	newUser, _, err := svc.GetUserByID(ctx, *newUID)
 	if err != nil {
 		log.Fatalf("新ユーザーが見つかりません（%s）: %v\n補正前に新 UID でログインしてください。", *newUID, err)
 	}
@@ -74,13 +77,13 @@ func main() {
 	oldKey := gcdatastore.NameKey("User", "KEY"+*oldUID, nil)
 	newKey := gcdatastore.NameKey("User", "KEY"+*newUID, nil)
 
-	oldStageUserCount, err := svc.CountStageUsersByUserKey(oldKey)
+	oldStageUserCount, err := svc.CountStageUsersByUserKey(ctx, oldKey)
 	if err != nil {
 		log.Fatalf("旧ユーザーの StageUser 件数取得に失敗: %v", err)
 	}
 	fmt.Printf("旧ユーザー StageUser 件数: %d 件\n", oldStageUserCount)
 
-	newStageUserCount, err := svc.CountStageUsersByUserKey(newKey)
+	newStageUserCount, err := svc.CountStageUsersByUserKey(ctx, newKey)
 	if err != nil {
 		log.Fatalf("新ユーザーの StageUser 件数取得に失敗: %v", err)
 	}
@@ -109,7 +112,7 @@ func main() {
 	fmt.Println("---")
 	fmt.Println("補正を実行します...")
 
-	migratedUser, err := svc.MigrateFirebaseUID(*oldUID, *newUID)
+	migratedUser, err := svc.MigrateFirebaseUID(ctx, *oldUID, *newUID)
 	if err != nil {
 		log.Fatalf("補正に失敗しました: %v", err)
 	}
@@ -118,8 +121,8 @@ func main() {
 		migratedUser.ScreenName, migratedUser.ClearStageCount)
 
 	// 事後確認
-	afterOldCount, _ := svc.CountStageUsersByUserKey(oldKey)
-	afterNewCount, _ := svc.CountStageUsersByUserKey(newKey)
+	afterOldCount, _ := svc.CountStageUsersByUserKey(ctx, oldKey)
+	afterNewCount, _ := svc.CountStageUsersByUserKey(ctx, newKey)
 	fmt.Println("---")
 	fmt.Println("事後確認:")
 	fmt.Printf("  旧ユーザー StageUser 件数: %d 件（0 になっているはずです）\n", afterOldCount)

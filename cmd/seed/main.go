@@ -61,7 +61,7 @@ func main() {
 	fmt.Println("Seed data initialization completed")
 }
 
-func createStage(_ context.Context, datastoreService *datastore.DatastoreService, seed SeedStage) error {
+func createStage(ctx context.Context, datastoreService *datastore.DatastoreService, seed SeedStage) error {
 	size, err := strconv.ParseInt(seed.Size, 10, 64)
 	if err != nil {
 		return fmt.Errorf("invalid size: %s", seed.Size)
@@ -75,7 +75,7 @@ func createStage(_ context.Context, datastoreService *datastore.DatastoreService
 		return fmt.Errorf("invalid stage: does not contain valid kyouen")
 	}
 
-	exists, err := datastoreService.CheckStageExists(seed.Stage)
+	exists, err := datastoreService.CheckStageExists(ctx, seed.Stage)
 	if err != nil {
 		return fmt.Errorf("failed to check stage existence: %w", err)
 	}
@@ -91,7 +91,7 @@ func createStage(_ context.Context, datastoreService *datastore.DatastoreService
 		RegistDate: time.Now(),
 	}
 
-	_, err = datastoreService.CreateStage(stage)
+	_, err = datastoreService.CreateStage(ctx, stage)
 	if err != nil {
 		return fmt.Errorf("failed to create stage: %w", err)
 	}

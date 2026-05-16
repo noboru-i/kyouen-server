@@ -10,19 +10,19 @@ import (
 	"cloud.google.com/go/datastore"
 	"kyouen-server/internal/auth"
 	datastoreservice "kyouen-server/internal/datastore"
-	"kyouen-server/pkg/models"
 	"kyouen-server/internal/generated/openapi"
+	"kyouen-server/pkg/models"
 )
 
 var (
-	ErrInsufficientStones  = errors.New("stage must have 5 stones")
-	ErrNoKyouen            = errors.New("sent stage don't have kyouen")
-	ErrStageExists         = errors.New("sent stage is already exists")
-	ErrInvalidKyouen       = errors.New("invalid kyouen")
-	ErrStageNotFound       = errors.New("stage not found")
-	ErrStageMismatch       = errors.New("stage mismatch")
-	ErrUserNotFound        = errors.New("user not found")
-	ErrInvalidStageLength  = errors.New("stage length must be size * size")
+	ErrInsufficientStones = errors.New("stage must have 5 stones")
+	ErrNoKyouen           = errors.New("sent stage don't have kyouen")
+	ErrStageExists        = errors.New("sent stage is already exists")
+	ErrInvalidKyouen      = errors.New("invalid kyouen")
+	ErrStageNotFound      = errors.New("stage not found")
+	ErrStageMismatch      = errors.New("stage mismatch")
+	ErrUserNotFound       = errors.New("user not found")
+	ErrInvalidStageLength = errors.New("stage length must be size * size")
 )
 
 type ClearedStageResult struct {
@@ -42,150 +42,131 @@ func NewService(datastoreService *datastoreservice.DatastoreService, firebaseSer
 	}
 }
 
-func (s *Service) GetStages(startStageNo, limit int, authUID string) ([]datastoreservice.KyouenPuzzle, []*datastore.Key, map[int64]time.Time, error) {
-	stages, stageKeys, err := s.datastoreService.GetStages(startStageNo, limit)
+func (s *Service) GetStages(ctx context.Context, startStageNo, limit int, authUID string) ([]datastoreservice.KyouenPuzzle, []*datastore.Key, map[int64]time.Time, error) {
+	stages, stageKeys, err := s.datastoreService.GetStages(ctx, startStageNo, limit)
 	if err != nil {
 		return nil, nil, nil, err
 	}
 
 	var clearedKeyIDs map[int64]time.Time
 	if authUID != "" && !auth.IsGuestUser(authUID) {
-		_, userKey, userErr := s.datastoreService.GetUserByID(authUID)
+		_, userKey, userErr := s.datastoreService.GetUserByID(ctx, authUID)
 		if userErr == nil {
-			clearedKeyIDs, _ = s.datastoreService.GetClearedStageKeyIDs(userKey)
+			clearedKeyIDs, _ = s.datastoreService.GetClearedStageKeyIDs(ctx, userKey)
 		}
 	}
 
 	return stages, stageKeys, clearedKeyIDs, nil
 }
 
-func (s *Service) CreateStage(param openapi.NewStage, creatorName string) (*datastoreservice.KyouenPuzzle, error) {
+func (s *Service) CreateStage(ctx context.Context, param openapi.NewStage, creatorName string) (*datastoreservice.KyouenPuzzle, error) {
 	if len(param.Stage) != int(param.Size)*int(param.Size) {
 		return nil, ErrInvalidStageLength
 	}
 
 	stage := *models.NewKyouenStage(int(param.Size), param.Stage)
-	
-	// Check stone count
+
 	if stage.StoneCount() <= 4 {
 		return nil, ErrInsufficientStones
 	}
-	
-	// Check if stage has kyouen
+
 	kyouenData := stage.HasKyouen()
 	if kyouenData == nil {
 		return nil, ErrNoKyouen
 	}
-	
-	// Check if stage already exists (including rotations and reflections)
-	exists, err := s.hasRegisteredStageAll(stage)
+
+	exists, err := s.hasRegisteredStageAll(ctx, stage)
 	if err != nil {
 		return nil, err
 	}
 	if exists {
 		return nil, ErrStageExists
 	}
-	
-	// Create stage with authenticated user as creator
+
 	newStage := datastoreservice.KyouenPuzzle{
 		Size:    param.Size,
 		Stage:   param.Stage,
 		Creator: creatorName,
 	}
-	
-	return s.datastoreService.CreateStage(newStage)
+
+	return s.datastoreService.CreateStage(ctx, newStage)
 }
 
-func (s *Service) ClearStage(stageNo int, stageData string, userUID string) (*datastoreservice.User, error) {
-	// Validate clear stage using existing business logic
+func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string, userUID string) (*datastoreservice.User, error) {
 	size := int(math.Sqrt(float64(len(stageData))))
 	paramKyouenStage := models.NewKyouenStage(size, stageData)
-	
+
 	if !isKyouen(paramKyouenStage) {
 		return nil, ErrInvalidKyouen
 	}
-	
-	// Get stage from database
-	stage, stageKeys, err := s.datastoreService.GetStageByNo(stageNo)
+
+	stage, stageKeys, err := s.datastoreService.GetStageByNo(ctx, stageNo)
 	if err != nil {
 		return nil, ErrStageNotFound
 	}
-	
-	// Verify stage matches
+
 	if stage.Stage != strings.Replace(paramKyouenStage.ToString(), "2", "1", -1) {
 		return nil, ErrStageMismatch
 	}
-	
-	// Get user from database (handle guest users)
+
 	var user *datastoreservice.User
 	var userKey *datastore.Key
-	
+
 	if auth.IsGuestUser(userUID) {
-		// Get or create guest user
-		user, userKey, err = s.datastoreService.GetOrCreateGuestUser()
+		user, userKey, err = s.datastoreService.GetOrCreateGuestUser(ctx)
 		if err != nil {
 			return nil, ErrUserNotFound
 		}
 	} else {
-		// Get regular user
-		user, userKey, err = s.datastoreService.GetUserByID(userUID)
+		user, userKey, err = s.datastoreService.GetUserByID(ctx, userUID)
 		if err != nil {
 			return nil, ErrUserNotFound
 		}
 	}
-	
-	// Create stage user relation to record the clear
-	err = s.datastoreService.CreateStageUser(stageKeys[0], userKey)
+
+	err = s.datastoreService.CreateStageUser(ctx, stageKeys[0], userKey)
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return user, nil
 }
 
-func (s *Service) SyncStages(userUID string, clientClearedStages []openapi.ClearedStage) ([]ClearedStageResult, error) {
-	// Get authenticated user from database
-	_, userKey, err := s.datastoreService.GetUserByID(userUID)
+func (s *Service) SyncStages(ctx context.Context, userUID string, clientClearedStages []openapi.ClearedStage) ([]ClearedStageResult, error) {
+	_, userKey, err := s.datastoreService.GetUserByID(ctx, userUID)
 	if err != nil {
 		return nil, ErrUserNotFound
 	}
 
-	// For each client cleared stage, create stage user relation if not exists
 	for _, clearedStage := range clientClearedStages {
-		// Get stage by stage number
-		_, stageKeys, err := s.datastoreService.GetStageByNo(int(clearedStage.StageNo))
+		_, stageKeys, err := s.datastoreService.GetStageByNo(ctx, int(clearedStage.StageNo))
 		if err != nil {
-			// Skip stages that don't exist
 			continue
 		}
 
-		// Check if stage user relation already exists
-		exists, err := s.datastoreService.HasStageUser(stageKeys[0], userKey)
+		exists, err := s.datastoreService.HasStageUser(ctx, stageKeys[0], userKey)
 		if err != nil {
 			continue
 		}
 
 		if !exists {
-			// Create stage user relation
-			err = s.datastoreService.CreateStageUser(stageKeys[0], userKey)
+			err = s.datastoreService.CreateStageUser(ctx, stageKeys[0], userKey)
 			if err != nil {
 				continue
 			}
 		}
 	}
 
-	// Get all cleared stages for this user from server
-	stageUsers, err := s.datastoreService.GetClearedStagesByUser(userKey)
+	stageUsers, err := s.datastoreService.GetClearedStagesByUser(ctx, userKey)
 	if err != nil {
 		return nil, err
 	}
 
-	// Batch fetch KyouenPuzzle to get stageNo
 	stageKeys := make([]*datastore.Key, len(stageUsers))
 	for i, su := range stageUsers {
 		stageKeys[i] = su.StageKey
 	}
-	stages, err := s.datastoreService.GetStagesByKeys(stageKeys)
+	stages, err := s.datastoreService.GetStagesByKeys(ctx, stageKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -201,19 +182,19 @@ func (s *Service) SyncStages(userUID string, clientClearedStages []openapi.Clear
 }
 
 // Helper function to check if stage exists in all rotations and reflections
-func (s *Service) hasRegisteredStageAll(stage models.KyouenStage) (bool, error) {
+func (s *Service) hasRegisteredStageAll(ctx context.Context, stage models.KyouenStage) (bool, error) {
 	for i := 0; i < 4; i++ {
 		mirror := models.NewMirroredKyouenStage(stage)
-		exists, err := s.datastoreService.CheckStageExists(mirror.ToString())
+		exists, err := s.datastoreService.CheckStageExists(ctx, mirror.ToString())
 		if err != nil {
 			return false, err
 		}
 		if exists {
 			return true, nil
 		}
-		
+
 		stage = *models.NewRotatedKyouenStage(stage)
-		exists, err = s.datastoreService.CheckStageExists(stage.ToString())
+		exists, err = s.datastoreService.CheckStageExists(ctx, stage.ToString())
 		if err != nil {
 			return false, err
 		}
@@ -236,8 +217,8 @@ type ActivityUser struct {
 	ClearedStages []ActivityStage
 }
 
-func (s *Service) GetActivities(limit int) ([]ActivityUser, error) {
-	stageUsers, err := s.datastoreService.GetRecentActivities(limit)
+func (s *Service) GetActivities(ctx context.Context, limit int) ([]ActivityUser, error) {
+	stageUsers, err := s.datastoreService.GetRecentActivities(ctx, limit)
 	if err != nil {
 		return nil, err
 	}
@@ -254,11 +235,11 @@ func (s *Service) GetActivities(limit int) ([]ActivityUser, error) {
 	uUserKeys, userIdx := uniqueKeys(userKeys)
 	uStageKeys, stageIdx := uniqueKeys(stageKeys)
 
-	users, err := s.datastoreService.GetUsersByKeys(uUserKeys)
+	users, err := s.datastoreService.GetUsersByKeys(ctx, uUserKeys)
 	if err != nil {
 		return nil, err
 	}
-	stages, err := s.datastoreService.GetStagesByKeys(uStageKeys)
+	stages, err := s.datastoreService.GetStagesByKeys(ctx, uStageKeys)
 	if err != nil {
 		return nil, err
 	}
@@ -310,17 +291,14 @@ func uniqueKeys(keys []*datastore.Key) ([]*datastore.Key, map[string]int) {
 }
 
 // DeleteAccount deletes a user account and all associated data
-func (s *Service) DeleteAccount(userUID string) error {
+func (s *Service) DeleteAccount(ctx context.Context, userUID string) error {
 	// TODO: Add audit log for account deletion request (required for compliance)
 
-	// Delete from Datastore first
-	err := s.datastoreService.DeleteUser(userUID)
+	err := s.datastoreService.DeleteUser(ctx, userUID)
 	if err != nil {
 		return err
 	}
 
-	// Delete from Firebase Auth
-	ctx := context.Background()
 	err = s.firebaseService.DeleteUser(ctx, userUID)
 	if err != nil {
 		// Don't fail the entire operation since Datastore deletion succeeded
@@ -329,4 +307,3 @@ func (s *Service) DeleteAccount(userUID string) error {
 
 	return nil
 }
-

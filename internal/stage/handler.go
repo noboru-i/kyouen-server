@@ -28,7 +28,6 @@ func NewHandler(datastoreService *datastore.DatastoreService, firebaseService *d
 }
 
 func (h *Handler) GetStages(c *gin.Context) {
-	// Parse query parameters
 	startStageNo, err := strconv.Atoi(c.DefaultQuery("start_stage_no", "0"))
 	if err != nil {
 		startStageNo = 0
@@ -41,14 +40,14 @@ func (h *Handler) GetStages(c *gin.Context) {
 		limit = 100
 	}
 
+	ctx := c.Request.Context()
 	authUID, _ := auth.GetAuthenticatedUID(c)
-	stages, stageKeys, clearedKeyIDs, err := h.stageService.GetStages(startStageNo, limit, authUID)
+	stages, stageKeys, clearedKeyIDs, err := h.stageService.GetStages(ctx, startStageNo, limit, authUID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Convert to response format
 	stageList := []openapi.Stage{}
 	for i, stage := range stages {
 		s := openapi.Stage{
@@ -76,7 +75,7 @@ func (h *Handler) CreateStage(c *gin.Context) {
 		return
 	}
 
-	savedStage, err := h.stageService.CreateStage(param, param.Creator)
+	savedStage, err := h.stageService.CreateStage(c.Request.Context(), param, param.Creator)
 	if err != nil {
 		switch err {
 		case ErrInvalidStageLength:
@@ -93,7 +92,6 @@ func (h *Handler) CreateStage(c *gin.Context) {
 		return
 	}
 
-	// Return response
 	c.JSON(http.StatusCreated, openapi.Stage{
 		StageNo:    savedStage.StageNo,
 		Size:       savedStage.Size,
@@ -104,7 +102,6 @@ func (h *Handler) CreateStage(c *gin.Context) {
 }
 
 func (h *Handler) ClearStage(c *gin.Context) {
-	// Get authenticated user from context (or use guest if not authenticated)
 	authUID, exists := auth.GetAuthenticatedUID(c)
 	if !exists {
 		// This should not happen with OptionalFirebaseAuth middleware, but just in case
@@ -123,7 +120,7 @@ func (h *Handler) ClearStage(c *gin.Context) {
 		return
 	}
 
-	user, err := h.stageService.ClearStage(stageNo, param.Stage, authUID)
+	user, err := h.stageService.ClearStage(c.Request.Context(), stageNo, param.Stage, authUID)
 	if err != nil {
 		switch err {
 		case ErrInvalidKyouen:
@@ -153,7 +150,6 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	// Verify Firebase ID token
 	ctx := c.Request.Context()
 	token, err := h.firebaseService.VerifyIDToken(ctx, param.Token)
 	if err != nil {
@@ -163,7 +159,6 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	// Get user information from Firebase Auth
 	userRecord, err := h.firebaseService.GetUserByUID(ctx, token.UID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{
@@ -172,12 +167,10 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	// Extract Twitter information
 	screenName := userRecord.DisplayName
 	image := userRecord.PhotoURL
 	twitterUID := ""
 
-	// Extract Twitter UID from custom claims
 	if claims, ok := token.Claims["firebase"].(map[string]interface{}); ok {
 		if identities, ok := claims["identities"].(map[string]interface{}); ok {
 			if twitterIds, ok := identities["twitter.com"].([]interface{}); ok && len(twitterIds) > 0 {
@@ -204,8 +197,8 @@ func (h *Handler) Login(c *gin.Context) {
 		}
 	}
 
-	// Create or update user in Datastore
 	user, err := h.datastoreService.CreateOrUpdateUserFromFirebase(
+		ctx,
 		token.UID,
 		screenName,
 		image,
@@ -218,16 +211,12 @@ func (h *Handler) Login(c *gin.Context) {
 		return
 	}
 
-	// Return successful login response
-	response := openapi.LoginResult{
+	c.JSON(http.StatusOK, openapi.LoginResult{
 		ScreenName: user.ScreenName,
-	}
-
-	c.JSON(http.StatusOK, response)
+	})
 }
 
 func (h *Handler) SyncStages(c *gin.Context) {
-	// Get authenticated user from context
 	authUID, exists := auth.GetAuthenticatedUID(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
@@ -240,13 +229,12 @@ func (h *Handler) SyncStages(c *gin.Context) {
 		return
 	}
 
-	serverClearedStages, err := h.stageService.SyncStages(authUID, clientClearedStages)
+	serverClearedStages, err := h.stageService.SyncStages(c.Request.Context(), authUID, clientClearedStages)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Convert to response format
 	var response []openapi.ClearedStage
 	for _, result := range serverClearedStages {
 		response = append(response, openapi.ClearedStage{
@@ -259,14 +247,13 @@ func (h *Handler) SyncStages(c *gin.Context) {
 }
 
 func (h *Handler) DeleteAccount(c *gin.Context) {
-	// Get authenticated user from context
 	authUID, exists := auth.GetAuthenticatedUID(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "authentication required"})
 		return
 	}
 
-	err := h.stageService.DeleteAccount(authUID)
+	err := h.stageService.DeleteAccount(c.Request.Context(), authUID)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
@@ -278,13 +265,12 @@ func (h *Handler) DeleteAccount(c *gin.Context) {
 }
 
 func (h *Handler) GetRecentStages(c *gin.Context) {
-	stages, err := h.datastoreService.GetRecentStages(10)
+	stages, err := h.datastoreService.GetRecentStages(c.Request.Context(), 10)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Convert to response format
 	stageList := []openapi.Stage{}
 	for _, stage := range stages {
 		stageList = append(stageList, openapi.Stage{
@@ -305,13 +291,13 @@ type ActivityStageResponse struct {
 }
 
 type ActivityUserResponse struct {
-	ScreenName    string                `json:"screen_name"`
-	Image         string                `json:"image"`
+	ScreenName    string                  `json:"screen_name"`
+	Image         string                  `json:"image"`
 	ClearedStages []ActivityStageResponse `json:"cleared_stages"`
 }
 
 func (h *Handler) GetActivities(c *gin.Context) {
-	activities, err := h.stageService.GetActivities(50)
+	activities, err := h.stageService.GetActivities(c.Request.Context(), 50)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
 		return
