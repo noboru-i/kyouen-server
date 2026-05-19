@@ -107,26 +107,24 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 	var userKey *datastore.Key
 
 	var stageErr, userErr error
-	g, gctx := errgroup.WithContext(ctx)
+	var g errgroup.Group
 	g.Go(func() error {
 		var err error
-		stage, stageKeys, err = s.datastoreService.GetStageByNo(gctx, stageNo)
+		stage, stageKeys, err = s.datastoreService.GetStageByNo(ctx, stageNo)
 		if err != nil {
 			stageErr = ErrStageNotFound
-			return stageErr
 		}
 		return nil
 	})
 	g.Go(func() error {
 		var err error
 		if auth.IsGuestUser(userUID) {
-			user, userKey, err = s.datastoreService.GetOrCreateGuestUser(gctx)
+			user, userKey, err = s.datastoreService.GetOrCreateGuestUser(ctx)
 		} else {
-			user, userKey, err = s.datastoreService.GetUserByID(gctx, userUID)
+			user, userKey, err = s.datastoreService.GetUserByID(ctx, userUID)
 		}
 		if err != nil {
 			userErr = ErrUserNotFound
-			return userErr
 		}
 		return nil
 	})
