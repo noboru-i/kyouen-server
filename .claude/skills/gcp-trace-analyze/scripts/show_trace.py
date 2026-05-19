@@ -22,7 +22,7 @@ def main():
 
     spans.sort(key=lambda s: parse(s["startTime"]))
     root_start = parse(spans[0]["startTime"])
-    total_ms = (parse(spans[0]["endTime"]) - root_start).total_seconds() * 1000
+    total_ms = (max(parse(s["endTime"]) for s in spans) - root_start).total_seconds() * 1000
 
     print(f"TRACE: {data.get('traceId','?')}  total={total_ms:.1f}ms  spans={len(spans)}")
     print(f"{'offset':>9} {'dur':>9} {'name':<60} {'parent':<12}")

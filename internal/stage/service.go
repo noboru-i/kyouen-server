@@ -106,12 +106,14 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 	var user *datastoreservice.User
 	var userKey *datastore.Key
 
+	var stageErr, userErr error
 	g, gctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		var err error
 		stage, stageKeys, err = s.datastoreService.GetStageByNo(gctx, stageNo)
 		if err != nil {
-			return ErrStageNotFound
+			stageErr = ErrStageNotFound
+			return stageErr
 		}
 		return nil
 	})
@@ -123,16 +125,22 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 			user, userKey, err = s.datastoreService.GetUserByID(gctx, userUID)
 		}
 		if err != nil {
-			return ErrUserNotFound
+			userErr = ErrUserNotFound
+			return userErr
 		}
 		return nil
 	})
-	if err := g.Wait(); err != nil {
-		return nil, err
-	}
+	_ = g.Wait()
 
+	// stage エラーを優先して返すことで、エラー返却順序を決定的にする
+	if stageErr != nil {
+		return nil, stageErr
+	}
 	if stage.Stage != strings.Replace(paramKyouenStage.ToString(), "2", "1", -1) {
 		return nil, ErrStageMismatch
+	}
+	if userErr != nil {
+		return nil, userErr
 	}
 
 	if err := s.datastoreService.CreateStageUser(ctx, stageKeys[0], userKey); err != nil {
