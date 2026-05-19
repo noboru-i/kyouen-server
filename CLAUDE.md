@@ -88,6 +88,20 @@ rm -rf tmp
 brew install gh && gh auth login
 ```
 
+### App Engine スタブのデプロイ
+
+旧 App Engine エンドポイントへのリクエストを `https://kyouen.app/` に 301 リダイレクトするスタブアプリ (`appengine/`) を管理しています。
+App Engine application は削除不可かつ Datastore と紐づいているため active のまま維持し、デフォルトサービスのみ上書きしています。
+原則一度デプロイすれば更新不要です。
+
+```bash
+./scripts/deploy-appengine-stub.sh dev   # DEV環境にデプロイ
+./scripts/deploy-appengine-stub.sh prod  # 本番環境にデプロイ
+
+# 前提条件: gcloud CLI 認証済み
+gcloud auth login
+```
+
 ### Terraform（インフラ管理）
 
 詳細は [terraform/README.md](./terraform/README.md) を参照してください。
