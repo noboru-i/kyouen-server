@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"golang.org/x/sync/errgroup"
 	"kyouen-server/internal/auth"
 	datastoreservice "kyouen-server/internal/datastore"
 	"kyouen-server/internal/generated/openapi"
@@ -100,32 +101,41 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 		return nil, ErrInvalidKyouen
 	}
 
-	stage, stageKeys, err := s.datastoreService.GetStageByNo(ctx, stageNo)
-	if err != nil {
-		return nil, ErrStageNotFound
+	var stage *datastoreservice.KyouenPuzzle
+	var stageKeys []*datastore.Key
+	var user *datastoreservice.User
+	var userKey *datastore.Key
+
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		stage, stageKeys, err = s.datastoreService.GetStageByNo(gctx, stageNo)
+		if err != nil {
+			return ErrStageNotFound
+		}
+		return nil
+	})
+	g.Go(func() error {
+		var err error
+		if auth.IsGuestUser(userUID) {
+			user, userKey, err = s.datastoreService.GetOrCreateGuestUser(gctx)
+		} else {
+			user, userKey, err = s.datastoreService.GetUserByID(gctx, userUID)
+		}
+		if err != nil {
+			return ErrUserNotFound
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil {
+		return nil, err
 	}
 
 	if stage.Stage != strings.Replace(paramKyouenStage.ToString(), "2", "1", -1) {
 		return nil, ErrStageMismatch
 	}
 
-	var user *datastoreservice.User
-	var userKey *datastore.Key
-
-	if auth.IsGuestUser(userUID) {
-		user, userKey, err = s.datastoreService.GetOrCreateGuestUser(ctx)
-		if err != nil {
-			return nil, ErrUserNotFound
-		}
-	} else {
-		user, userKey, err = s.datastoreService.GetUserByID(ctx, userUID)
-		if err != nil {
-			return nil, ErrUserNotFound
-		}
-	}
-
-	err = s.datastoreService.CreateStageUser(ctx, stageKeys[0], userKey)
-	if err != nil {
+	if err := s.datastoreService.CreateStageUser(ctx, stageKeys[0], userKey); err != nil {
 		return nil, err
 	}
 
@@ -235,12 +245,21 @@ func (s *Service) GetActivities(ctx context.Context, limit int) ([]ActivityUser,
 	uUserKeys, userIdx := uniqueKeys(userKeys)
 	uStageKeys, stageIdx := uniqueKeys(stageKeys)
 
-	users, err := s.datastoreService.GetUsersByKeys(ctx, uUserKeys)
-	if err != nil {
-		return nil, err
-	}
-	stages, err := s.datastoreService.GetStagesByKeys(ctx, uStageKeys)
-	if err != nil {
+	var users []datastoreservice.User
+	var stages []datastoreservice.KyouenPuzzle
+
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		users, err = s.datastoreService.GetUsersByKeys(gctx, uUserKeys)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		stages, err = s.datastoreService.GetStagesByKeys(gctx, uStageKeys)
+		return err
+	})
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
