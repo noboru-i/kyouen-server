@@ -165,6 +165,14 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 	if stageErr != nil {
 		return nil, stageErr
 	}
+	// userErr により gctx がキャンセルされ stage 取得が中断された場合、
+	// stage は nil になり得る。その場合は userErr を優先して返す。
+	if stage == nil {
+		if userErr != nil {
+			return nil, userErr
+		}
+		return nil, ErrStageNotFound
+	}
 	if stage.Stage != strings.Replace(paramKyouenStage.ToString(), "2", "1", -1) {
 		return nil, ErrStageMismatch
 	}
