@@ -123,13 +123,20 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 	var user *datastoreservice.User
 	var userKey *datastore.Key
 
+	// errgroup.WithContext を使い goroutine から実エラーを返す。
+	// 片方の失敗で gctx がキャンセルされ、もう片方が context.Canceled で終わることがあるため、
+	// context.Canceled の場合は stageErr/userErr を設定しない。
+	// Wait 後に stage→mismatch→user の優先順で返すことでエラー選択を決定的にする。
 	var stageErr, userErr error
-	var g errgroup.Group
+	g, gctx := errgroup.WithContext(ctx)
 	g.Go(func() error {
 		var err error
-		stage, stageKeys, err = s.datastoreService.GetStageByNo(ctx, stageNo)
+		stage, stageKeys, err = s.datastoreService.GetStageByNo(gctx, stageNo)
 		if err != nil {
-			stageErr = ErrStageNotFound
+			if !errors.Is(err, context.Canceled) {
+				stageErr = ErrStageNotFound
+			}
+			return err
 		}
 		return nil
 	})
@@ -139,16 +146,17 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 			// GetOrCreateGuestUser may run concurrently with the stage lookup and
 			// could create the guest user even if the stage is not found. However,
 			// the guest user always exists in production, so no write occurs here.
-			user, userKey, err = s.datastoreService.GetOrCreateGuestUser(ctx)
+			user, userKey, err = s.datastoreService.GetOrCreateGuestUser(gctx)
 		} else {
-			user, userKey, err = s.datastoreService.GetUserByID(ctx, userUID)
+			user, userKey, err = s.datastoreService.GetUserByID(gctx, userUID)
 		}
-		if err != nil {
+		if err != nil && !errors.Is(err, context.Canceled) {
 			userErr = ErrUserNotFound
+			return userErr
 		}
 		return nil
 	})
-	_ = g.Wait()
+	g.Wait() //nolint:errcheck // エラーは stageErr/userErr で優先順位付きに管理する
 
 	// stage エラーを優先して返すことで、エラー返却順序を決定的にする
 	if stageErr != nil {
