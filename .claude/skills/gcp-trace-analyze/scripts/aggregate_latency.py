@@ -5,7 +5,7 @@ Cloud Trace v1 ROOTSPAN レスポンス → エンドポイント別 p50/p95/p99
 Usage:
   curl ... | python3 aggregate_latency.py
 """
-import sys, json, statistics
+import sys, json, re, statistics
 from collections import defaultdict
 from datetime import datetime
 
@@ -13,7 +13,10 @@ SKIP = ["BatchWriteSpans", "BatchWriteS", ".well-known", "/html/"]
 
 
 def parse(s):
-    return datetime.fromisoformat(s.replace("Z", "+00:00"))
+    # Cloud Trace timestamps may have up to 9 fractional digits (RFC3339Nano);
+    # fromisoformat only handles up to 6, so truncate the excess.
+    s = re.sub(r'(\.\d{6})\d+', r'\1', s.replace("Z", "+00:00"))
+    return datetime.fromisoformat(s)
 
 
 def main():

@@ -26,13 +26,30 @@ var (
 	ErrInvalidStageLength = errors.New("stage length must be size * size")
 )
 
+type datastoreServiceIface interface {
+	GetStages(ctx context.Context, startStageNo, limit int) ([]datastoreservice.KyouenPuzzle, []*datastore.Key, error)
+	GetUserByID(ctx context.Context, userID string) (*datastoreservice.User, *datastore.Key, error)
+	GetClearedStageKeyIDs(ctx context.Context, userKey *datastore.Key) (map[int64]time.Time, error)
+	CheckStageExists(ctx context.Context, stageString string) (bool, error)
+	CreateStage(ctx context.Context, stage datastoreservice.KyouenPuzzle) (*datastoreservice.KyouenPuzzle, error)
+	GetStageByNo(ctx context.Context, stageNo int) (*datastoreservice.KyouenPuzzle, []*datastore.Key, error)
+	GetOrCreateGuestUser(ctx context.Context) (*datastoreservice.User, *datastore.Key, error)
+	CreateStageUser(ctx context.Context, stageKey *datastore.Key, userKey *datastore.Key) error
+	HasStageUser(ctx context.Context, stageKey *datastore.Key, userKey *datastore.Key) (bool, error)
+	GetClearedStagesByUser(ctx context.Context, userKey *datastore.Key) ([]datastoreservice.StageUser, error)
+	GetStagesByKeys(ctx context.Context, keys []*datastore.Key) ([]datastoreservice.KyouenPuzzle, error)
+	GetRecentActivities(ctx context.Context, limit int) ([]datastoreservice.StageUser, error)
+	GetUsersByKeys(ctx context.Context, keys []*datastore.Key) ([]datastoreservice.User, error)
+	DeleteUser(ctx context.Context, userID string) error
+}
+
 type ClearedStageResult struct {
 	StageNo   int64
 	ClearDate time.Time
 }
 
 type Service struct {
-	datastoreService *datastoreservice.DatastoreService
+	datastoreService datastoreServiceIface
 	firebaseService  *datastoreservice.FirebaseService
 }
 
@@ -119,6 +136,9 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 	g.Go(func() error {
 		var err error
 		if auth.IsGuestUser(userUID) {
+			// GetOrCreateGuestUser may run concurrently with the stage lookup and
+			// could create the guest user even if the stage is not found. However,
+			// the guest user always exists in production, so no write occurs here.
 			user, userKey, err = s.datastoreService.GetOrCreateGuestUser(ctx)
 		} else {
 			user, userKey, err = s.datastoreService.GetUserByID(ctx, userUID)
