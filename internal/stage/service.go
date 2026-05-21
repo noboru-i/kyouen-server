@@ -156,7 +156,10 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 		}
 		return nil
 	})
-	g.Wait() //nolint:errcheck // エラーは stageErr/userErr で優先順位付きに管理する
+	if err := g.Wait(); err != nil && stageErr == nil && userErr == nil {
+		// stageErr/userErr が未設定のままの場合（context.Canceled 等の予期しないエラー）
+		return nil, err
+	}
 
 	// stage エラーを優先して返すことで、エラー返却順序を決定的にする
 	if stageErr != nil {
