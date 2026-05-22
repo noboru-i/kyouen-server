@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"cloud.google.com/go/datastore"
+	"golang.org/x/sync/errgroup"
 	"kyouen-server/internal/auth"
 	datastoreservice "kyouen-server/internal/datastore"
 	"kyouen-server/internal/generated/openapi"
@@ -25,13 +26,30 @@ var (
 	ErrInvalidStageLength = errors.New("stage length must be size * size")
 )
 
+type datastoreServiceIface interface {
+	GetStages(ctx context.Context, startStageNo, limit int) ([]datastoreservice.KyouenPuzzle, []*datastore.Key, error)
+	GetUserByID(ctx context.Context, userID string) (*datastoreservice.User, *datastore.Key, error)
+	GetClearedStageKeyIDs(ctx context.Context, userKey *datastore.Key) (map[int64]time.Time, error)
+	CheckStageExists(ctx context.Context, stageString string) (bool, error)
+	CreateStage(ctx context.Context, stage datastoreservice.KyouenPuzzle) (*datastoreservice.KyouenPuzzle, error)
+	GetStageByNo(ctx context.Context, stageNo int) (*datastoreservice.KyouenPuzzle, []*datastore.Key, error)
+	GetOrCreateGuestUser(ctx context.Context) (*datastoreservice.User, *datastore.Key, error)
+	CreateStageUser(ctx context.Context, stageKey *datastore.Key, userKey *datastore.Key) error
+	HasStageUser(ctx context.Context, stageKey *datastore.Key, userKey *datastore.Key) (bool, error)
+	GetClearedStagesByUser(ctx context.Context, userKey *datastore.Key) ([]datastoreservice.StageUser, error)
+	GetStagesByKeys(ctx context.Context, keys []*datastore.Key) ([]datastoreservice.KyouenPuzzle, error)
+	GetRecentActivities(ctx context.Context, limit int) ([]datastoreservice.StageUser, error)
+	GetUsersByKeys(ctx context.Context, keys []*datastore.Key) ([]datastoreservice.User, error)
+	DeleteUser(ctx context.Context, userID string) error
+}
+
 type ClearedStageResult struct {
 	StageNo   int64
 	ClearDate time.Time
 }
 
 type Service struct {
-	datastoreService *datastoreservice.DatastoreService
+	datastoreService datastoreServiceIface
 	firebaseService  *datastoreservice.FirebaseService
 }
 
@@ -100,32 +118,69 @@ func (s *Service) ClearStage(ctx context.Context, stageNo int, stageData string,
 		return nil, ErrInvalidKyouen
 	}
 
-	stage, stageKeys, err := s.datastoreService.GetStageByNo(ctx, stageNo)
-	if err != nil {
-		return nil, ErrStageNotFound
-	}
-
-	if stage.Stage != strings.Replace(paramKyouenStage.ToString(), "2", "1", -1) {
-		return nil, ErrStageMismatch
-	}
-
+	var stage *datastoreservice.KyouenPuzzle
+	var stageKeys []*datastore.Key
 	var user *datastoreservice.User
 	var userKey *datastore.Key
 
-	if auth.IsGuestUser(userUID) {
-		user, userKey, err = s.datastoreService.GetOrCreateGuestUser(ctx)
+	// errgroup.WithContext を使い goroutine から実エラーを返す。
+	// 片方の失敗で gctx がキャンセルされ、もう片方が context.Canceled で終わることがあるため、
+	// context.Canceled の場合は stageErr/userErr を設定しない。
+	// Wait 後に stage→mismatch→user の優先順で返すことでエラー選択を決定的にする。
+	var stageErr, userErr error
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		stage, stageKeys, err = s.datastoreService.GetStageByNo(gctx, stageNo)
 		if err != nil {
-			return nil, ErrUserNotFound
+			if !errors.Is(err, context.Canceled) {
+				stageErr = ErrStageNotFound
+			}
+			return err
 		}
-	} else {
-		user, userKey, err = s.datastoreService.GetUserByID(ctx, userUID)
-		if err != nil {
-			return nil, ErrUserNotFound
+		return nil
+	})
+	g.Go(func() error {
+		var err error
+		if auth.IsGuestUser(userUID) {
+			// GetOrCreateGuestUser may run concurrently with the stage lookup and
+			// could create the guest user even if the stage is not found. However,
+			// the guest user always exists in production, so no write occurs here.
+			user, userKey, err = s.datastoreService.GetOrCreateGuestUser(gctx)
+		} else {
+			user, userKey, err = s.datastoreService.GetUserByID(gctx, userUID)
 		}
+		if err != nil && !errors.Is(err, context.Canceled) {
+			userErr = ErrUserNotFound
+			return userErr
+		}
+		return nil
+	})
+	if err := g.Wait(); err != nil && stageErr == nil && userErr == nil {
+		// stageErr/userErr が未設定のままの場合（context.Canceled 等の予期しないエラー）
+		return nil, err
 	}
 
-	err = s.datastoreService.CreateStageUser(ctx, stageKeys[0], userKey)
-	if err != nil {
+	// stage エラーを優先して返すことで、エラー返却順序を決定的にする
+	if stageErr != nil {
+		return nil, stageErr
+	}
+	// userErr により gctx がキャンセルされ stage 取得が中断された場合、
+	// stage は nil になり得る。その場合は userErr を優先して返す。
+	if stage == nil {
+		if userErr != nil {
+			return nil, userErr
+		}
+		return nil, ErrStageNotFound
+	}
+	if stage.Stage != strings.Replace(paramKyouenStage.ToString(), "2", "1", -1) {
+		return nil, ErrStageMismatch
+	}
+	if userErr != nil {
+		return nil, userErr
+	}
+
+	if err := s.datastoreService.CreateStageUser(ctx, stageKeys[0], userKey); err != nil {
 		return nil, err
 	}
 
@@ -235,12 +290,21 @@ func (s *Service) GetActivities(ctx context.Context, limit int) ([]ActivityUser,
 	uUserKeys, userIdx := uniqueKeys(userKeys)
 	uStageKeys, stageIdx := uniqueKeys(stageKeys)
 
-	users, err := s.datastoreService.GetUsersByKeys(ctx, uUserKeys)
-	if err != nil {
-		return nil, err
-	}
-	stages, err := s.datastoreService.GetStagesByKeys(ctx, uStageKeys)
-	if err != nil {
+	var users []datastoreservice.User
+	var stages []datastoreservice.KyouenPuzzle
+
+	g, gctx := errgroup.WithContext(ctx)
+	g.Go(func() error {
+		var err error
+		users, err = s.datastoreService.GetUsersByKeys(gctx, uUserKeys)
+		return err
+	})
+	g.Go(func() error {
+		var err error
+		stages, err = s.datastoreService.GetStagesByKeys(gctx, uStageKeys)
+		return err
+	})
+	if err := g.Wait(); err != nil {
 		return nil, err
 	}
 
