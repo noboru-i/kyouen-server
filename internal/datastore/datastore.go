@@ -12,8 +12,8 @@ type DatastoreService struct {
 	client *datastore.Client
 }
 
-func NewDatastoreService(projectID string) (*DatastoreService, error) {
-	client, err := datastore.NewClient(context.Background(), projectID)
+func NewDatastoreService(projectID, databaseID string) (*DatastoreService, error) {
+	client, err := datastore.NewClientWithDatabase(context.Background(), projectID, databaseID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create Datastore client: %w", err)
 	}

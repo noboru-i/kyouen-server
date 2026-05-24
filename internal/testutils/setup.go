@@ -13,7 +13,7 @@ func SetupDatastoreTest() *datastore.Client {
 	os.Setenv("DATASTORE_EMULATOR_HOST", "localhost:8081")
 	
 	ctx := context.Background()
-	client, err := datastore.NewClient(ctx, "test-project")
+	client, err := datastore.NewClientWithDatabase(ctx, "test-project", "")
 	if err != nil {
 		log.Fatal(err)
 	}

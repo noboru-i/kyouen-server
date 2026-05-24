@@ -41,8 +41,9 @@ func main() {
 		projectID = "my-android-server"
 		log.Printf("Using default project ID: %s", projectID)
 	}
+	databaseID := os.Getenv("DATASTORE_DATABASE_ID")
 
-	datastoreService, err := datastore.NewDatastoreService(projectID)
+	datastoreService, err := datastore.NewDatastoreService(projectID, databaseID)
 	if err != nil {
 		log.Fatal("Failed to create datastore service:", err)
 	}

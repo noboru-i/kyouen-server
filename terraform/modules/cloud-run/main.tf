@@ -47,6 +47,16 @@ resource "google_cloud_run_v2_service" "kyouen_server" {
         value = var.environment
       }
 
+      env {
+        name  = "DATASTORE_DATABASE_ID"
+        value = var.datastore_database_id
+      }
+
+      env {
+        name  = "WRITE_FREEZE"
+        value = var.write_freeze ? "true" : "false"
+      }
+
       ports {
         name           = "http1"
         container_port = 8080

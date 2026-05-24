@@ -7,6 +7,16 @@ on:
         description: 'Type "deploy" to confirm production deployment'
         required: true
         type: string
+      datastore_database_id:
+        description: 'Firestore/Datastore database ID (empty = default database, "kyouen" = Tokyo region DB)'
+        required: false
+        type: string
+        default: ''
+      write_freeze:
+        description: 'Reject all write requests with 503 (use during DB migration cutover)'
+        required: false
+        type: boolean
+        default: false
 
 jobs:
   validate-input:
@@ -28,6 +38,8 @@ jobs:
     with:
       environment: prod
       project_id: my-android-server
+      datastore_database_id: ${{ github.event.inputs.datastore_database_id }}
+      write_freeze: ${{ github.event.inputs.write_freeze == 'true' }}
     secrets:
       wif_provider: ${{ secrets.PROD_WIF_PROVIDER }}
       wif_service_account: ${{ secrets.PROD_WIF_SERVICE_ACCOUNT }}

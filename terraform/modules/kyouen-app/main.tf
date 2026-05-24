@@ -22,6 +22,15 @@ module "artifact_registry" {
   location   = var.region
 }
 
+module "firestore_db" {
+  source = "../firestore-db"
+  count  = var.datastore_database_id != "" ? 1 : 0
+
+  project_id  = var.project_id
+  database_id = var.datastore_database_id
+  location_id = var.region
+}
+
 module "cloud_run" {
   source = "../cloud-run"
 
@@ -32,6 +41,8 @@ module "cloud_run" {
   service_account_email = var.service_account_email
   max_instances         = var.max_instances
   min_instances         = var.min_instances
+  datastore_database_id = var.datastore_database_id
+  write_freeze          = var.write_freeze
 
   depends_on = [module.artifact_registry]
 }

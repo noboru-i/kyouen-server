@@ -8,7 +8,9 @@ import (
 type Config struct {
 	Port           string
 	ProjectID      string
+	DatabaseID     string
 	Environment    string
+	WriteFreeze    bool
 	FirebaseConfig FirebaseConfig
 }
 
@@ -26,7 +28,9 @@ func Load() *Config {
 	config := &Config{
 		Port:        getEnv("PORT", "8080"),
 		ProjectID:   getEnv("GOOGLE_CLOUD_PROJECT", defaultProjectID),
+		DatabaseID:  getEnv("DATASTORE_DATABASE_ID", ""),
 		Environment: getEnv("GIN_MODE", "debug"),
+		WriteFreeze: getEnv("WRITE_FREEZE", "") == "true",
 		FirebaseConfig: FirebaseConfig{
 			CredentialsFile: getEnv("FIREBASE_CREDENTIALS_FILE", ""),
 		},

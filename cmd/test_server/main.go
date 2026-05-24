@@ -30,7 +30,7 @@ func main() {
 	cfg := config.Load()
 	
 	// Initialize Datastore service
-	datastoreService, err := datastore.NewDatastoreService(cfg.ProjectID)
+	datastoreService, err := datastore.NewDatastoreService(cfg.ProjectID, cfg.DatabaseID)
 	if err != nil {
 		log.Fatalf("Failed to initialize Datastore service: %v", err)
 	}
