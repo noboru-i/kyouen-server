@@ -11,6 +11,16 @@ on:
         required: true
         type: string
         description: 'Google Cloud Project ID'
+      datastore_database_id:
+        required: false
+        type: string
+        default: ''
+        description: 'Firestore/Datastore database ID (empty = default database)'
+      write_freeze:
+        required: false
+        type: boolean
+        default: false
+        description: 'When true, server rejects all write requests with 503'
     secrets:
       wif_provider:
         required: true
@@ -64,7 +74,7 @@ jobs:
           --platform managed \
           --allow-unauthenticated \
           --port 8080 \
-          --set-env-vars GOOGLE_CLOUD_PROJECT=${{ inputs.project_id }},ENVIRONMENT=${{ inputs.environment }} \
+          --set-env-vars GOOGLE_CLOUD_PROJECT=${{ inputs.project_id }},ENVIRONMENT=${{ inputs.environment }},DATASTORE_DATABASE_ID=${{ inputs.datastore_database_id }},WRITE_FREEZE=${{ inputs.write_freeze }} \
           --memory 512Mi \
           --cpu 1 \
           --max-instances 10
@@ -109,6 +119,8 @@ jobs:
                       value: '${{ inputs.project_id }}'
                     - name: ENVIRONMENT
                       value: '${{ inputs.environment }}'
+                    - name: DATASTORE_DATABASE_ID
+                      value: '${{ inputs.datastore_database_id }}'
                     resources:
                       limits:
                         memory: 512Mi

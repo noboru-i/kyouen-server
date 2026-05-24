@@ -39,3 +39,15 @@ variable "min_instances" {
   type        = number
   default     = 0
 }
+
+variable "datastore_database_id" {
+  description = "Firestore/Datastore database ID. Empty string means (default) database."
+  type        = string
+  default     = ""
+}
+
+variable "write_freeze" {
+  description = "When true, the server rejects all write requests (POST/PUT/DELETE) with 503. Used during DB migration cutover."
+  type        = bool
+  default     = false
+}

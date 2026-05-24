@@ -34,4 +34,6 @@ module "kyouen_app" {
   twitter_client_secret = var.twitter_client_secret
   apple_client_id       = var.apple_client_id
   apple_client_secret   = var.apple_client_secret
+  datastore_database_id = var.datastore_database_id
+  write_freeze          = var.write_freeze
 }

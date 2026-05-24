@@ -64,3 +64,15 @@ variable "apple_client_secret" {
   type        = string
   sensitive   = true
 }
+
+variable "datastore_database_id" {
+  description = "Firestore/Datastore named database ID. Empty string uses (default) database."
+  type        = string
+  default     = ""
+}
+
+variable "write_freeze" {
+  description = "When true, the server rejects all write requests (POST/PUT/DELETE) with 503. Used during DB migration cutover."
+  type        = bool
+  default     = false
+}

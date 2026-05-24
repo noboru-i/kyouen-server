@@ -15,7 +15,7 @@ func TestGetStatics(t *testing.T) {
 	gin.SetMode(gin.TestMode)
 	
 	// Create a test Datastore service
-	datastoreService, err := datastore.NewDatastoreService("test-project-id")
+	datastoreService, err := datastore.NewDatastoreService("test-project-id", "")
 	if err != nil {
 		t.Skipf("Skipping test - Datastore not available: %v", err)
 		return

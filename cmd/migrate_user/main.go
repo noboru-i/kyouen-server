@@ -29,8 +29,9 @@ func main() {
 		projectID = "my-android-server"
 		log.Printf("GOOGLE_CLOUD_PROJECT が未設定のためデフォルトを使用: %s", projectID)
 	}
+	databaseID := os.Getenv("DATASTORE_DATABASE_ID")
 
-	svc, err := datastore.NewDatastoreService(projectID)
+	svc, err := datastore.NewDatastoreService(projectID, databaseID)
 	if err != nil {
 		log.Fatalf("Datastore 接続に失敗: %v", err)
 	}

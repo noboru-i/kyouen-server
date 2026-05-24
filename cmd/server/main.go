@@ -32,7 +32,7 @@ func main() {
 	shutdown := tracing.Init(ctx, cfg.ProjectID)
 	defer shutdown()
 
-	datastoreService, err := datastore.NewDatastoreService(cfg.ProjectID)
+	datastoreService, err := datastore.NewDatastoreService(cfg.ProjectID, cfg.DatabaseID)
 	if err != nil {
 		log.Fatalf("Failed to initialize Datastore service: %v", err)
 	}
@@ -75,6 +75,7 @@ func setupRouter(app *App) *gin.Engine {
 
 	router.Use(otelgin.Middleware("kyouen-server"))
 	router.Use(middleware.Logger())
+	router.Use(middleware.WriteFreeze(app.Config.WriteFreeze))
 	router.Use(gin.Recovery())
 
 	router.GET("/health", func(c *gin.Context) {
